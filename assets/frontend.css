@@ -364,9 +364,9 @@
 .kt-btn-quiz { background: var(--kt-btn-bg); border-color: var(--kt-btn-hover-bg); color: var(--kt-btn-text); }
 .kt-btn-quiz:hover { background: var(--kt-btn-hover-bg); color: var(--kt-btn-hover-text); }
 
-.kt-btn-complete { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
-.kt-btn-complete:hover:not(:disabled) { background: #e2e8f0; border-color: #94a3b8; color: #1e293b; }
-.kt-btn-complete:disabled { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+.kt-btn-complete { background: transparent; border-color: #1e293b; color: #1e293b; }
+.kt-btn-complete:hover:not(:disabled) { background: #1e293b; border-color: #1e293b; color: #fff; }
+.kt-btn-complete:disabled { background: transparent; border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
 
 .kt-btn-lg { padding: 12px 28px; font-size: 1em; }
 .kt-btn-sm { padding: 5px 12px; font-size: .8em; }
