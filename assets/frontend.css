@@ -117,9 +117,17 @@
 	font-weight: 700;
 	white-space: nowrap;
 }
-.kt-status-nao_iniciado { background: #f1f5f9; color: #64748b; }
-.kt-status-em_andamento  { background: #fef9c3; color: #713f12; }
-.kt-status-concluido     { background: #dcfce7; color: #14532d; }
+/* Badge de status (dentro de cards e listas) */
+.kt-status-badge.kt-status-nao_iniciado { background: #f1f5f9; color: #64748b; }
+.kt-status-badge.kt-status-em_andamento  { background: #fef9c3; color: #713f12; }
+.kt-status-badge.kt-status-concluido     { background: #dcfce7; color: #14532d; }
+.kt-status-badge.kt-status-overdue       { background: #fee2e2; color: #7f1d1d; }
+
+/* Card de curso: sempre fundo branco ou cinza muito claro */
+.kt-course-card.kt-status-nao_iniciado { background: #fff; }
+.kt-course-card.kt-status-em_andamento  { background: #fafafa; }
+.kt-course-card.kt-status-concluido     { background: #fff; border-color: #86efac; }
+.kt-course-card.kt-status-overdue       { background: #fff; border-color: #fca5a5; }
 .kt-status-overdue       { background: #fee2e2; color: #7f1d1d; }
 
 /* --- Barra de progresso --- */
