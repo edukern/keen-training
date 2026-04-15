@@ -12,6 +12,31 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_submit_quiz',     [ $this, 'ajax_submit_quiz' ] );
 		add_action( 'template_redirect',          [ $this, 'maybe_render_certificate' ] );
 		add_action( 'template_redirect',          [ $this, 'enforce_module_page_access' ] );
+		add_filter( 'login_redirect',             [ $this, 'login_redirect' ], 10, 3 );
+	}
+
+	/**
+	 * Redireciona colaboradores para o portal após o login.
+	 * Admins e gestores seguem o fluxo padrão do WordPress.
+	 */
+	public function login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+		if ( is_wp_error( $user ) ) return $redirect_to;
+
+		// Super admin ou gestor → painel WordPress normalmente
+		$roles = (array) $user->roles;
+		if ( in_array( 'kt_super_admin', $roles, true ) ||
+		     in_array( 'kt_location_manager', $roles, true ) ||
+		     in_array( 'administrator', $roles, true ) ) {
+			return $redirect_to ?: admin_url();
+		}
+
+		// Colaborador com portal configurado → redireciona para o portal
+		$portal_url = get_option( 'kt_portal_page_url' );
+		if ( $portal_url ) {
+			return $portal_url;
+		}
+
+		return $redirect_to;
 	}
 
 	public function enqueue_assets() {
