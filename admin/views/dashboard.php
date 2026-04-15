@@ -106,22 +106,29 @@
 	<?php if ( KT_Roles::is_super_admin() ): ?>
 	<?php
 	$fonts_disponiveis = [
-		''               => '— Herdar do tema —',
-		'Inter'          => 'Inter',
-		'Roboto'         => 'Roboto',
-		'Open Sans'      => 'Open Sans',
-		'Lato'           => 'Lato',
-		'Montserrat'     => 'Montserrat',
-		'Poppins'        => 'Poppins',
-		'Raleway'        => 'Raleway',
-		'Nunito'         => 'Nunito',
+		''                 => '— Herdar do tema —',
+		'Inter'            => 'Inter',
+		'Roboto'           => 'Roboto',
+		'Open Sans'        => 'Open Sans',
+		'Lato'             => 'Lato',
+		'Montserrat'       => 'Montserrat',
+		'Poppins'          => 'Poppins',
+		'Raleway'          => 'Raleway',
+		'Nunito'           => 'Nunito',
 		'Playfair Display' => 'Playfair Display',
-		'Merriweather'   => 'Merriweather',
+		'Merriweather'     => 'Merriweather',
 	];
-	$saved_font_heading = get_option( 'kt_font_heading', '' );
-	$saved_font_body    = get_option( 'kt_font_body',    '' );
+	$pesos_disponiveis = [ 300 => 'Leve (300)', 400 => 'Normal (400)', 500 => 'Médio (500)', 600 => 'Semibold (600)', 700 => 'Bold (700)', 800 => 'Extrabold (800)' ];
+	$saved_primary          = get_option( 'kt_primary_color',       '#3b82f6' );
+	$saved_btn_bg           = get_option( 'kt_btn_bg',              $saved_primary );
+	$saved_btn_text         = get_option( 'kt_btn_text',            '#ffffff' );
+	$saved_btn_hover_bg     = get_option( 'kt_btn_hover_bg',        '' );
+	$saved_btn_hover_text   = get_option( 'kt_btn_hover_text',      '#ffffff' );
+	$saved_font_heading        = get_option( 'kt_font_heading',        '' );
+	$saved_font_heading_weight = get_option( 'kt_font_heading_weight', 700 );
+	$saved_font_body           = get_option( 'kt_font_body',           '' );
 	?>
-	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:560px">
+	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
 		<h2 style="margin-top:0">Aparência do Portal</h2>
 		<?php if ( isset( $_GET['color_saved'] ) ): ?>
 			<div class="notice notice-success inline" style="margin-bottom:16px"><p>Configurações salvas.</p></div>
@@ -129,20 +136,49 @@
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'kt_save_color' ); ?>
 			<input type="hidden" name="action" value="kt_save_color">
-			<table class="form-table" style="margin:0">
+
+			<h3 style="margin:0 0 8px;font-size:.95em;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Cores</h3>
+			<table class="form-table" style="margin:0 0 20px">
 				<tr>
-					<th style="padding:10px 0;width:180px"><label for="kt_primary_color">Cor primária</label></th>
-					<td style="padding:10px 0;display:flex;align-items:center;gap:12px">
-						<input type="color" id="kt_primary_color" name="kt_primary_color"
-							value="<?php echo esc_attr( get_option( 'kt_primary_color', '#3b82f6' ) ); ?>"
-							style="width:60px;height:36px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
-						<span class="description">Botões, links, barra de progresso e destaques.</span>
+					<th style="padding:8px 0;width:200px"><label for="kt_primary_color">Cor primária</label></th>
+					<td style="padding:8px 0;display:flex;align-items:center;gap:10px">
+						<input type="color" id="kt_primary_color" name="kt_primary_color" value="<?php echo esc_attr( $saved_primary ); ?>" style="width:50px;height:32px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+						<span class="description">Links, barra de progresso e destaques.</span>
 					</td>
 				</tr>
 				<tr>
-					<th style="padding:10px 0"><label for="kt_font_heading">Fonte dos títulos</label></th>
-					<td style="padding:10px 0">
-						<select id="kt_font_heading" name="kt_font_heading" style="min-width:220px">
+					<th style="padding:8px 0"><label for="kt_btn_bg">Fundo do botão</label></th>
+					<td style="padding:8px 0;display:flex;align-items:center;gap:10px">
+						<input type="color" id="kt_btn_bg" name="kt_btn_bg" value="<?php echo esc_attr( $saved_btn_bg ); ?>" style="width:50px;height:32px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_btn_text">Texto do botão</label></th>
+					<td style="padding:8px 0;display:flex;align-items:center;gap:10px">
+						<input type="color" id="kt_btn_text" name="kt_btn_text" value="<?php echo esc_attr( $saved_btn_text ); ?>" style="width:50px;height:32px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_btn_hover_bg">Fundo no hover</label></th>
+					<td style="padding:8px 0;display:flex;align-items:center;gap:10px">
+						<input type="color" id="kt_btn_hover_bg" name="kt_btn_hover_bg" value="<?php echo esc_attr( $saved_btn_hover_bg ?: $saved_btn_bg ); ?>" style="width:50px;height:32px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+						<span class="description">Se não definido, usa versão mais escura do fundo.</span>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_btn_hover_text">Texto no hover</label></th>
+					<td style="padding:8px 0;display:flex;align-items:center;gap:10px">
+						<input type="color" id="kt_btn_hover_text" name="kt_btn_hover_text" value="<?php echo esc_attr( $saved_btn_hover_text ); ?>" style="width:50px;height:32px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+					</td>
+				</tr>
+			</table>
+
+			<h3 style="margin:0 0 8px;font-size:.95em;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Tipografia</h3>
+			<table class="form-table" style="margin:0">
+				<tr>
+					<th style="padding:8px 0;width:200px"><label for="kt_font_heading">Fonte dos títulos</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_font_heading" name="kt_font_heading" style="min-width:200px">
 							<?php foreach ( $fonts_disponiveis as $val => $label ): ?>
 								<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $saved_font_heading, $val ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
@@ -150,9 +186,19 @@
 					</td>
 				</tr>
 				<tr>
-					<th style="padding:10px 0"><label for="kt_font_body">Fonte do texto</label></th>
-					<td style="padding:10px 0">
-						<select id="kt_font_body" name="kt_font_body" style="min-width:220px">
+					<th style="padding:8px 0"><label for="kt_font_heading_weight">Peso dos títulos</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_font_heading_weight" name="kt_font_heading_weight" style="min-width:200px">
+							<?php foreach ( $pesos_disponiveis as $val => $label ): ?>
+								<option value="<?php echo esc_attr( $val ); ?>" <?php selected( (int) $saved_font_heading_weight, $val ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_font_body">Fonte do texto</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_font_body" name="kt_font_body" style="min-width:200px">
 							<?php foreach ( $fonts_disponiveis as $val => $label ): ?>
 								<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $saved_font_body, $val ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>

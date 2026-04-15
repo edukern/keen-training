@@ -467,8 +467,17 @@ class KT_Admin {
 		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
 		$color = sanitize_hex_color( $_POST['kt_primary_color'] ?? '' );
 		if ( $color ) update_option( 'kt_primary_color', $color );
-		update_option( 'kt_font_heading', sanitize_text_field( $_POST['kt_font_heading'] ?? '' ) );
-		update_option( 'kt_font_body',    sanitize_text_field( $_POST['kt_font_body']    ?? '' ) );
+		$btn_bg         = sanitize_hex_color( $_POST['kt_btn_bg']         ?? '' );
+		$btn_text       = sanitize_hex_color( $_POST['kt_btn_text']       ?? '' );
+		$btn_hover_bg   = sanitize_hex_color( $_POST['kt_btn_hover_bg']   ?? '' );
+		$btn_hover_text = sanitize_hex_color( $_POST['kt_btn_hover_text'] ?? '' );
+		if ( $btn_bg )         update_option( 'kt_btn_bg',         $btn_bg );
+		if ( $btn_text )       update_option( 'kt_btn_text',       $btn_text );
+		update_option( 'kt_btn_hover_bg',   $btn_hover_bg ?: '' );
+		if ( $btn_hover_text ) update_option( 'kt_btn_hover_text', $btn_hover_text );
+		update_option( 'kt_font_heading',        sanitize_text_field( $_POST['kt_font_heading']        ?? '' ) );
+		update_option( 'kt_font_heading_weight', absint( $_POST['kt_font_heading_weight'] ?? 700 ) );
+		update_option( 'kt_font_body',           sanitize_text_field( $_POST['kt_font_body']           ?? '' ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&color_saved=1' ) );
 		exit;
 	}

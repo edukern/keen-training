@@ -41,7 +41,19 @@ class KT_Frontend {
 	}
 
 	public function inject_appearance_vars() {
-		$primary = sanitize_hex_color( get_option( 'kt_primary_color', '#3b82f6' ) ) ?: '#3b82f6';
+		$primary      = sanitize_hex_color( get_option( 'kt_primary_color',    '#3b82f6' ) ) ?: '#3b82f6';
+		$btn_bg       = sanitize_hex_color( get_option( 'kt_btn_bg',           $primary  ) ) ?: $primary;
+		$btn_text     = sanitize_hex_color( get_option( 'kt_btn_text',         '#ffffff' ) ) ?: '#ffffff';
+		$btn_hover_bg = sanitize_hex_color( get_option( 'kt_btn_hover_bg',     '' ) );
+		$btn_hover_text = sanitize_hex_color( get_option( 'kt_btn_hover_text', $btn_text ) ) ?: $btn_text;
+
+		// Calcula hover bg automaticamente se não definido (15% mais escuro)
+		if ( ! $btn_hover_bg ) {
+			list( $r, $g, $b ) = sscanf( $btn_bg, '#%02x%02x%02x' );
+			$btn_hover_bg = sprintf( '#%02x%02x%02x', max( 0, $r - 38 ), max( 0, $g - 38 ), max( 0, $b - 38 ) );
+		}
+
+		// Deriva dark e light da cor primária
 		list( $r, $g, $b ) = sscanf( $primary, '#%02x%02x%02x' );
 		$dark  = sprintf( '#%02x%02x%02x', max( 0, $r - 38 ), max( 0, $g - 38 ), max( 0, $b - 38 ) );
 		$light = sprintf( '#%02x%02x%02x',
@@ -50,26 +62,33 @@ class KT_Frontend {
 			min( 255, $b + round( ( 255 - $b ) * 0.85 ) )
 		);
 
-		$font_heading = sanitize_text_field( get_option( 'kt_font_heading', '' ) );
-		$font_body    = sanitize_text_field( get_option( 'kt_font_body',    '' ) );
+		$font_heading        = sanitize_text_field( get_option( 'kt_font_heading',        '' ) );
+		$font_heading_weight = absint( get_option( 'kt_font_heading_weight', 700 ) ) ?: 700;
+		$font_body           = sanitize_text_field( get_option( 'kt_font_body',           '' ) );
 
 		// Carrega Google Fonts se necessário
 		$fonts_to_load = array_filter( array_unique( [ $font_heading, $font_body ] ) );
 		if ( $fonts_to_load ) {
-			$family = implode( '&family=', array_map( function( $f ) {
-				return urlencode( $f ) . ':wght@400;600;700';
+			$family = implode( '&family=', array_map( function( $f ) use ( $font_heading_weight ) {
+				return urlencode( $f ) . ':wght@400;600;' . $font_heading_weight;
 			}, $fonts_to_load ) );
 			echo '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=' . $family . '&display=swap">' . "\n";
 		}
 
 		$css = ':root{'
-			. '--kt-color-primary:'      . esc_attr( $primary ) . ';'
-			. '--kt-color-primary-dark:' . esc_attr( $dark )    . ';'
-			. '--kt-color-primary-light:'. esc_attr( $light )   . ';'
+			. '--kt-color-primary:'       . esc_attr( $primary )        . ';'
+			. '--kt-color-primary-dark:'  . esc_attr( $dark )           . ';'
+			. '--kt-color-primary-light:' . esc_attr( $light )          . ';'
+			. '--kt-btn-bg:'              . esc_attr( $btn_bg )         . ';'
+			. '--kt-btn-text:'            . esc_attr( $btn_text )       . ';'
+			. '--kt-btn-hover-bg:'        . esc_attr( $btn_hover_bg )   . ';'
+			. '--kt-btn-hover-text:'      . esc_attr( $btn_hover_text ) . ';'
 		. '}';
 
 		if ( $font_heading ) {
-			$css .= '.kt-portal h1,.kt-portal h2,.kt-portal h3,.kt-course-title,.kt-module-title{font-family:"' . esc_attr( $font_heading ) . '",sans-serif}';
+			$css .= '.kt-portal h1,.kt-portal h2,.kt-portal h3,.kt-course-title,.kt-module-title{'
+				. 'font-family:"' . esc_attr( $font_heading ) . '",sans-serif;'
+				. 'font-weight:' . $font_heading_weight . '}';
 		}
 		if ( $font_body ) {
 			$css .= '.kt-portal{font-family:"' . esc_attr( $font_body ) . '",sans-serif}';
