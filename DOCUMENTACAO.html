@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keen Training — Documentação e Guia de UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue:   #2563eb;
+    --green:  #16a34a;
+    --purple: #7c3aed;
+    --orange: #ea580c;
+    --gray:   #64748b;
+    --light:  #f8fafc;
+    --border: #e2e8f0;
+    --text:   #1e293b;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text); background: #fff; }
+
+  /* Layout */
+  .wrapper { display: flex; min-height: 100vh; }
+  nav.sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: #1e293b;
+    color: #cbd5e1;
+    padding: 28px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav.sidebar .logo { padding: 0 24px 24px; font-size: 1.15em; font-weight: 700; color: #fff; border-bottom: 1px solid #334155; margin-bottom: 16px; }
+  nav.sidebar .logo span { color: #60a5fa; }
+  nav.sidebar a { display: block; padding: 8px 24px; color: #94a3b8; text-decoration: none; font-size: .9em; border-left: 3px solid transparent; transition: all .15s; }
+  nav.sidebar a:hover, nav.sidebar a.active { color: #fff; border-left-color: #3b82f6; background: rgba(59,130,246,.1); }
+  nav.sidebar .nav-section { padding: 12px 24px 4px; font-size: .72em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #475569; }
+
+  main { flex: 1; padding: 48px 56px; max-width: 900px; }
+  @media (max-width: 768px) {
+    .wrapper { flex-direction: column; }
+    nav.sidebar { width: 100%; height: auto; position: static; }
+    main { padding: 28px 20px; }
+  }
+
+  /* Typography */
+  h1 { font-size: 2.2em; color: var(--text); margin-bottom: 8px; }
+  h2 { font-size: 1.5em; margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.1em; margin: 28px 0 10px; }
+  p  { line-height: 1.7; margin-bottom: 12px; color: #374151; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { line-height: 1.7; margin-bottom: 4px; }
+  code { background: #f1f5f9; border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: .88em; font-family: monospace; }
+  strong { color: var(--text); }
+
+  /* Components */
+  .hero {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 32px 36px;
+    margin-bottom: 40px;
+  }
+  .hero h1 { margin-bottom: 10px; }
+  .hero p { font-size: 1.05em; color: var(--gray); }
+
+  .role-card {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .role-card .role-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .role-icon { font-size: 2em; }
+  .role-title h3 { margin: 0; font-size: 1.1em; }
+  .role-title p  { margin: 0; font-size: .85em; color: var(--gray); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: .78em;
+    font-weight: 700;
+    margin: 2px;
+  }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-green  { background: #dcfce7; color: #15803d; }
+  .badge-purple { background: #ede9fe; color: #6d28d9; }
+  .badge-orange { background: #ffedd5; color: #c2410c; }
+  .badge-gray   { background: #f1f5f9; color: #475569; }
+
+  .journey {
+    border-left: 3px solid var(--blue);
+    padding-left: 20px;
+    margin: 16px 0;
+  }
+  .journey.green  { border-color: var(--green); }
+  .journey.purple { border-color: var(--purple); }
+
+  .step-list { list-style: none; padding: 0; counter-reset: steps; }
+  .step-list li {
+    counter-increment: steps;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  .step-list li::before {
+    content: counter(steps);
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82em;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-list.green  li::before { background: var(--green); }
+  .step-list.purple li::before { background: var(--purple); }
+
+  .step-content strong { display: block; font-size: .95em; }
+  .step-content p { font-size: .9em; color: var(--gray); margin: 2px 0 0; }
+
+  .access-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .9em; }
+  .access-table th { background: #f1f5f9; text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+  .access-table td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
+  .access-table tr:nth-child(even) td { background: #fafafa; }
+  .yes { color: var(--green); font-weight: 700; }
+  .no  { color: #94a3b8; }
+  .part { color: var(--orange); font-weight: 600; }
+
+  .tip {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: .9em;
+    margin: 16px 0;
+  }
+  .tip::before { content: "💡 "; }
+
+  .warning {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: .9em;
+    margin: 16px 0;
+  }
+  .warning::before { content: "⚠️ "; }
+
+  .screen-shot {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: .88em;
+    color: var(--gray);
+    margin: 10px 0;
+    font-style: italic;
+  }
+  .screen-shot::before { content: "🖥 Tela: "; font-style: normal; font-weight: 700; color: var(--text); }
+
+  section { margin-bottom: 60px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- Barra lateral de navegação -->
+<nav class="sidebar">
+  <div class="logo">🎓 <span>Keen</span> Training</div>
+  <div class="nav-section">Visão Geral</div>
+  <a href="#visao-geral">O que é o Keen Training</a>
+  <a href="#instalacao">Instalação Rápida</a>
+  <a href="#papeis">Papéis e Permissões</a>
+
+  <div class="nav-section">Jornadas</div>
+  <a href="#jornada-admin">Super Admin</a>
+  <a href="#jornada-gerente">Gerente de Unidade</a>
+  <a href="#jornada-colaborador">Colaborador</a>
+
+  <div class="nav-section">Recursos</div>
+  <a href="#restricao">Restrição de Conteúdo</a>
+  <a href="#avaliacoes">Avaliações</a>
+  <a href="#certificados">Certificados</a>
+  <a href="#relatorios">Relatórios e Progresso</a>
+
+  <div class="nav-section">Ajuda</div>
+  <a href="#duvidas">Perguntas Frequentes</a>
+  <a href="#glossario">Glossário</a>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero" id="visao-geral">
+    <h1>Keen Training</h1>
+    <p>Documentação completa — guia de instalação, UX e jornadas por papel.<br>
+    Tudo em português, para sua equipe começar em minutos.</p>
+  </div>
+
+  <!-- O QUE É -->
+  <section>
+    <h2 id="visao-geral-anchor">O que é o Keen Training?</h2>
+    <p>O <strong>Keen Training</strong> é um plugin WordPress para redes de lojas de roupas gerenciarem os treinamentos dos colaboradores. Ele funciona diretamente no seu site WordPress, sem precisar de ferramentas externas.</p>
+
+    <h3>O que você pode fazer:</h3>
+    <ul>
+      <li>Cadastrar <strong>unidades</strong> (lojas/filiais) e vincular gerentes a cada uma</li>
+      <li>Gerenciar <strong>colaboradores</strong> por unidade</li>
+      <li>Criar <strong>cursos</strong> com módulos usando links do YouTube, Google Drive, Vimeo, PDF ou qualquer URL</li>
+      <li>Criar <strong>avaliações</strong> (múltipla escolha ou V/F) vinculadas aos módulos</li>
+      <li>Atribuir treinamentos a colaboradores específicos ou à unidade inteira</li>
+      <li>Monitorar o <strong>progresso</strong> de cada colaborador em tempo real</li>
+      <li>Emitir <strong>certificados</strong> automáticos ao concluir cursos</li>
+      <li>Restringir cursos por <strong>unidade ou cargo</strong></li>
+    </ul>
+
+    <div class="tip">O conteúdo dos treinamentos fica nos serviços que você já usa (YouTube, Google Drive, etc.). O Keen Training rastreia quem assistiu, quem passou na avaliação e quem concluiu.</div>
+  </section>
+
+  <!-- INSTALAÇÃO -->
+  <section>
+    <h2 id="instalacao">⚙️ Instalação Rápida</h2>
+    <ol class="step-list">
+      <li>
+        <div class="step-content">
+          <strong>Copie a pasta do plugin</strong>
+          <p>Copie a pasta <code>keen-training</code> para dentro de <code>wp-content/plugins/</code> no seu servidor.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Ative o plugin no WordPress</strong>
+          <p>Acesse o painel do WordPress → <strong>Plugins</strong> → localize "Keen Training" → clique em <strong>Ativar</strong>.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Siga o Guia de Início</strong>
+          <p>Um banner aparecerá no topo do painel com o guia passo a passo. Clique em <strong>"Ver guia de início"</strong>.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Crie uma página para o portal dos colaboradores</strong>
+          <p>No WordPress, crie uma nova página (ex: "Portal de Treinamentos") e insira o shortcode <code>[kt_portal]</code> no conteúdo. Publique a página. Os colaboradores acessam essa URL para ver seus treinamentos.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Configure as unidades e comece!</strong>
+          <p>Vá em <strong>Keen Training → Unidades</strong> e crie suas lojas. Em seguida, adicione colaboradores e cursos.</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="warning">O plugin cria automaticamente as tabelas no banco de dados ao ser ativado. Não é necessário nenhuma configuração extra no servidor.</div>
+  </section>
+
+  <!-- PAPÉIS E PERMISSÕES -->
+  <section>
+    <h2 id="papeis">👥 Papéis e Permissões</h2>
+    <p>O Keen Training tem três papéis específicos. O acesso de cada um é controlado automaticamente.</p>
+
+    <div class="role-card">
+      <div class="role-header">
+        <div class="role-icon">🛡️</div>
+        <div class="role-title">
+          <h3>Super Admin</h3>
+          <p>Acesso total a todas as unidades, cursos e relatórios</p>
+        </div>
+      </div>
+      <div>
+        <span class="badge badge-blue">Gerenciar Unidades</span>
+        <span class="badge badge-blue">Gerenciar Cursos</span>
+        <span class="badge badge-blue">Criar Avaliações</span>
+        <span class="badge badge-blue">Ver Todos os Relatórios</span>
+        <span class="badge badge-blue">Emitir Certificados</span>
+        <span class="badge badge-blue">Configurar Restrições</span>
+      </div>
+    </div>
+
+    <div class="role-card">
+      <div class="role-header">
+        <div class="role-icon">🏪</div>
+        <div class="role-title">
+          <h3>Gerente de Unidade</h3>
+          <p>Acesso apenas à sua unidade — cadastra colaboradores e atribui treinamentos</p>
+        </div>
+      </div>
+      <div>
+        <span class="badge badge-green">Adicionar Colaboradores (sua unidade)</span>
+        <span class="badge badge-green">Atribuir Treinamentos (sua unidade)</span>
+        <span class="badge badge-green">Ver Progresso (sua unidade)</span>
+        <span class="badge badge-gray">Não vê outras unidades</span>
+        <span class="badge badge-gray">Não cria cursos</span>
+      </div>
+    </div>
+
+    <div class="role-card">
+      <div class="role-header">
+        <div class="role-icon">👤</div>
+        <div class="role-title">
+          <h3>Colaborador</h3>
+          <p>Acessa apenas seus próprios treinamentos pelo portal</p>
+        </div>
+      </div>
+      <div>
+        <span class="badge badge-purple">Ver cursos atribuídos</span>
+        <span class="badge badge-purple">Assistir módulos</span>
+        <span class="badge badge-purple">Fazer avaliações</span>
+        <span class="badge badge-purple">Ver certificados próprios</span>
+        <span class="badge badge-gray">Não acessa o painel WordPress</span>
+      </div>
+    </div>
+
+    <h3>Tabela de Permissões</h3>
+    <table class="access-table">
+      <thead>
+        <tr>
+          <th>Ação</th>
+          <th>Super Admin</th>
+          <th>Gerente de Unidade</th>
+          <th>Colaborador</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Criar/editar unidades</td><td class="yes">✔ Sim</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>Adicionar colaboradores</td><td class="yes">✔ Todas</td><td class="part">⬤ Só sua unidade</td><td class="no">✗</td></tr>
+        <tr><td>Criar cursos e módulos</td><td class="yes">✔ Sim</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>Criar avaliações</td><td class="yes">✔ Sim</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>Restringir cursos por unidade/cargo</td><td class="yes">✔ Sim</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>Atribuir treinamentos</td><td class="yes">✔ Todas</td><td class="part">⬤ Só sua unidade</td><td class="no">✗</td></tr>
+        <tr><td>Ver progresso</td><td class="yes">✔ Todos</td><td class="part">⬤ Só sua unidade</td><td class="no">✗</td></tr>
+        <tr><td>Exportar CSV</td><td class="yes">✔ Sim</td><td class="part">⬤ Só sua unidade</td><td class="no">✗</td></tr>
+        <tr><td>Ver certificados</td><td class="yes">✔ Todos</td><td class="part">⬤ Só sua unidade</td><td class="part">⬤ Só os próprios</td></tr>
+        <tr><td>Acessar portal de treinamentos</td><td class="no">✗ (acessa o painel admin)</td><td class="no">✗ (acessa o painel admin)</td><td class="yes">✔ Sim</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <!-- JORNADA: SUPER ADMIN -->
+  <section>
+    <h2 id="jornada-admin">🛡️ Jornada do Super Admin</h2>
+    <p>O Super Admin é quem configura a plataforma, cria os conteúdos e tem visão global de toda a rede.</p>
+
+    <h3>Configuração inicial (uma única vez)</h3>
+    <div class="journey">
+      <ol class="step-list">
+        <li>
+          <div class="step-content">
+            <strong>Criar as Unidades</strong>
+            <p>Keen Training → Unidades → + Adicionar Unidade. Preencha nome, endereço e selecione o gerente responsável.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Adicionar Gerentes</strong>
+            <p>Na tela de Unidades, selecione um usuário WordPress existente como Gerente. Ele receberá automaticamente o papel "Gerente de Unidade".</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Criar Cursos</strong>
+            <p>Keen Training → Cursos → + Novo Curso. Defina título, descrição e nota mínima de aprovação.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Adicionar Módulos ao Curso</strong>
+            <p>Dentro do curso, na seção "Módulos", clique em "+ Adicionar Módulo". Cole o link do YouTube, Google Drive, Vimeo ou PDF. O tipo de embed é detectado automaticamente.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Criar Avaliações (opcional)</strong>
+            <p>Keen Training → Avaliações → + Nova Avaliação. Vincule a um módulo e adicione perguntas de múltipla escolha ou V/F. O colaborador precisará passar na avaliação para marcar o módulo como concluído.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Definir Restrições de Acesso (opcional)</strong>
+            <p>Na tela de edição do curso, na seção "Restrição de Acesso", marque as unidades e/ou cargos que podem fazer este curso. Se deixar tudo em branco, o curso fica disponível para todos.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <h3>Uso diário</h3>
+    <div class="journey">
+      <ul>
+        <li><strong>Atribuir novo treinamento:</strong> Keen Training → Matrículas → Selecionar curso e unidade/colaboradores → Definir prazo → Atribuir</li>
+        <li><strong>Acompanhar progresso geral:</strong> Keen Training → Progresso → Filtrar por unidade ou curso</li>
+        <li><strong>Exportar relatório:</strong> Na tela de Progresso, botão "⬇ Exportar CSV" (abre no Excel)</li>
+        <li><strong>Ver certificados emitidos:</strong> Keen Training → Certificados</li>
+      </ul>
+    </div>
+
+    <div class="screen-shot">Keen Training → Dashboard — mostra cards com total de unidades, colaboradores e cursos + atalhos rápidos</div>
+    <div class="screen-shot">Keen Training → Progresso → filtre por unidade e curso para ver quem está atrasado (linha vermelha)</div>
+  </section>
+
+  <!-- JORNADA: GERENTE -->
+  <section>
+    <h2 id="jornada-gerente">🏪 Jornada do Gerente de Unidade</h2>
+    <p>O Gerente acessa o painel WordPress mas vê <strong>apenas os dados da sua unidade</strong>. Ele não cria cursos — apenas gerencia sua equipe e atribui os treinamentos disponíveis.</p>
+
+    <div class="warning">O Gerente só consegue matricular colaboradores em cursos que não estejam restritos a outras unidades. Se o curso estiver restrito e a unidade dele não estiver na lista, ele não conseguirá atribuir.</div>
+
+    <h3>Fluxo típico do gerente</h3>
+    <div class="journey green">
+      <ol class="step-list green">
+        <li>
+          <div class="step-content">
+            <strong>Fazer login no WordPress</strong>
+            <p>O gerente acessa o painel normalmente. No menu lateral, verá "Keen Training".</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Adicionar novo colaborador</strong>
+            <p>Keen Training → Colaboradores → + Adicionar Colaborador. Pode criar novo usuário ou vincular um existente. A unidade já vem preenchida com a unidade do gerente.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Atribuir treinamento à equipe</strong>
+            <p>Keen Training → Matrículas → Selecionar curso → Escolher "Toda a unidade" → Definir prazo → Atribuir. Todos os colaboradores da unidade serão matriculados de uma vez.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Acompanhar progresso</strong>
+            <p>Keen Training → Progresso. O filtro de unidade já vem pré-selecionado com a unidade do gerente. Ele vê quem concluiu, quem está em andamento e quem está atrasado.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Verificar certificados da equipe</strong>
+            <p>Keen Training → Certificados. Lista todos os certificados emitidos para colaboradores da unidade.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="tip">O Gerente não vê o menu "Cursos" e "Avaliações" — esses são controlados pelo Super Admin para manter a padronização dos treinamentos na rede.</div>
+  </section>
+
+  <!-- JORNADA: COLABORADOR -->
+  <section>
+    <h2 id="jornada-colaborador">👤 Jornada do Colaborador</h2>
+    <p>O colaborador <strong>não acessa o painel do WordPress</strong>. Ele usa uma página normal do site com o shortcode <code>[kt_portal]</code>. A experiência é simples e intuitiva.</p>
+
+    <h3>Como o colaborador acessa o portal</h3>
+    <div class="journey purple">
+      <ol class="step-list purple">
+        <li>
+          <div class="step-content">
+            <strong>Fazer login no WordPress</strong>
+            <p>O colaborador acessa a página de login do WordPress (<code>seusite.com.br/wp-login.php</code>) com usuário e senha fornecidos pelo gerente. Dica: coloque o link de login na página de intranet ou envie por e-mail.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Acessar o Portal de Treinamentos</strong>
+            <p>Após login, o colaborador acessa a página onde está o shortcode <code>[kt_portal]</code> (ex: <code>seusite.com.br/treinamentos</code>). Ele vê todos os cursos atribuídos a ele com status e progresso.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Iniciar um curso</strong>
+            <p>Clica em "▶ Iniciar Treinamento" no card do curso. Vê a lista de módulos ordenados com barra de progresso geral.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Completar um módulo</strong>
+            <p>O vídeo/conteúdo externo é exibido inline (YouTube, Drive, etc.). Após assistir, clica em "✔ Marcar como Concluído". Se o módulo tiver avaliação, precisa passar primeiro.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Fazer a avaliação (se houver)</strong>
+            <p>Clica em "📝 Fazer Avaliação". Responde as perguntas de múltipla escolha ou V/F. Ao submeter, recebe o resultado na hora (aprovado/reprovado, nota obtida). Se reprovado, pode tentar novamente dentro do limite de tentativas.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Concluir o curso e receber o certificado</strong>
+            <p>Ao marcar todos os módulos como concluídos, o curso é finalizado automaticamente. Um banner de parabéns é exibido e o certificado fica disponível para impressão/download (PDF via impressão do navegador).</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="screen-shot">Portal → Dashboard — cards com cada curso, barra de progresso, prazo e botão de ação</div>
+    <div class="screen-shot">Portal → Curso → Lista de módulos com embed do conteúdo + botão de avaliação + "Marcar como Concluído"</div>
+    <div class="screen-shot">Portal → Avaliação → Perguntas numeradas com alternativas → resultado imediato após envio</div>
+  </section>
+
+  <hr>
+
+  <!-- RESTRIÇÃO DE CONTEÚDO -->
+  <section>
+    <h2 id="restricao">🔒 Restrição de Conteúdo por Unidade / Cargo</h2>
+    <p>O Super Admin pode definir quais unidades e/ou cargos têm acesso a cada curso.</p>
+
+    <h3>Como configurar</h3>
+    <ol>
+      <li>Acesse <strong>Keen Training → Cursos</strong></li>
+      <li>Clique em "Editar / Módulos" no curso desejado</li>
+      <li>Na seção <strong>"🔒 Restrição de Acesso"</strong>, marque as unidades e/ou cargos permitidos</li>
+      <li>Salve o curso</li>
+    </ol>
+
+    <h3>Como funciona</h3>
+    <ul>
+      <li><strong>Sem restrição (padrão):</strong> O curso aparece para todos e qualquer colaborador pode ser matriculado</li>
+      <li><strong>Com restrição por unidade:</strong> Apenas colaboradores das unidades selecionadas podem ser matriculados. Se o gerente tentar matricular alguém de outra unidade, a matrícula é silenciosamente ignorada</li>
+      <li><strong>Com restrição por cargo:</strong> Apenas colaboradores com aquele papel (ex: Gerente) podem ser matriculados</li>
+      <li><strong>Combinação:</strong> Unidade E cargo — o colaborador precisa estar em uma das unidades E ter um dos cargos selecionados</li>
+    </ul>
+
+    <div class="tip">Na lista de cursos, a coluna "Restrição de Acesso" mostra um resumo de quem pode acessar cada curso.</div>
+    <div class="tip">Na tela de Matrículas, ao selecionar um curso restrito, o nome da restrição aparece entre colchetes para lembrar o gerente.</div>
+  </section>
+
+  <!-- AVALIAÇÕES -->
+  <section>
+    <h2 id="avaliacoes">📝 Avaliações</h2>
+
+    <h3>Tipos de pergunta disponíveis</h3>
+    <ul>
+      <li><strong>Múltipla Escolha:</strong> O colaborador escolhe uma alternativa correta entre várias</li>
+      <li><strong>Verdadeiro / Falso:</strong> Duas alternativas — Verdadeiro e Falso</li>
+    </ul>
+
+    <h3>Configurações por avaliação</h3>
+    <table class="access-table">
+      <thead>
+        <tr><th>Configuração</th><th>O que faz</th><th>Padrão</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Nota Mínima (%)</td><td>Percentual de acertos para ser aprovado</td><td>70%</td></tr>
+        <tr><td>Máximo de Tentativas</td><td>Quantas vezes o colaborador pode tentar. Após esgotar, o gerente precisa remover a matrícula e rematricular</td><td>3</td></tr>
+        <tr><td>Vincular a Módulo</td><td>Se vinculada, a avaliação bloqueia o botão "Marcar como Concluído" até o colaborador passar</td><td>Opcional</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warning">Se um colaborador esgotar as tentativas sem passar, ele precisará ser rematriculado pelo gerente para tentar novamente.</div>
+  </section>
+
+  <!-- CERTIFICADOS -->
+  <section>
+    <h2 id="certificados">🏆 Certificados</h2>
+    <p>Certificados são gerados automaticamente quando o colaborador conclui todos os módulos de um curso.</p>
+
+    <h3>Funcionalidades</h3>
+    <ul>
+      <li>Cada certificado tem um <strong>ID único</strong> que pode ser verificado</li>
+      <li>O colaborador acessa o certificado pelo portal e pode <strong>imprimir ou salvar como PDF</strong> pelo navegador (Ctrl+P)</li>
+      <li>O Super Admin e o Gerente podem visualizar e imprimir todos os certificados da sua unidade em <strong>Keen Training → Certificados</strong></li>
+      <li>O certificado contém: nome do colaborador, nome do curso, data de conclusão e ID de verificação</li>
+    </ul>
+  </section>
+
+  <!-- RELATÓRIOS -->
+  <section>
+    <h2 id="relatorios">📊 Relatórios e Progresso</h2>
+
+    <h3>Painel de Progresso</h3>
+    <p>Acesse <strong>Keen Training → Progresso</strong>. Filtre por unidade, por curso, ou por ambos.</p>
+    <ul>
+      <li>Cards de resumo: total de matrículas, concluídas, pendentes e atrasadas</li>
+      <li>Tabela com status de cada colaborador</li>
+      <li>Barra de progresso visual (% de módulos concluídos)</li>
+      <li>Linhas em vermelho claro = prazo vencido</li>
+    </ul>
+
+    <h3>Exportar para Excel (CSV)</h3>
+    <ol>
+      <li>Acesse Keen Training → Progresso</li>
+      <li>Aplique os filtros desejados</li>
+      <li>Clique em "⬇ Exportar CSV"</li>
+      <li>O arquivo baixado pode ser aberto diretamente no Excel (está codificado em UTF-8 com BOM para exibir corretamente acentuação em PT-BR)</li>
+    </ol>
+
+    <div class="tip">O separador do CSV é ponto-e-vírgula (;), que é o padrão do Excel em PT-BR.</div>
+  </section>
+
+  <!-- FAQ -->
+  <section>
+    <h2 id="duvidas">❓ Perguntas Frequentes</h2>
+
+    <h3>O colaborador não vê seus treinamentos no portal</h3>
+    <p>Verifique se: (1) o colaborador está cadastrado em "Colaboradores" com uma unidade vinculada; (2) há uma matrícula ativa para ele (Keen Training → Matrículas); (3) o curso não tem restrição de unidade que exclua a unidade dele.</p>
+
+    <h3>Um gerente não aparece na lista ao criar a unidade</h3>
+    <p>Qualquer usuário WordPress pode ser selecionado como gerente. Se não aparecer, verifique se o usuário está ativo no WordPress.</p>
+
+    <h3>O vídeo do YouTube não aparece no módulo</h3>
+    <p>Verifique se o link está no formato correto: <code>https://www.youtube.com/watch?v=CODIGO</code> ou <code>https://youtu.be/CODIGO</code>. Alguns vídeos têm incorporação desativada pelo canal — nesse caso, o colaborador verá um botão para abrir o link diretamente.</p>
+
+    <h3>Como reiniciar as tentativas de avaliação de um colaborador?</h3>
+    <p>Acesse Keen Training → Matrículas, remova a matrícula do colaborador naquele curso, e rematricule. As tentativas anteriores ficam no histórico mas novas tentativas ficam disponíveis.</p>
+
+    <h3>Como mudar a nota mínima de aprovação já existente?</h3>
+    <p>Acesse Keen Training → Cursos → edite o curso → altere o campo "Nota Mínima para Aprovação". A mudança vale para novas tentativas. Tentativas anteriores não são afetadas.</p>
+
+    <h3>O portal aparece em branco para o colaborador</h3>
+    <p>Confirme que: (1) o colaborador está logado no WordPress; (2) o shortcode <code>[kt_portal]</code> está na página corretamente; (3) o colaborador tem o papel "Colaborador" ou está cadastrado em "Colaboradores".</p>
+  </section>
+
+  <!-- GLOSSÁRIO -->
+  <section>
+    <h2 id="glossario">📖 Glossário</h2>
+    <table class="access-table">
+      <thead><tr><th>Termo</th><th>Definição</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Unidade</strong></td><td>Uma loja ou filial da rede. Cada unidade tem um gerente e uma lista de colaboradores.</td></tr>
+        <tr><td><strong>Colaborador</strong></td><td>Um funcionário da loja cadastrado no Keen Training para receber treinamentos.</td></tr>
+        <tr><td><strong>Curso</strong></td><td>Um programa de treinamento composto por um ou mais módulos.</td></tr>
+        <tr><td><strong>Módulo</strong></td><td>Uma etapa do curso. Contém um link de conteúdo (vídeo, PDF, etc.) e opcionalmente uma avaliação.</td></tr>
+        <tr><td><strong>Avaliação</strong></td><td>Um questionário vinculado a um módulo. O colaborador precisa passar para marcar o módulo como concluído.</td></tr>
+        <tr><td><strong>Matrícula</strong></td><td>A atribuição de um curso a um colaborador, com prazo e status de progresso.</td></tr>
+        <tr><td><strong>Restrição de Acesso</strong></td><td>Configuração que limita quais unidades e/ou cargos podem ser matriculados em um curso.</td></tr>
+        <tr><td><strong>Certificado</strong></td><td>Documento gerado automaticamente ao concluir todos os módulos de um curso.</td></tr>
+        <tr><td><strong>Shortcode</strong></td><td>Código <code>[kt_portal]</code> que exibe o portal de treinamentos em uma página WordPress.</td></tr>
+        <tr><td><strong>Super Admin</strong></td><td>Papel com acesso total — cria cursos, unidades, avaliações e vê todos os relatórios.</td></tr>
+        <tr><td><strong>Gerente de Unidade</strong></td><td>Papel com acesso restrito à sua unidade — adiciona colaboradores e atribui treinamentos.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

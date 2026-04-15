@@ -1,0 +1,209 @@
+/* ============================================================
+   Keen Training — Estilos do Painel Administrativo
+   ============================================================ */
+
+.kt-wrap { max-width: 1200px; }
+.kt-wrap .required { color: #d63638; }
+
+/* --- Cards --- */
+.kt-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 24px 28px;
+	margin-bottom: 24px;
+}
+.kt-card h2, .kt-card h3 { margin-top: 0; }
+
+/* --- Cards de estatísticas --- */
+.kt-stats-grid { display: flex; gap: 20px; margin: 20px 0 28px; flex-wrap: wrap; }
+.kt-stat-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	padding: 24px 28px;
+	text-align: center;
+	min-width: 150px;
+	flex: 1;
+	box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+.kt-stat-icon  { font-size: 2.2em; color: #2271b1; display: block; margin-bottom: 8px; }
+.kt-stat-value { font-size: 2.4em; font-weight: 700; color: #1d2327; line-height: 1; }
+.kt-stat-label { color: #646970; margin-top: 6px; font-size: .9em; }
+
+/* --- Wizard de boas-vindas --- */
+.kt-wizard-banner {
+	background: linear-gradient(135deg, #f0f6fc 0%, #e8f4ff 100%);
+	border: 1px solid #b6d4fe;
+	border-radius: 12px;
+	padding: 28px;
+	margin-bottom: 28px;
+}
+.kt-wizard-inner h2 { margin-top: 0; color: #0a3069; }
+.kt-steps {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 12px;
+	margin: 20px 0;
+}
+.kt-step {
+	background: #fff;
+	border: 1px solid #dae6f5;
+	border-radius: 10px;
+	padding: 16px;
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+}
+.kt-step-num {
+	background: #2271b1;
+	color: #fff;
+	font-weight: 700;
+	border-radius: 50%;
+	width: 28px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	font-size: .9em;
+}
+.kt-step-arrow { display: none; }
+
+/* --- Ações rápidas --- */
+.kt-quick-links { margin: 24px 0; }
+.kt-quick-links h2 { margin-bottom: 12px; }
+.kt-quick-links .button { margin-right: 8px; margin-bottom: 8px; }
+
+/* --- Barra de filtros --- */
+.kt-filter-bar {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin: 16px 0;
+	flex-wrap: wrap;
+}
+.kt-filter-bar label { font-weight: 600; }
+.kt-filter-bar select { margin-left: 6px; }
+
+/* --- Seção de rótulo --- */
+.kt-section-label { margin: 20px 0 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+.kt-section-label strong { font-size: 1em; }
+
+/* --- Restrições de acesso --- */
+.kt-restriction-section {
+	background: #fafafa;
+	border: 1px dashed #dcdcde;
+	border-radius: 8px;
+	padding: 20px;
+	margin: 20px 0;
+}
+.kt-restriction-section h3 { margin-top: 0; font-size: 1em; }
+.kt-restriction-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+.kt-checkbox-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.kt-checkbox-option { display: flex; align-items: center; gap: 8px; font-size: .95em; cursor: pointer; }
+.kt-checkbox-option input { margin: 0; }
+.kt-restriction-status {
+	background: #e7f3ff;
+	border: 1px solid #b6d4fe;
+	border-radius: 6px;
+	padding: 8px 14px;
+	font-size: .9em;
+	margin-top: 12px;
+}
+
+/* --- Status badges --- */
+.kt-status, .kt-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 20px;
+	font-size: .8em;
+	font-weight: 600;
+}
+.kt-status-nao_iniciado       { background: #f0f0f0; color: #555; }
+.kt-status-em_andamento        { background: #fff3cd; color: #856404; }
+.kt-status-concluido           { background: #d1e7dd; color: #0a3622; }
+.kt-badge-overdue, .kt-status-overdue { background: #f8d7da; color: #842029; }
+.kt-badge-youtube   { background: #fee2e2; color: #b91c1c; }
+.kt-badge-vimeo     { background: #dbeafe; color: #1d4ed8; }
+.kt-badge-google_drive { background: #dcfce7; color: #15803d; }
+.kt-badge-pdf       { background: #fef9c3; color: #854d0e; }
+.kt-badge-success   { background: #d1e7dd; color: #0a3622; }
+.kt-badge-info      { background: #cfe2ff; color: #084298; }
+
+/* --- Barra de progresso --- */
+.kt-progress-bar {
+	background: #e9ecef;
+	border-radius: 10px;
+	height: 10px;
+	overflow: hidden;
+	display: inline-block;
+	width: 120px;
+	vertical-align: middle;
+}
+.kt-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #2271b1, #00a0d2);
+	border-radius: 10px;
+	transition: width .4s ease;
+}
+.kt-progress-label { margin-left: 8px; font-size: .85em; color: #555; }
+
+/* --- Resumo do progresso --- */
+.kt-progress-summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.kt-summary-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 14px 20px;
+	text-align: center;
+	min-width: 100px;
+	flex: 1;
+}
+.kt-summary-card span { display: block; font-size: 2em; font-weight: 700; }
+.kt-summary-total span  { color: #2271b1; }
+.kt-summary-done span   { color: #0a3622; }
+.kt-summary-pending span{ color: #856404; }
+.kt-summary-late span   { color: #842029; }
+
+/* Linha atrasada */
+tr.kt-overdue { background-color: #fff5f5 !important; }
+
+/* Botão de excluir */
+.kt-delete-link { color: #b32d2e !important; text-decoration: none; }
+.kt-delete-link:hover { color: #8a1b1c !important; text-decoration: underline; }
+
+/* Formulário inline dentro de tabela */
+.kt-inline-form { background: #f8f9fa; padding: 20px; border-top: 1px solid #dcdcde; }
+.kt-inline-form form p { margin: 8px 0; }
+
+/* Editor de perguntas */
+.kt-question-block {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 20px;
+	margin-bottom: 16px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.kt-question-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 14px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #f0f0f0;
+}
+.kt-answers { margin-top: 12px; }
+.kt-answers > p { font-weight: 600; margin-bottom: 8px; }
+.kt-answer-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.kt-answer-row input[type="text"] { flex: 1; }
+.kt-add-answer { margin-top: 8px; }
+
+/* Grid de restrições responsivo */
+@media (max-width: 782px) {
+	.kt-restriction-grid { grid-template-columns: 1fr; }
+	.kt-steps { flex-direction: column; }
+	.kt-step-arrow { display: none; }
+	.kt-stats-grid { flex-direction: column; }
+}

@@ -1,0 +1,6 @@
+PERGUNTA;TIPO;ALTERNATIVA_A;ALTERNATIVA_B;ALTERNATIVA_C;ALTERNATIVA_D;CORRETA
+Qual é o prazo máximo para troca de produtos sem defeito?;MC;7 dias corridos;30 dias corridos;15 dias corridos;Sem prazo definido;A
+O atendimento ao cliente deve ser sempre a prioridade da equipe?;VF;Verdadeiro;Falso;;;A
+Qual documento é obrigatório para realizar uma troca?;MC;Nota fiscal;RG do cliente;Cartão fidelidade;Não é necessário documento;A
+Em caso de produto com defeito, o prazo de troca é de quantos dias?;MC;90 dias;30 dias;7 dias;60 dias;C
+O colaborador pode recusar uma troca dentro do prazo legal?;VF;Verdadeiro;Falso;;;B
