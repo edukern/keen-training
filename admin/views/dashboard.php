@@ -104,26 +104,64 @@
 	</div>
 
 	<?php if ( KT_Roles::is_super_admin() ): ?>
-	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:480px">
-		<h2 style="margin-top:0">Aparência</h2>
+	<?php
+	$fonts_disponiveis = [
+		''               => '— Herdar do tema —',
+		'Inter'          => 'Inter',
+		'Roboto'         => 'Roboto',
+		'Open Sans'      => 'Open Sans',
+		'Lato'           => 'Lato',
+		'Montserrat'     => 'Montserrat',
+		'Poppins'        => 'Poppins',
+		'Raleway'        => 'Raleway',
+		'Nunito'         => 'Nunito',
+		'Playfair Display' => 'Playfair Display',
+		'Merriweather'   => 'Merriweather',
+	];
+	$saved_font_heading = get_option( 'kt_font_heading', '' );
+	$saved_font_body    = get_option( 'kt_font_body',    '' );
+	?>
+	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:560px">
+		<h2 style="margin-top:0">Aparência do Portal</h2>
 		<?php if ( isset( $_GET['color_saved'] ) ): ?>
-			<div class="notice notice-success inline" style="margin-bottom:16px"><p>Cor salva com sucesso.</p></div>
+			<div class="notice notice-success inline" style="margin-bottom:16px"><p>Configurações salvas.</p></div>
 		<?php endif; ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'kt_save_color' ); ?>
 			<input type="hidden" name="action" value="kt_save_color">
 			<table class="form-table" style="margin:0">
 				<tr>
-					<th style="padding:8px 0;width:160px"><label for="kt_primary_color">Cor primária dos botões</label></th>
-					<td style="padding:8px 0">
+					<th style="padding:10px 0;width:180px"><label for="kt_primary_color">Cor primária</label></th>
+					<td style="padding:10px 0;display:flex;align-items:center;gap:12px">
 						<input type="color" id="kt_primary_color" name="kt_primary_color"
 							value="<?php echo esc_attr( get_option( 'kt_primary_color', '#3b82f6' ) ); ?>"
 							style="width:60px;height:36px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
-						<p class="description" style="margin-top:6px">Cor usada nos botões do portal do colaborador.</p>
+						<span class="description">Botões, links, barra de progresso e destaques.</span>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:10px 0"><label for="kt_font_heading">Fonte dos títulos</label></th>
+					<td style="padding:10px 0">
+						<select id="kt_font_heading" name="kt_font_heading" style="min-width:220px">
+							<?php foreach ( $fonts_disponiveis as $val => $label ): ?>
+								<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $saved_font_heading, $val ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:10px 0"><label for="kt_font_body">Fonte do texto</label></th>
+					<td style="padding:10px 0">
+						<select id="kt_font_body" name="kt_font_body" style="min-width:220px">
+							<?php foreach ( $fonts_disponiveis as $val => $label ): ?>
+								<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $saved_font_body, $val ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description" style="margin-top:4px">Fontes carregadas do Google Fonts automaticamente.</p>
 					</td>
 				</tr>
 			</table>
-			<button type="submit" class="button button-primary" style="margin-top:12px">Salvar Cor</button>
+			<button type="submit" class="button button-primary" style="margin-top:16px">Salvar Aparência</button>
 		</form>
 	</div>
 	<?php endif; ?>

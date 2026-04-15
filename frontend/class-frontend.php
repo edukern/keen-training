@@ -8,6 +8,7 @@ class KT_Frontend {
 		add_shortcode( 'kt_modulo',  [ $this, 'shortcode_module_actions' ] );
 		add_shortcode( 'kt_quiz',    [ $this, 'shortcode_quiz_embed' ] );
 		add_action( 'wp_enqueue_scripts',         [ $this, 'enqueue_assets' ] );
+		add_action( 'wp_head',                    [ $this, 'inject_appearance_vars' ] );
 		add_action( 'wp_ajax_kt_complete_module', [ $this, 'ajax_complete_module' ] );
 		add_action( 'wp_ajax_kt_submit_quiz',     [ $this, 'ajax_submit_quiz' ] );
 		add_action( 'template_redirect',          [ $this, 'maybe_render_certificate' ] );
@@ -37,6 +38,44 @@ class KT_Frontend {
 		}
 
 		return $redirect_to;
+	}
+
+	public function inject_appearance_vars() {
+		$primary = sanitize_hex_color( get_option( 'kt_primary_color', '#3b82f6' ) ) ?: '#3b82f6';
+		list( $r, $g, $b ) = sscanf( $primary, '#%02x%02x%02x' );
+		$dark  = sprintf( '#%02x%02x%02x', max( 0, $r - 38 ), max( 0, $g - 38 ), max( 0, $b - 38 ) );
+		$light = sprintf( '#%02x%02x%02x',
+			min( 255, $r + round( ( 255 - $r ) * 0.85 ) ),
+			min( 255, $g + round( ( 255 - $g ) * 0.85 ) ),
+			min( 255, $b + round( ( 255 - $b ) * 0.85 ) )
+		);
+
+		$font_heading = sanitize_text_field( get_option( 'kt_font_heading', '' ) );
+		$font_body    = sanitize_text_field( get_option( 'kt_font_body',    '' ) );
+
+		// Carrega Google Fonts se necessário
+		$fonts_to_load = array_filter( array_unique( [ $font_heading, $font_body ] ) );
+		if ( $fonts_to_load ) {
+			$family = implode( '&family=', array_map( function( $f ) {
+				return urlencode( $f ) . ':wght@400;600;700';
+			}, $fonts_to_load ) );
+			echo '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=' . $family . '&display=swap">' . "\n";
+		}
+
+		$css = ':root{'
+			. '--kt-color-primary:'      . esc_attr( $primary ) . ';'
+			. '--kt-color-primary-dark:' . esc_attr( $dark )    . ';'
+			. '--kt-color-primary-light:'. esc_attr( $light )   . ';'
+		. '}';
+
+		if ( $font_heading ) {
+			$css .= '.kt-portal h1,.kt-portal h2,.kt-portal h3,.kt-course-title,.kt-module-title{font-family:"' . esc_attr( $font_heading ) . '",sans-serif}';
+		}
+		if ( $font_body ) {
+			$css .= '.kt-portal{font-family:"' . esc_attr( $font_body ) . '",sans-serif}';
+		}
+
+		echo '<style>' . $css . '</style>' . "\n";
 	}
 
 	public function enqueue_assets() {
