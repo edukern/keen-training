@@ -245,8 +245,38 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
+		// Migrações introduzidas na v2.0.0
+		// -----------------------------------------------------------------
+		if ( version_compare( $installed, '2.0.0', '<' ) ) {
+
+			// Novos campos na tabela de quizzes
+			$quiz_cols = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}kt_quizzes" );
+			if ( ! in_array( 'pass_message', $quiz_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$wpdb->prefix}kt_quizzes ADD COLUMN pass_message TEXT NOT NULL DEFAULT ''" );
+			}
+			if ( ! in_array( 'fail_message', $quiz_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$wpdb->prefix}kt_quizzes ADD COLUMN fail_message TEXT NOT NULL DEFAULT ''" );
+			}
+			if ( ! in_array( 'question_pool_size', $quiz_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$wpdb->prefix}kt_quizzes ADD COLUMN question_pool_size INT NOT NULL DEFAULT 0" );
+			}
+
+			// Explicação por pergunta
+			$q_cols = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}kt_quiz_questions" );
+			if ( ! in_array( 'explanation', $q_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$wpdb->prefix}kt_quiz_questions ADD COLUMN explanation TEXT NOT NULL DEFAULT ''" );
+			}
+
+			// Snapshot de respostas nos resultados
+			$r_cols = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}kt_quiz_results" );
+			if ( ! in_array( 'answers_snapshot', $r_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$wpdb->prefix}kt_quiz_results ADD COLUMN answers_snapshot LONGTEXT DEFAULT NULL" );
+			}
+		}
+
+		// -----------------------------------------------------------------
 		// Adicione blocos futuros aqui, ex:
-		// if ( version_compare( $installed, '1.1.0', '<' ) ) { ... }
+		// if ( version_compare( $installed, '2.1.0', '<' ) ) { ... }
 		// -----------------------------------------------------------------
 
 		update_option( 'kt_db_version', KT_VERSION );

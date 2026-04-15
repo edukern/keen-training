@@ -11,27 +11,36 @@
 			: ( $attempt_count . ' de ' . $quiz->max_attempts );
 		$exhausted    = ! $unlimited && $attempt_count >= (int) $quiz->max_attempts;
 		$course_url   = esc_url( add_query_arg( [ 'kt_view' => 'course', 'course_id' => absint( $_GET['course_id'] ?? 0 ) ] ) );
+		$pool_size    = (int) ( $quiz->question_pool_size ?? 0 );
 	?>
 	<div class="kt-portal-header">
-		<h2>📝 <?php echo esc_html( $quiz->title ); ?></h2>
+		<h2><?php echo esc_html( $quiz->title ); ?></h2>
 		<p class="kt-quiz-meta">
 			Mínimo para aprovação: <strong><?php echo $quiz->pass_threshold; ?>%</strong>
 			&nbsp;·&nbsp;
 			Tentativas: <strong><?php echo $attempts_str; ?></strong>
+			<?php if ( $pool_size > 0 ): ?>
+			&nbsp;·&nbsp;
+			<strong><?php echo $pool_size; ?></strong> perguntas por tentativa
+			<?php endif; ?>
 		</p>
 	</div>
 
 	<?php if ( $best ): ?>
 	<!-- Já aprovado -->
 	<div class="kt-quiz-result kt-result-pass">
-		<p>✅ Você foi aprovado(a) nesta avaliação com <strong><?php echo $best->score; ?>%</strong>! O módulo foi concluído.</p>
+		<div class="kt-score-display"><?php echo $best->score; ?>%</div>
+		<p><?php
+			$pass_msg = ! empty( $quiz->pass_message ) ? $quiz->pass_message : '';
+			echo $pass_msg ? esc_html( $pass_msg ) : sprintf( 'Parabéns! Você foi aprovado(a) nesta avaliação. O módulo foi concluído.' );
+		?></p>
 		<a href="<?php echo $course_url; ?>" class="kt-btn">← Voltar ao Curso</a>
 	</div>
 
 	<?php elseif ( $exhausted ): ?>
 	<!-- Tentativas esgotadas -->
 	<div class="kt-quiz-result kt-result-fail">
-		<p>⚠ Você usou todas as <?php echo $quiz->max_attempts; ?> tentativas disponíveis. Entre em contato com seu gerente para liberar novas tentativas.</p>
+		<p>Você usou todas as <?php echo $quiz->max_attempts; ?> tentativas disponíveis. Entre em contato com seu gerente para liberar novas tentativas.</p>
 		<a href="<?php echo $course_url; ?>" class="kt-btn">← Voltar ao Curso</a>
 	</div>
 
@@ -47,25 +56,41 @@
 		<input type="hidden" id="kt-quiz-id"   value="<?php echo absint( $quiz->id ); ?>">
 		<input type="hidden" id="kt-module-id" value="<?php echo absint( $module_id ); ?>">
 
+		<!-- Progress bar -->
+		<div class="kt-quiz-progress">
+			<div class="kt-quiz-progress-info">
+				<span id="kt-progress-label">Pergunta 1 de <?php echo count( $questions ); ?></span>
+			</div>
+			<div class="kt-quiz-progress-bar-wrap">
+				<div class="kt-quiz-progress-fill" id="kt-progress-fill" style="width:<?php echo count($questions) > 0 ? round(1/count($questions)*100) : 100; ?>%"></div>
+			</div>
+		</div>
+
 		<?php foreach ( $questions as $qi => $q ):
 			$answers = KT_Quiz::get_answers( $q->id );
 			if ( $quiz->shuffle_answers ) {
 				shuffle( $answers );
 			}
+			$is_multiple = ( $q->question_type === 'multiple_select' );
+			// Hidden input tracking which questions were served (for pool)
 		?>
-		<div class="kt-question" data-question-id="<?php echo absint( $q->id ); ?>">
+		<input type="hidden" name="question_ids[]" value="<?php echo absint( $q->id ); ?>">
+		<div class="kt-q-card kt-question" data-question-id="<?php echo absint( $q->id ); ?>" data-index="<?php echo $qi; ?>">
 			<p class="kt-question-text">
 				<span class="kt-question-num"><?php echo $qi + 1; ?></span>
 				<?php echo esc_html( $q->question_text ); ?>
 			</p>
+			<?php if ( $is_multiple ): ?>
+			<p class="kt-multiple-note">(Selecione todas as corretas)</p>
+			<?php endif; ?>
 			<div class="kt-answers">
 				<?php foreach ( $answers as $ans ): ?>
 				<label class="kt-answer-option">
-					<input type="radio"
-						name="response_<?php echo absint( $q->id ); ?>"
+					<input type="<?php echo $is_multiple ? 'checkbox' : 'radio'; ?>"
+						name="<?php echo $is_multiple ? 'response_' . absint( $q->id ) . '[]' : 'response_' . absint( $q->id ); ?>"
 						value="<?php echo absint( $ans->id ); ?>"
 						data-question-id="<?php echo absint( $q->id ); ?>"
-						class="kt-response-input">
+						class="kt-response-input <?php echo $is_multiple ? 'kt-response-checkbox' : ''; ?>">
 					<span class="kt-answer-label"><?php echo esc_html( $ans->answer_text ); ?></span>
 				</label>
 				<?php endforeach; ?>

@@ -67,6 +67,27 @@
 						</fieldset>
 					</td>
 				</tr>
+				<tr>
+					<th><label for="question_pool_size">Banco de Perguntas (Pool)</label></th>
+					<td>
+						<input type="number" id="question_pool_size" name="question_pool_size" min="0" max="999" class="small-text" value="<?php echo $quiz ? absint( $quiz->question_pool_size ?? 0 ) : 0; ?>">
+						<p class="description"><strong>0 = exibir todas.</strong> Se definir um número maior que zero, o sistema selecionará aleatoriamente essa quantidade de perguntas do banco para cada tentativa.</p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="pass_message">Mensagem de Aprovação</label></th>
+					<td>
+						<textarea id="pass_message" name="pass_message" class="large-text" rows="2" placeholder="Ex: Parabéns! Você foi aprovado(a) com sucesso."><?php echo $quiz ? esc_textarea( $quiz->pass_message ?? '' ) : ''; ?></textarea>
+						<p class="description">Exibida ao colaborador quando ele atingir a nota mínima. Deixe em branco para usar a mensagem padrão.</p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="fail_message">Mensagem de Reprovação</label></th>
+					<td>
+						<textarea id="fail_message" name="fail_message" class="large-text" rows="2" placeholder="Ex: Não foi desta vez. Revise o conteúdo e tente novamente."><?php echo $quiz ? esc_textarea( $quiz->fail_message ?? '' ) : ''; ?></textarea>
+						<p class="description">Exibida ao colaborador quando ele não atingir a nota mínima. Deixe em branco para usar a mensagem padrão.</p>
+					</td>
+				</tr>
 			</table>
 			<?php submit_button( $quiz ? 'Atualizar e Gerenciar Perguntas →' : 'Criar Avaliação e Adicionar Perguntas →', 'primary', 'submit', false ); ?>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-quizzes' ) ); ?>" class="button" style="margin-left:8px">Cancelar</a>
@@ -77,8 +98,8 @@
 	<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-quizzes&action=edit&id=' . $quiz->id ) ); ?>">← Voltar às configurações</a></p>
 	<div class="kt-card">
 		<h2>Perguntas: <?php echo esc_html( $quiz->title ); ?></h2>
-		<p class="description">Nota mínima: <strong><?php echo $quiz->pass_threshold; ?>%</strong> &nbsp;|&nbsp; Máx. tentativas: <strong><?php echo $quiz->max_attempts; ?></strong></p>
-		<p class="description">Marque o checkbox da alternativa correta de cada pergunta. Para múltipla escolha, pode haver apenas uma alternativa correta.</p>
+		<p class="description">Nota mínima: <strong><?php echo $quiz->pass_threshold; ?>%</strong> &nbsp;|&nbsp; Máx. tentativas: <strong><?php echo $quiz->max_attempts; ?></strong><?php if ( ! empty( $quiz->question_pool_size ) ): ?> &nbsp;|&nbsp; Pool: <strong><?php echo absint( $quiz->question_pool_size ); ?> por tentativa</strong><?php endif; ?></p>
+		<p class="description">Marque o(s) checkbox(es) da(s) alternativa(s) correta(s). Para <strong>Múltipla Seleção</strong>, marque todas as corretas.</p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-quiz-form">
 			<?php wp_nonce_field( 'kt_quiz_questions' ); ?>
@@ -95,6 +116,7 @@
 						<select name="questions[<?php echo $qi; ?>][question_type]" style="margin-right:8px">
 							<option value="multiple_choice" <?php selected( $q->question_type, 'multiple_choice' ); ?>>Múltipla Escolha</option>
 							<option value="true_false" <?php selected( $q->question_type, 'true_false' ); ?>>Verdadeiro / Falso</option>
+							<option value="multiple_select" <?php selected( $q->question_type, 'multiple_select' ); ?>>Múltipla Seleção (checkboxes)</option>
 						</select>
 						<button type="button" class="button-link kt-delete-link kt-remove-question">Remover</button>
 					</div>
@@ -102,8 +124,11 @@
 				<p><label>Texto da Pergunta<br>
 					<textarea name="questions[<?php echo $qi; ?>][question_text]" class="large-text" rows="2" required><?php echo esc_textarea( $q->question_text ); ?></textarea>
 				</label></p>
+				<p><label>Explicação <small style="color:#888">(exibida na revisão após envio)</small><br>
+					<textarea name="questions[<?php echo $qi; ?>][explanation]" class="large-text" rows="2" placeholder="Opcional — explique por que a resposta é correta."><?php echo esc_textarea( $q->explanation ?? '' ); ?></textarea>
+				</label></p>
 				<div class="kt-answers">
-					<p><strong>Alternativas</strong> <small style="color:#888">(marque a correta)</small></p>
+					<p><strong>Alternativas</strong> <small style="color:#888">(marque a(s) correta(s))</small></p>
 					<?php foreach ( $answers as $ai => $ans ): ?>
 					<div class="kt-answer-row">
 						<input type="checkbox" name="questions[<?php echo $qi; ?>][answers][<?php echo $ai; ?>][is_correct]" value="1" <?php checked( $ans->is_correct ); ?> title="Marcar como correta">
@@ -132,17 +157,18 @@
 			</thead>
 			<tbody>
 				<tr><td><strong>PERGUNTA</strong></td><td>Sim</td><td>Texto livre</td><td>Qual é a política de trocas?</td></tr>
-				<tr><td><strong>TIPO</strong></td><td>Não</td><td>MC ou VF</td><td>MC</td></tr>
+				<tr><td><strong>TIPO</strong></td><td>Não</td><td>MC, VF ou MS</td><td>MC</td></tr>
 				<tr><td><strong>ALTERNATIVA_A</strong></td><td>Sim</td><td>Texto</td><td>7 dias corridos</td></tr>
 				<tr><td><strong>ALTERNATIVA_B</strong></td><td>Sim</td><td>Texto</td><td>30 dias</td></tr>
 				<tr><td><strong>ALTERNATIVA_C</strong></td><td>Não</td><td>Texto</td><td>Não tem prazo</td></tr>
 				<tr><td><strong>ALTERNATIVA_D</strong></td><td>Não</td><td>Texto</td><td>Apenas com etiqueta</td></tr>
-				<tr><td><strong>CORRETA</strong></td><td>Sim</td><td>A, B, C ou D</td><td>A</td></tr>
+				<tr><td><strong>CORRETA</strong></td><td>Sim</td><td>A, B, C, D — ou múltiplos com | (ex: A|C)</td><td>A</td></tr>
+				<tr><td><strong>EXPLICACAO</strong></td><td>Não</td><td>Texto livre</td><td>O prazo legal é de 7 dias.</td></tr>
 			</tbody>
 		</table>
 		<p class="description">
-			<strong>TIPO MC</strong> = Múltipla Escolha &nbsp;|&nbsp; <strong>VF</strong> = Verdadeiro/Falso (ALTERNATIVA_A e B preenchidas automaticamente se deixadas em branco).<br>
-			Separador: <strong>ponto-e-vírgula (;)</strong> recomendado para Excel PT-BR.
+			<strong>TIPO MC</strong> = Múltipla Escolha &nbsp;|&nbsp; <strong>VF</strong> = Verdadeiro/Falso &nbsp;|&nbsp; <strong>MS</strong> = Múltipla Seleção (separe corretas com | na coluna CORRETA, ex: A|C).<br>
+			Separador de colunas: <strong>ponto-e-vírgula (;)</strong> recomendado para Excel PT-BR.
 		</p>
 		<p>
 			<a href="<?php echo esc_url( $modelo_csv_url ); ?>" download class="button">⬇ Baixar planilha modelo (.csv)</a>

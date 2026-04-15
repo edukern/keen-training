@@ -347,6 +347,7 @@ class KT_Admin {
 				'question_text' => $q_data['question_text'],
 				'question_type' => $q_data['question_type'] ?? 'multiple_choice',
 				'sort_order'    => (int) $order,
+				'explanation'   => $q_data['explanation'] ?? '',
 			] );
 			$answers = [];
 			foreach ( $q_data['answers'] ?? [] as $a ) {

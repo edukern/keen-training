@@ -420,6 +420,143 @@
 .kt-manager-enroll-title { font-size: .9em; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
 .kt-manager-enroll-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
+/* --- Quiz v2.0 — Progress bar --- */
+.kt-quiz-progress {
+	margin-bottom: 24px;
+}
+.kt-quiz-progress-info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 6px;
+	font-size: .85em;
+	color: #64748b;
+	font-weight: 600;
+}
+.kt-quiz-progress-bar-wrap {
+	height: 6px;
+	background: #e2e8f0;
+	border-radius: 10px;
+	overflow: hidden;
+}
+.kt-quiz-progress-fill {
+	height: 100%;
+	background: var(--kt-color-primary);
+	border-radius: 10px;
+	transition: width .35s ease;
+}
+
+/* --- Quiz v2.0 — Question cards --- */
+.kt-q-card {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 22px 26px;
+	margin-bottom: 18px;
+	box-shadow: 0 1px 4px rgba(0,0,0,.05);
+	transition: border-color .2s, box-shadow .2s;
+}
+.kt-q-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,.08); }
+.kt-q-card.kt-unanswered { border-color: #fca5a5; background: #fff5f5; }
+
+/* --- Quiz v2.0 — Answer options (full-width clickable cards) --- */
+.kt-answer-option {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 13px 18px;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	cursor: pointer;
+	transition: background .15s, border-color .15s;
+	user-select: none;
+	width: 100%;
+	box-sizing: border-box;
+}
+.kt-answer-option:hover { background: var(--kt-color-primary-light); border-color: var(--kt-color-primary); }
+/* CSS :has() support — modern browsers */
+.kt-answer-option:has(input:checked) { background: var(--kt-color-primary-light); border-color: var(--kt-color-primary); font-weight: 600; }
+/* Fallback class for older browsers (set via JS) */
+.kt-answer-option.selected { background: var(--kt-color-primary-light); border-color: var(--kt-color-primary); font-weight: 600; }
+.kt-answer-option input[type="radio"],
+.kt-answer-option input[type="checkbox"] { accent-color: var(--kt-color-primary); flex-shrink: 0; width: 16px; height: 16px; }
+
+/* --- Quiz v2.0 — Multiple select note --- */
+.kt-multiple-note {
+	font-size: .82em;
+	font-style: italic;
+	color: #64748b;
+	margin: -6px 0 10px;
+}
+
+/* --- Quiz v2.0 — Score display --- */
+.kt-score-display {
+	font-size: 3.2em;
+	font-weight: 800;
+	line-height: 1;
+	margin-bottom: 8px;
+	letter-spacing: -1px;
+}
+.kt-result-pass .kt-score-display { color: #15803d; }
+.kt-result-fail .kt-score-display { color: #b91c1c; }
+.kt-result-message { font-size: 1.05em; margin: 0 0 10px; }
+
+/* --- Quiz v2.0 — Review section --- */
+.kt-review-section {
+	margin-top: 20px;
+	padding-top: 16px;
+	border-top: 1px solid rgba(0,0,0,.1);
+}
+.kt-review-question {
+	background: #f8fafc;
+	border-left: 4px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 14px 16px;
+	margin-bottom: 12px;
+}
+.kt-review-question.kt-review-correct { border-left-color: #22c55e; }
+.kt-review-question.kt-review-wrong   { border-left-color: #f87171; }
+.kt-review-q-text { margin: 0 0 10px; font-weight: 600; font-size: .95em; }
+.kt-review-answers {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.kt-review-answer {
+	padding: 6px 10px;
+	border-radius: 6px;
+	font-size: .88em;
+	background: #f1f5f9;
+	color: #475569;
+}
+.kt-review-answer.correct {
+	background: #dcfce7;
+	color: #14532d;
+	font-weight: 600;
+}
+.kt-review-answer.wrong-selected {
+	background: #fee2e2;
+	color: #7f1d1d;
+	text-decoration: line-through;
+}
+.kt-review-answer.correct-not-selected {
+	background: #fef9c3;
+	color: #713f12;
+	font-weight: 600;
+}
+.kt-explanation {
+	background: var(--kt-color-primary-light);
+	border-left: 3px solid var(--kt-color-primary);
+	border-radius: 6px;
+	padding: 10px 14px;
+	font-size: .88em;
+	color: #1e3a5f;
+	margin-top: 8px;
+}
+
 /* --- Quiz embed ([kt_quiz]) --- */
 .kt-quiz-embed { line-height: 1.6; }
 .kt-quiz-embed-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: .88em; color: #64748b; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }

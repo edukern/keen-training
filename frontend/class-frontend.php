@@ -287,10 +287,8 @@ class KT_Frontend {
 
 		$attempt_count = KT_Quiz::attempt_count( $member->id, $quiz_id );
 		$best          = KT_Quiz::best_result( $member->id, $quiz_id );
-		$questions = KT_Quiz::get_questions( $quiz_id );
-		if ( $quiz->shuffle_questions ) {
-			shuffle( $questions );
-		}
+		// for_attempt=true applies pool selection and shuffle at the PHP level
+		$questions     = KT_Quiz::get_questions( $quiz_id, true );
 		include KT_PLUGIN_DIR . 'frontend/views/quiz.php';
 	}
 
@@ -350,8 +348,21 @@ class KT_Frontend {
 			wp_send_json_error( [ 'message' => 'Você atingiu o número máximo de tentativas.' ] );
 		}
 
-		$responses = array_map( 'absint', (array) ( $_POST['responses'] ?? [] ) );
-		$result    = KT_Quiz::grade( $member->id, $quiz_id, $responses );
+		// Collect responses — support both scalar (radio) and array (checkbox) per question
+		$raw_responses = (array) ( $_POST['responses'] ?? [] );
+		$responses = [];
+		foreach ( $raw_responses as $q_id => $val ) {
+			if ( is_array( $val ) ) {
+				$responses[ absint( $q_id ) ] = array_map( 'absint', $val );
+			} else {
+				$responses[ absint( $q_id ) ] = absint( $val );
+			}
+		}
+
+		// Pool / question ID restriction (sent as hidden inputs question_ids[])
+		$question_ids = array_map( 'absint', array_filter( (array) ( $_POST['question_ids'] ?? [] ) ) );
+
+		$result = KT_Quiz::grade( $member->id, $quiz_id, $responses, $question_ids );
 
 		if ( $result['passed'] && $module_id ) {
 			KT_Progress::mark_module_complete( $member->id, $module_id );
@@ -359,15 +370,26 @@ class KT_Frontend {
 
 		$tentativas_restantes = ( (int) $quiz->max_attempts === 0 ) ? -1 : ( (int) $quiz->max_attempts - $attempts - 1 ); // -1 = ilimitado
 
+		// Build pass/fail message — use configured messages when available
+		if ( $result['passed'] ) {
+			$message = ! empty( $quiz->pass_message )
+				? $quiz->pass_message
+				: sprintf( 'Parabéns! Você foi aprovado(a) com %d%%!', $result['score'] );
+		} else {
+			$message = ! empty( $quiz->fail_message )
+				? $quiz->fail_message
+				: sprintf( 'Você obteve %d%%. A nota mínima é %d%%. Tente novamente.', $result['score'], $quiz->pass_threshold );
+		}
+
 		wp_send_json_success( [
-			'score'   => $result['score'],
-			'passed'  => $result['passed'],
-			'correct' => $result['correct'],
-			'total'   => $result['total'],
-			'message' => $result['passed']
-				? sprintf( 'Parabéns! Você foi aprovado(a) com %d%%! 🎉', $result['score'] )
-				: sprintf( 'Você obteve %d%%. A nota mínima é %d%%. Tente novamente.', $result['score'], $quiz->pass_threshold ),
+			'score'                => $result['score'],
+			'passed'               => $result['passed'],
+			'correct'              => $result['correct'],
+			'total'                => $result['total'],
+			'message'              => $message,
+			'pass_threshold'       => (int) $quiz->pass_threshold,
 			'tentativas_restantes' => max( 0, $tentativas_restantes ),
+			'snapshot'             => $result['snapshot'],
 		] );
 	}
 
@@ -466,8 +488,7 @@ class KT_Frontend {
 			? ( $attempt_count > 0 ? $attempt_count . ' realizada(s) · Ilimitadas' : 'Ilimitadas' )
 			: $attempt_count . ' de ' . $quiz->max_attempts;
 
-		$questions = KT_Quiz::get_questions( $quiz_id );
-		if ( $quiz->shuffle_questions ) shuffle( $questions );
+		$questions = KT_Quiz::get_questions( $quiz_id, true );
 
 		ob_start();
 		include KT_PLUGIN_DIR . 'frontend/views/quiz-embed.php';
