@@ -48,6 +48,18 @@ spl_autoload_register( function ( $class ) {
 	}
 } );
 
+// Ícone na tela de plugins instalados
+add_filter( 'plugin_row_meta', function( $links, $file ) {
+	return $links;
+}, 10, 2 );
+
+add_action( 'admin_head', function() {
+	$icon_url = KT_PLUGIN_URL . 'assets/icon.svg';
+	echo '<style>
+		#adminmenu #toplevel_page_kt-dashboard .wp-menu-image img { padding-top: 4px; width: 20px; height: 20px; }
+	</style>';
+} );
+
 register_activation_hook( __FILE__, [ 'KT_Installer', 'activate' ] );
 register_deactivation_hook( __FILE__, [ 'KT_Installer', 'deactivate' ] );
 

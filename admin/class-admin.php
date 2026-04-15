@@ -33,13 +33,18 @@ class KT_Admin {
 	public function register_menus() {
 		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) return;
 
+		$icon_file = KT_PLUGIN_DIR . 'assets/icon.svg';
+		$icon      = file_exists( $icon_file )
+			? 'data:image/svg+xml;base64,' . base64_encode( file_get_contents( $icon_file ) )
+			: 'dashicons-welcome-learn-more';
+
 		add_menu_page(
 			'Keen Training',
 			'Keen Training',
 			'read',
 			'kt-dashboard',
 			[ $this, 'page_dashboard' ],
-			'dashicons-welcome-learn-more',
+			$icon,
 			30
 		);
 
