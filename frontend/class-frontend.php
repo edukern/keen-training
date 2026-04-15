@@ -262,6 +262,22 @@ class KT_Frontend {
 		$quiz_blocked = $quiz && ! $quiz_passed && ! $unlimited && $attempts >= $max_attempts;
 		$course_url   = add_query_arg( [ 'kt_view' => 'course', 'course_id' => $module->course_id ], get_option( 'kt_portal_page_url', home_url( '/' ) ) );
 
+		// Próximo módulo
+		$next_module     = null;
+		$next_module_url = null;
+		$all_modules     = KT_Course::get_modules( $module->course_id );
+		$found           = false;
+		foreach ( $all_modules as $m ) {
+			if ( $found ) {
+				$next_module = $m;
+				$next_module_url = $m->page_id
+					? get_permalink( $m->page_id )
+					: add_query_arg( [ 'kt_view' => 'module', 'module_id' => $m->id ], get_option( 'kt_portal_page_url', home_url( '/' ) ) );
+				break;
+			}
+			if ( $m->id === $module->id ) $found = true;
+		}
+
 		ob_start();
 		include KT_PLUGIN_DIR . 'frontend/views/module-actions.php';
 		return ob_get_clean();

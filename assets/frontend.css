@@ -358,11 +358,11 @@
 .kt-btn-success { background: #22c55e; border-color: #16a34a; color: #fff; }
 .kt-btn-success:hover { background: #16a34a; color: #fff; }
 
-.kt-btn-quiz { background: #8b5cf6; border-color: #7c3aed; color: #fff; }
-.kt-btn-quiz:hover { background: #7c3aed; color: #fff; }
+.kt-btn-quiz { background: var(--kt-color-primary); border-color: var(--kt-color-primary-dark); color: #fff; }
+.kt-btn-quiz:hover { background: var(--kt-color-primary-dark); color: #fff; }
 
-.kt-btn-complete { background: #0ea5e9; border-color: #0284c7; color: #fff; }
-.kt-btn-complete:hover:not(:disabled) { background: #0284c7; color: #fff; }
+.kt-btn-complete { background: var(--kt-color-primary); border-color: var(--kt-color-primary-dark); color: #fff; }
+.kt-btn-complete:hover:not(:disabled) { background: var(--kt-color-primary-dark); color: #fff; }
 .kt-btn-complete:disabled { background: #f1f5f9; border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
 
 .kt-btn-lg { padding: 12px 28px; font-size: 1em; }

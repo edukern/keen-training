@@ -3,16 +3,23 @@
 /**
  * Renderizado pelo shortcode [kt_modulo] em páginas Elementor.
  * Variáveis disponíveis: $module, $member, $quiz, $is_complete,
- *   $quiz_passed, $attempts, $unlimited, $quiz_blocked, $course_url
+ *   $quiz_passed, $attempts, $unlimited, $quiz_blocked, $course_url,
+ *   $next_module, $next_module_url
  */
 ?>
 <div class="kt-portal kt-module-actions-block">
 
 	<?php if ( $is_complete ): ?>
-		<div class="kt-quiz-result kt-result-pass" style="margin:0">
-			<p>✅ Módulo concluído!
-				<a href="<?php echo esc_url( $course_url ); ?>" style="margin-left:12px">← Voltar ao curso</a>
-			</p>
+		<div class="kt-quiz-result kt-result-pass" style="margin:0 0 16px">
+			<p style="margin:0">✅ Módulo concluído!</p>
+		</div>
+		<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+			<?php if ( $next_module && $next_module_url ): ?>
+				<a href="<?php echo esc_url( $next_module_url ); ?>" class="kt-btn kt-btn-primary kt-btn-lg">
+					<?php echo esc_html( $next_module->title ); ?> →
+				</a>
+			<?php endif; ?>
+			<a href="<?php echo esc_url( $course_url ); ?>" class="kt-btn kt-btn-lg">← Voltar ao curso</a>
 		</div>
 
 	<?php elseif ( $quiz ): ?>
@@ -50,14 +57,20 @@
 
 	<?php else: ?>
 		<?php /* Módulo sem avaliação — botão manual */ ?>
-		<button type="button"
-			class="kt-btn kt-btn-complete kt-btn-lg kt-complete-module"
-			data-module-id="<?php echo absint( $module->id ); ?>">
-			✔ Marcar este Módulo como Concluído
-		</button>
+		<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+			<button type="button"
+				class="kt-btn kt-btn-complete kt-btn-lg kt-complete-module"
+				data-module-id="<?php echo absint( $module->id ); ?>"
+				<?php if ( $next_module_url ) echo 'data-next-url="' . esc_url( $next_module_url ) . '"'; ?>>
+				✔ Marcar como Concluído<?php echo $next_module ? ' e continuar' : ''; ?>
+			</button>
+			<a href="<?php echo esc_url( $course_url ); ?>" class="kt-btn kt-btn-lg">← Voltar ao curso</a>
+		</div>
+		<?php if ( $next_module ): ?>
 		<p style="margin:10px 0 0;font-size:.88em;color:#64748b">
-			<a href="<?php echo esc_url( $course_url ); ?>">← Voltar ao curso</a>
+			Próximo: <strong><?php echo esc_html( $next_module->title ); ?></strong>
 		</p>
+		<?php endif; ?>
 	<?php endif; ?>
 
 </div>

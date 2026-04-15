@@ -21,6 +21,7 @@
 	$(document).on('click', '.kt-complete-module', function () {
 		var $btn     = $(this);
 		var moduleId = $btn.data('module-id');
+		var nextUrl  = $btn.data('next-url') || null;
 
 		$btn.prop('disabled', true).text(ktFrontend.i18n.salvando);
 
@@ -43,6 +44,12 @@
 				// Atualiza a barra de progresso do topo
 				$('#kt-course-progress-bar').css('width', pct + '%');
 				$('#kt-course-progress-label').text(pct + '% concluído');
+
+				// Redireciona para próximo módulo se disponível (contexto de página Elementor)
+				if (nextUrl) {
+					window.location.href = nextUrl;
+					return;
+				}
 
 				// Exibe banner se curso 100%
 				if (resp.data.course_done || pct >= 100) {
