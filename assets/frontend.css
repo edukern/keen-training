@@ -379,6 +379,47 @@
 .kt-btn-lg { padding: 12px 28px; font-size: 1em; }
 .kt-btn-sm { padding: 5px 12px; font-size: .8em; }
 
+/* --- Dashboard do gerente ([kt_gerente]) --- */
+.kt-manager-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 16px;
+	margin-bottom: 28px;
+}
+.kt-manager-stat {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 20px;
+	text-align: center;
+}
+.kt-manager-stat-value { font-size: 2em; font-weight: 700; color: var(--kt-color-primary); line-height: 1.1; }
+.kt-manager-stat-label { font-size: .82em; color: #64748b; margin-top: 4px; }
+
+.kt-manager-enroll-box {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 20px 24px;
+	margin-bottom: 28px;
+}
+.kt-manager-enroll-box h3 { margin: 0 0 14px; font-size: 1em; }
+
+.kt-manager-members h3 { margin: 0 0 16px; font-size: 1em; }
+.kt-manager-member-row {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 16px 20px;
+	margin-bottom: 12px;
+}
+.kt-manager-member-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.kt-manager-position { font-size: .8em; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 20px; }
+.kt-manager-enrollments { display: flex; flex-direction: column; gap: 10px; }
+.kt-manager-enroll-row { padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+.kt-manager-enroll-title { font-size: .9em; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.kt-manager-enroll-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
 /* --- Quiz embed ([kt_quiz]) --- */
 .kt-quiz-embed { line-height: 1.6; }
 .kt-quiz-embed-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: .88em; color: #64748b; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }

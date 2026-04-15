@@ -4,16 +4,19 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class KT_Frontend {
 
 	public function __construct() {
-		add_shortcode( 'kt_portal',  [ $this, 'shortcode_portal' ] );
-		add_shortcode( 'kt_modulo',  [ $this, 'shortcode_module_actions' ] );
-		add_shortcode( 'kt_quiz',    [ $this, 'shortcode_quiz_embed' ] );
-		add_action( 'wp_enqueue_scripts',         [ $this, 'enqueue_assets' ] );
-		add_action( 'wp_head',                    [ $this, 'inject_appearance_vars' ] );
-		add_action( 'wp_ajax_kt_complete_module', [ $this, 'ajax_complete_module' ] );
-		add_action( 'wp_ajax_kt_submit_quiz',     [ $this, 'ajax_submit_quiz' ] );
-		add_action( 'template_redirect',          [ $this, 'maybe_render_certificate' ] );
-		add_action( 'template_redirect',          [ $this, 'enforce_module_page_access' ] );
-		add_filter( 'login_redirect',             [ $this, 'login_redirect' ], 10, 3 );
+		add_shortcode( 'kt_portal',   [ $this, 'shortcode_portal' ] );
+		add_shortcode( 'kt_modulo',   [ $this, 'shortcode_module_actions' ] );
+		add_shortcode( 'kt_quiz',     [ $this, 'shortcode_quiz_embed' ] );
+		add_shortcode( 'kt_gerente',  [ $this, 'shortcode_manager' ] );
+		add_action( 'wp_enqueue_scripts',          [ $this, 'enqueue_assets' ] );
+		add_action( 'wp_head',                     [ $this, 'inject_appearance_vars' ] );
+		add_action( 'wp_ajax_kt_complete_module',  [ $this, 'ajax_complete_module' ] );
+		add_action( 'wp_ajax_kt_submit_quiz',      [ $this, 'ajax_submit_quiz' ] );
+		add_action( 'wp_ajax_kt_enroll_member',    [ $this, 'ajax_enroll_member' ] );
+		add_action( 'wp_ajax_kt_unenroll_member',  [ $this, 'ajax_unenroll_member' ] );
+		add_action( 'template_redirect',           [ $this, 'maybe_render_certificate' ] );
+		add_action( 'template_redirect',           [ $this, 'enforce_module_page_access' ] );
+		add_filter( 'login_redirect',              [ $this, 'login_redirect' ], 10, 3 );
 	}
 
 	/**
@@ -23,15 +26,20 @@ class KT_Frontend {
 	public function login_redirect( $redirect_to, $requested_redirect_to, $user ) {
 		if ( is_wp_error( $user ) ) return $redirect_to;
 
-		// Super admin ou gestor → painel WordPress normalmente
 		$roles = (array) $user->roles;
-		if ( in_array( 'kt_super_admin', $roles, true ) ||
-		     in_array( 'kt_location_manager', $roles, true ) ||
-		     in_array( 'administrator', $roles, true ) ) {
+
+		// Super admin / administrator → painel WP
+		if ( in_array( 'kt_super_admin', $roles, true ) || in_array( 'administrator', $roles, true ) ) {
 			return $redirect_to ?: admin_url();
 		}
 
-		// Colaborador com portal configurado → redireciona para o portal
+		// Gerente de unidade → dashboard frontend do gerente (se configurado)
+		if ( in_array( 'kt_location_manager', $roles, true ) ) {
+			$manager_url = get_option( 'kt_manager_page_url' );
+			return $manager_url ?: ( $redirect_to ?: admin_url() );
+		}
+
+		// Colaborador → portal de treinamentos
 		$portal_url = get_option( 'kt_portal_page_url' );
 		if ( $portal_url ) {
 			return $portal_url;
@@ -95,6 +103,85 @@ class KT_Frontend {
 		}
 
 		echo '<style>' . $css . '</style>' . "\n";
+	}
+
+	/* -----------------------------------------------------------------------
+	 * Shortcode [kt_gerente] — Dashboard frontend do gerente de unidade
+	 * -------------------------------------------------------------------- */
+
+	public function shortcode_manager( $atts ) {
+		update_option( 'kt_manager_page_url', get_permalink(), false );
+
+		if ( ! is_user_logged_in() ) {
+			return '<div class="kt-portal kt-login-prompt"><p>' .
+				sprintf( 'Por favor, <a href="%s">faça login</a> para acessar o painel do gerente.', esc_url( wp_login_url( get_permalink() ) ) ) .
+			'</p></div>';
+		}
+
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
+			return '<div class="kt-portal"><p>Acesso restrito a gerentes de unidade.</p></div>';
+		}
+
+		$location_id = KT_Roles::is_super_admin()
+			? absint( $_GET['location_id'] ?? 0 )
+			: KT_Roles::current_user_location_id();
+
+		$location  = $location_id ? KT_Location::get( $location_id ) : null;
+		$locations = KT_Roles::is_super_admin() ? KT_Location::get_all() : [];
+		$members   = $location_id ? KT_Member::get_all( $location_id ) : [];
+		$courses   = KT_Course::get_all();
+
+		// Progresso por membro
+		$member_progress = [];
+		foreach ( $members as $m ) {
+			$enrollments = KT_Progress::get_enrollments_for_member( $m->id );
+			$member_progress[ $m->id ] = $enrollments;
+		}
+
+		// Stats
+		$total_members    = count( $members );
+		$total_enrollments = 0;
+		$total_done        = 0;
+		foreach ( $member_progress as $enrs ) {
+			foreach ( $enrs as $e ) {
+				$total_enrollments++;
+				if ( $e->status === 'concluido' ) $total_done++;
+			}
+		}
+		$completion_rate = $total_enrollments > 0 ? round( $total_done / $total_enrollments * 100 ) : 0;
+
+		ob_start();
+		include KT_PLUGIN_DIR . 'frontend/views/manager-dashboard.php';
+		return ob_get_clean();
+	}
+
+	public function ajax_enroll_member() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) wp_send_json_error();
+
+		$member_id = absint( $_POST['member_id'] );
+		$course_id = absint( $_POST['course_id'] );
+		$due_date  = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
+
+		$m = KT_Member::get( $member_id );
+		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		KT_Progress::enroll( [ $member_id ], $course_id, $due_date );
+		wp_send_json_success( [ 'message' => 'Matrícula realizada.' ] );
+	}
+
+	public function ajax_unenroll_member() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) wp_send_json_error();
+
+		$member_id = absint( $_POST['member_id'] );
+		$course_id = absint( $_POST['course_id'] );
+
+		$m = KT_Member::get( $member_id );
+		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		KT_Progress::unenroll( $member_id, $course_id );
+		wp_send_json_success( [ 'message' => 'Matrícula removida.' ] );
 	}
 
 	public function enqueue_assets() {
