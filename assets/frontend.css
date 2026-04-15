@@ -3,9 +3,8 @@
    ============================================================ */
 
 /*
- * Variáveis de cor. Sobrescreva no seu tema para adaptar ao visual do site:
- *
- *   :root { --kt-color-primary: #sua-cor; }
+ * Variáveis de cor injetadas dinamicamente pelo PHP (Keen Training → Dashboard → Aparência).
+ * Fallback caso o PHP não tenha injetado ainda.
  */
 :root {
 	--kt-color-primary:       #3b82f6;

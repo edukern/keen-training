@@ -8,8 +8,12 @@ class KT_Admin {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'admin_notices',         [ $this, 'setup_notice' ] );
 
+		add_action( 'wp_head',    [ $this, 'inject_color_vars' ] );
+		add_action( 'admin_head', [ $this, 'inject_color_vars' ] );
+
 		// Handlers de formulário
 		$actions = [
+			'kt_save_color',
 			'kt_save_location', 'kt_delete_location',
 			'kt_save_position', 'kt_delete_position',
 			'kt_save_member',   'kt_delete_member',
@@ -458,6 +462,29 @@ class KT_Admin {
 		}
 
 		wp_redirect( add_query_arg( 'reset_done', 1, $back_url ) );
+		exit;
+	}
+
+	public function inject_color_vars() {
+		$primary = sanitize_hex_color( get_option( 'kt_primary_color', '#3b82f6' ) ) ?: '#3b82f6';
+
+		// Gera dark (~15% mais escuro) e light (~90% mais claro) a partir do hex
+		list( $r, $g, $b ) = sscanf( $primary, '#%02x%02x%02x' );
+		$dark  = sprintf( '#%02x%02x%02x', max( 0, $r - 38 ), max( 0, $g - 38 ), max( 0, $b - 38 ) );
+		$light = sprintf( '#%02x%02x%02x',
+			min( 255, $r + round( ( 255 - $r ) * 0.85 ) ),
+			min( 255, $g + round( ( 255 - $g ) * 0.85 ) ),
+			min( 255, $b + round( ( 255 - $b ) * 0.85 ) )
+		);
+		echo '<style>:root{--kt-color-primary:' . esc_attr( $primary ) . ';--kt-color-primary-dark:' . esc_attr( $dark ) . ';--kt-color-primary-light:' . esc_attr( $light ) . '}</style>' . "\n";
+	}
+
+	public function handle_kt_save_color() {
+		check_admin_referer( 'kt_save_color' );
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+		$color = sanitize_hex_color( $_POST['kt_primary_color'] ?? '' );
+		if ( $color ) update_option( 'kt_primary_color', $color );
+		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&color_saved=1' ) );
 		exit;
 	}
 

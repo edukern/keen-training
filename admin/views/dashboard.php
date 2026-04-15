@@ -102,4 +102,29 @@
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-progress' ) ); ?>" class="button">Ver Progresso</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-certificates' ) ); ?>" class="button">Certificados</a>
 	</div>
+
+	<?php if ( KT_Roles::is_super_admin() ): ?>
+	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:480px">
+		<h2 style="margin-top:0">Aparência</h2>
+		<?php if ( isset( $_GET['color_saved'] ) ): ?>
+			<div class="notice notice-success inline" style="margin-bottom:16px"><p>Cor salva com sucesso.</p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'kt_save_color' ); ?>
+			<input type="hidden" name="action" value="kt_save_color">
+			<table class="form-table" style="margin:0">
+				<tr>
+					<th style="padding:8px 0;width:160px"><label for="kt_primary_color">Cor primária dos botões</label></th>
+					<td style="padding:8px 0">
+						<input type="color" id="kt_primary_color" name="kt_primary_color"
+							value="<?php echo esc_attr( get_option( 'kt_primary_color', '#3b82f6' ) ); ?>"
+							style="width:60px;height:36px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+						<p class="description" style="margin-top:6px">Cor usada nos botões do portal do colaborador.</p>
+					</td>
+				</tr>
+			</table>
+			<button type="submit" class="button button-primary" style="margin-top:12px">Salvar Cor</button>
+		</form>
+	</div>
+	<?php endif; ?>
 </div>
