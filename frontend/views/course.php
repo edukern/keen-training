@@ -60,7 +60,7 @@
 				<?php if ( ! $is_complete ): ?>
 				<p>
 					<a href="<?php echo esc_url( get_permalink( $mod->page_id ) ); ?>" class="kt-btn kt-btn-primary">
-						▶ Acessar Conteúdo do Módulo
+						Acessar Conteúdo do Módulo
 					</a>
 				</p>
 				<?php endif; ?>
@@ -73,9 +73,9 @@
 					<?php /* Módulo com avaliação: o quiz É a conclusão — sem botão separado */ ?>
 					<div class="kt-quiz-block">
 						<?php if ( $is_complete ): ?>
-							<span class="kt-module-done-label">✓ Módulo concluído</span>
+							<span class="kt-module-done-label">Módulo concluído</span>
 						<?php elseif ( $quiz_blocked ): ?>
-							<p class="kt-quiz-failed">⚠ Tentativas esgotadas. Fale com seu gerente.</p>
+							<p class="kt-quiz-failed">Tentativas esgotadas. Fale com seu gerente.</p>
 						<?php else:
 							$quiz_url = add_query_arg( [
 								'kt_view'   => 'quiz',
@@ -85,7 +85,7 @@
 							] );
 						?>
 							<a href="<?php echo esc_url( $quiz_url ); ?>" class="kt-btn kt-btn-quiz">
-								<?php echo $attempts > 0 ? '🔄 Refazer Avaliação' : '📝 Fazer Avaliação'; ?>
+								<?php echo $attempts > 0 ? 'Refazer Avaliação' : 'Fazer Avaliação'; ?>
 							</a>
 							<span class="kt-attempts-left">
 								<?php if ( $unlimited ): ?>
@@ -104,10 +104,10 @@
 					<button type="button"
 						class="kt-btn kt-btn-complete kt-complete-module"
 						data-module-id="<?php echo absint( $mod->id ); ?>">
-						✔ Marcar como Concluído
+						Marcar como Concluído
 					</button>
 					<?php else: ?>
-					<span class="kt-module-done-label">✓ Módulo concluído</span>
+					<span class="kt-module-done-label">Módulo concluído</span>
 					<?php endif; ?>
 					<?php endif; ?>
 				</div>
@@ -121,9 +121,9 @@
 		$cert = KT_Certificate::get( $member->id, $course->id );
 	?>
 	<div class="kt-completion-banner" id="kt-completion-banner">
-		🎉 Parabéns! Você concluiu este curso!
+		Parabéns! Você concluiu este curso!
 		<?php if ( $cert ): ?>
-		<a href="<?php echo esc_url( add_query_arg( [ 'kt_cert' => $cert->cert_uid ] ) ); ?>" target="_blank" class="kt-btn kt-btn-success">🏆 Ver Certificado</a>
+		<a href="<?php echo esc_url( add_query_arg( [ 'kt_cert' => $cert->cert_uid ] ) ); ?>" target="_blank" class="kt-btn kt-btn-success">Ver Certificado</a>
 		<?php endif; ?>
 	</div>
 	<?php else: ?>

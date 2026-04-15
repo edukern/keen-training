@@ -11,22 +11,22 @@
 
 	<?php if ( $is_complete ): ?>
 		<div class="kt-quiz-result kt-result-pass" style="margin:0 0 16px">
-			<p style="margin:0">✅ Módulo concluído!</p>
+			<p style="margin:0">Módulo concluído!</p>
 		</div>
 		<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
 			<?php if ( $next_module && $next_module_url ): ?>
 				<a href="<?php echo esc_url( $next_module_url ); ?>" class="kt-btn kt-btn-primary kt-btn-lg">
-					<?php echo esc_html( $next_module->title ); ?> →
+					<?php echo esc_html( $next_module->title ); ?>
 				</a>
 			<?php endif; ?>
-			<a href="<?php echo esc_url( $course_url ); ?>" class="kt-btn kt-btn-lg">← Voltar ao curso</a>
+			<a href="<?php echo esc_url( $course_url ); ?>" class="kt-btn kt-btn-lg">Voltar ao curso</a>
 		</div>
 
 	<?php elseif ( $quiz ): ?>
 		<?php /* Módulo com avaliação — quiz é a forma de conclusão */ ?>
 		<div class="kt-quiz-block" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
 			<?php if ( $quiz_blocked ): ?>
-				<p class="kt-quiz-failed" style="margin:0">⚠ Tentativas esgotadas. Fale com seu gerente.</p>
+				<p class="kt-quiz-failed" style="margin:0">Tentativas esgotadas. Fale com seu gerente.</p>
 			<?php else:
 				$quiz_url = add_query_arg( [
 					'kt_view'   => 'quiz',
@@ -36,7 +36,7 @@
 				], get_option( 'kt_portal_page_url', home_url( '/' ) ) );
 			?>
 				<a href="<?php echo esc_url( $quiz_url ); ?>" class="kt-btn kt-btn-quiz kt-btn-lg">
-					<?php echo $attempts > 0 ? '🔄 Refazer Avaliação' : '📝 Responder Avaliação'; ?>
+					<?php echo $attempts > 0 ? 'Refazer Avaliação' : 'Responder Avaliação'; ?>
 				</a>
 				<span class="kt-pass-threshold">Mínimo: <strong><?php echo $quiz->pass_threshold; ?>%</strong></span>
 				<?php if ( $attempts > 0 ): ?>
@@ -62,9 +62,9 @@
 				class="kt-btn kt-btn-complete kt-btn-lg kt-complete-module"
 				data-module-id="<?php echo absint( $module->id ); ?>"
 				<?php if ( $next_module_url ) echo 'data-next-url="' . esc_url( $next_module_url ) . '"'; ?>>
-				✔ Marcar como Concluído<?php echo $next_module ? ' e continuar' : ''; ?>
+				Marcar como Concluído<?php echo $next_module ? ' e continuar' : ''; ?>
 			</button>
-			<a href="<?php echo esc_url( $course_url ); ?>" class="kt-btn kt-btn-lg">← Voltar ao curso</a>
+			<a href="<?php echo esc_url( $course_url ); ?>" class="kt-btn kt-btn-lg">Voltar ao curso</a>
 		</div>
 		<?php if ( $next_module ): ?>
 		<p style="margin:10px 0 0;font-size:.88em;color:#64748b">

@@ -85,7 +85,7 @@
 	transition: box-shadow .2s, transform .2s;
 }
 .kt-course-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
-.kt-course-card.kt-status-concluido { border-color: #86efac; background: #f0fdf4; }
+.kt-course-card.kt-status-concluido { border-color: #86efac; }
 
 .kt-course-card-top {
 	display: flex;
@@ -93,7 +93,7 @@
 	align-items: flex-start;
 	margin-bottom: 12px;
 }
-.kt-course-icon { font-size: 1.8em; line-height: 1; }
+.kt-course-icon { display: none; }
 .kt-course-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
 .kt-course-title { font-size: 1.05em; font-weight: 700; margin: 0 0 12px; }
 
@@ -355,18 +355,18 @@
 .kt-btn:hover { background: #e2e8f0; text-decoration: none; color: #1d2327; }
 .kt-btn:active { transform: scale(.98); }
 
-.kt-btn-primary { background: var(--kt-btn-bg); border-color: var(--kt-btn-hover-bg); color: var(--kt-btn-text); }
-.kt-btn-primary:hover { background: var(--kt-btn-hover-bg); color: var(--kt-btn-hover-text); }
+.kt-btn-primary { background: var(--kt-btn-bg) !important; border-color: var(--kt-btn-hover-bg) !important; color: var(--kt-btn-text) !important; }
+.kt-btn-primary:hover { background: var(--kt-btn-hover-bg) !important; color: var(--kt-btn-hover-text) !important; }
 
-.kt-btn-success { background: #22c55e; border-color: #16a34a; color: #fff; }
-.kt-btn-success:hover { background: #16a34a; color: #fff; }
+.kt-btn-success { background: #22c55e !important; border-color: #16a34a !important; color: #fff !important; }
+.kt-btn-success:hover { background: #16a34a !important; color: #fff !important; }
 
-.kt-btn-quiz { background: var(--kt-btn-bg); border-color: var(--kt-btn-hover-bg); color: var(--kt-btn-text); }
-.kt-btn-quiz:hover { background: var(--kt-btn-hover-bg); color: var(--kt-btn-hover-text); }
+.kt-btn-quiz { background: var(--kt-btn-bg) !important; border-color: var(--kt-btn-hover-bg) !important; color: var(--kt-btn-text) !important; }
+.kt-btn-quiz:hover { background: var(--kt-btn-hover-bg) !important; color: var(--kt-btn-hover-text) !important; }
 
-.kt-btn-complete { background: transparent; border-color: #1e293b; color: #1e293b; }
-.kt-btn-complete:hover:not(:disabled) { background: #1e293b; border-color: #1e293b; color: #fff; }
-.kt-btn-complete:disabled { background: transparent; border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+.kt-btn-complete { background: transparent !important; border-color: #1e293b !important; color: #1e293b !important; }
+.kt-btn-complete:hover:not(:disabled) { background: #1e293b !important; border-color: #1e293b !important; color: #fff !important; }
+.kt-btn-complete:disabled { background: transparent !important; border-color: #cbd5e1 !important; color: #94a3b8 !important; cursor: not-allowed; }
 
 .kt-btn-lg { padding: 12px 28px; font-size: 1em; }
 .kt-btn-sm { padding: 5px 12px; font-size: .8em; }

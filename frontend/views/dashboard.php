@@ -1,8 +1,12 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
+<?php
+$wp_user   = get_userdata( $member->user_id );
+$nome      = $member->display_name ?: ( $wp_user ? $wp_user->display_name : '' ) ?: ( $wp_user ? $wp_user->first_name : '' ) ?: '';
+?>
 <div class="kt-portal">
 	<div class="kt-portal-header">
 		<h2>Meu Portal de Treinamentos</h2>
-		<p class="kt-welcome">Olá, <strong><?php echo esc_html( $member->display_name ); ?></strong>! Acompanhe seus treinamentos abaixo.</p>
+		<p class="kt-welcome">Olá<?php echo $nome ? ', <strong>' . esc_html( $nome ) . '</strong>' : ''; ?>! Acompanhe seus treinamentos abaixo.</p>
 	</div>
 
 	<?php if ( isset( $_GET['kt_acesso_negado'] ) ): ?>
@@ -13,7 +17,7 @@
 
 	<?php if ( ! $enrollments ): ?>
 	<div class="kt-empty-state">
-		<div class="kt-empty-icon">📚</div>
+		<div class="kt-empty-icon"></div>
 		<p>Você ainda não tem treinamentos atribuídos. Em breve seu gerente irá cadastrar seus cursos.</p>
 	</div>
 	<?php else: ?>
@@ -28,7 +32,7 @@
 		<div class="kt-summary-pill"><?php echo $total; ?> curso<?php echo $total !== 1 ? 's' : ''; ?></div>
 		<div class="kt-summary-pill kt-pill-done"><?php echo $concluido; ?> concluído<?php echo $concluido !== 1 ? 's' : ''; ?></div>
 		<?php if ( $atrasado ): ?>
-		<div class="kt-summary-pill kt-pill-late">⚠ <?php echo $atrasado; ?> atrasado<?php echo $atrasado !== 1 ? 's' : ''; ?></div>
+		<div class="kt-summary-pill kt-pill-late"><?php echo $atrasado; ?> atrasado<?php echo $atrasado !== 1 ? 's' : ''; ?></div>
 		<?php endif; ?>
 	</div>
 
@@ -40,9 +44,6 @@
 		?>
 		<div class="kt-course-card kt-status-<?php echo esc_attr( $en->status ); ?>">
 			<div class="kt-course-card-top">
-				<div class="kt-course-icon">
-					<?php echo $en->status === 'concluido' ? '✅' : ( $en->status === 'em_andamento' ? '▶️' : '📘' ); ?>
-				</div>
 				<div class="kt-course-badges">
 					<span class="kt-status-badge kt-status-<?php echo esc_attr( $en->status ); ?>"><?php echo esc_html( KT_Progress::status_label( $en->status ) ); ?></span>
 					<?php if ( $overdue ): ?><span class="kt-status-badge kt-status-overdue">Atrasado</span><?php endif; ?>
@@ -60,19 +61,19 @@
 
 			<?php if ( $en->due_date ): ?>
 			<p class="kt-due-date <?php echo $overdue ? 'kt-due-late' : ''; ?>">
-				📅 Prazo: <?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $en->due_date ) ) ); ?>
+				Prazo: <?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $en->due_date ) ) ); ?>
 			</p>
 			<?php endif; ?>
 
 			<div class="kt-course-card-actions">
 				<?php if ( $en->status !== 'concluido' ): ?>
 				<a href="<?php echo esc_url( add_query_arg( [ 'kt_view' => 'course', 'course_id' => $en->course_id ] ) ); ?>" class="kt-btn kt-btn-primary">
-					<?php echo $en->status === 'nao_iniciado' ? '▶ Iniciar Treinamento' : '▶ Continuar'; ?>
+					<?php echo $en->status === 'nao_iniciado' ? 'Iniciar Treinamento' : 'Continuar'; ?>
 				</a>
 				<?php else: ?>
 				<a href="<?php echo esc_url( add_query_arg( [ 'kt_view' => 'course', 'course_id' => $en->course_id ] ) ); ?>" class="kt-btn">Revisar</a>
 				<?php if ( $cert ): ?>
-				<a href="<?php echo esc_url( add_query_arg( [ 'kt_cert' => $cert->cert_uid ] ) ); ?>" target="_blank" class="kt-btn kt-btn-success">🏆 Certificado</a>
+				<a href="<?php echo esc_url( add_query_arg( [ 'kt_cert' => $cert->cert_uid ] ) ); ?>" target="_blank" class="kt-btn kt-btn-success">Ver Certificado</a>
 				<?php endif; ?>
 				<?php endif; ?>
 			</div>
@@ -83,7 +84,7 @@
 
 	<?php if ( $certificates ): ?>
 	<div class="kt-certificates-section">
-		<h3>🏆 Meus Certificados</h3>
+		<h3>Meus Certificados</h3>
 		<ul class="kt-cert-list">
 			<?php foreach ( $certificates as $cert ): ?>
 			<li>
