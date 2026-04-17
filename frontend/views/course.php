@@ -56,14 +56,12 @@
 
 			<div class="kt-module-body">
 				<?php if ( $mod->page_id ): ?>
-				<?php /* Conteúdo vive em página Elementor — mostra botão de acesso */ ?>
-				<?php if ( ! $is_complete ): ?>
+				<?php /* Conteúdo vive em página Elementor — mostra botão de acesso sempre */ ?>
 				<p>
-					<a href="<?php echo esc_url( get_permalink( $mod->page_id ) ); ?>" class="kt-btn kt-btn-primary">
-						Acessar Conteúdo do Módulo
+					<a href="<?php echo esc_url( get_permalink( $mod->page_id ) ); ?>" class="kt-btn <?php echo $is_complete ? 'kt-btn-outline' : 'kt-btn-primary'; ?>">
+						<?php echo $is_complete ? 'Rever Conteúdo' : 'Acessar Conteúdo do Módulo'; ?>
 					</a>
 				</p>
-				<?php endif; ?>
 				<?php else: ?>
 				<?php echo KT_Course::render_embed( $mod ); ?>
 				<?php endif; ?>
