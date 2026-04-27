@@ -327,7 +327,7 @@ class KT_Admin {
 		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
 		$id = absint( $_POST['quiz_id'] ?? 0 );
 		$id ? KT_Quiz::update( $id, $_POST ) : ( $id = KT_Quiz::create( $_POST ) );
-		wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=questions&id=' . $id . '&saved=1' ) ); exit;
+		wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=edit&id=' . $id . '&saved=1' ) ); exit;
 	}
 
 	public function handle_kt_save_quiz_questions() {
@@ -360,7 +360,7 @@ class KT_Admin {
 			if ( $answers ) KT_Quiz::save_answers( $q_id, $answers );
 		}
 
-		wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=questions&id=' . $quiz_id . '&saved=1' ) ); exit;
+		wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=edit&id=' . $quiz_id . '&saved=1' ) ); exit;
 	}
 
 	public function handle_kt_delete_quiz() {
@@ -435,7 +435,7 @@ class KT_Admin {
 
 		$quiz_id = absint( $_POST['quiz_id'] ?? 0 );
 		if ( ! $quiz_id || empty( $_FILES['csv_file']['tmp_name'] ) ) {
-			wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=questions&id=' . $quiz_id . '&import_error=1' ) );
+			wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=edit&id=' . $quiz_id . '&import_error=1' ) );
 			exit;
 		}
 
@@ -446,7 +446,7 @@ class KT_Admin {
 			$msg .= ' Avisos: ' . implode( ' | ', $result['errors'] );
 		}
 
-		wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=questions&id=' . $quiz_id . '&import_done=' . urlencode( $msg ) ) );
+		wp_redirect( admin_url( 'admin.php?page=kt-quizzes&action=edit&id=' . $quiz_id . '&import_done=' . urlencode( $msg ) ) );
 		exit;
 	}
 
