@@ -7,10 +7,11 @@ class KT_Admin {
 		add_action( 'admin_menu',            [ $this, 'register_menus' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'admin_notices',         [ $this, 'setup_notice' ] );
+		add_action( 'admin_init',            [ $this, 'maybe_preview_certificate' ] );
 
 		// Handlers de formulário
 		$actions = [
-			'kt_save_color',
+			'kt_save_color',    'kt_save_cert',
 			'kt_save_location', 'kt_delete_location',
 			'kt_save_position', 'kt_delete_position',
 			'kt_save_member',   'kt_delete_member',
@@ -480,6 +481,25 @@ class KT_Admin {
 		update_option( 'kt_font_heading_weight', absint( $_POST['kt_font_heading_weight'] ?? 700 ) );
 		update_option( 'kt_font_body',           sanitize_text_field( $_POST['kt_font_body']           ?? '' ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&color_saved=1' ) );
+		exit;
+	}
+
+	public function maybe_preview_certificate() {
+		if ( empty( $_GET['kt_cert_preview'] ) ) return;
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+		echo KT_Certificate::render_html( '', true );
+		exit;
+	}
+
+	public function handle_kt_save_cert() {
+		check_admin_referer( 'kt_save_cert' );
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+		update_option( 'kt_cert_company_name',  sanitize_text_field( $_POST['kt_cert_company_name']  ?? '' ) );
+		update_option( 'kt_cert_logo_url',      esc_url_raw( $_POST['kt_cert_logo_url']              ?? '' ) );
+		$accent = sanitize_hex_color( $_POST['kt_cert_accent_color'] ?? '' );
+		update_option( 'kt_cert_accent_color',  $accent ?: '' );
+		update_option( 'kt_cert_show_id',       ! empty( $_POST['kt_cert_show_id'] ) ? '1' : '0' );
+		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&cert_saved=1' ) );
 		exit;
 	}
 

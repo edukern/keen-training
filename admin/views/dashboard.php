@@ -210,5 +210,68 @@
 			<button type="submit" class="button button-primary" style="margin-top:16px">Salvar Aparência</button>
 		</form>
 	</div>
+	<?php
+	$cert_company  = get_option( 'kt_cert_company_name', get_bloginfo( 'name' ) );
+	$cert_logo_url = get_option( 'kt_cert_logo_url',     '' );
+	$cert_accent   = get_option( 'kt_cert_accent_color', $saved_primary );
+	$cert_show_id  = get_option( 'kt_cert_show_id',      '1' );
+	?>
+	<div class="kt-settings-box" style="margin-top:24px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
+		<h2 style="margin-top:0">Certificado de Conclusão</h2>
+		<?php if ( isset( $_GET['cert_saved'] ) ): ?>
+			<div class="notice notice-success inline" style="margin-bottom:16px"><p>Configurações do certificado salvas.</p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'kt_save_cert' ); ?>
+			<input type="hidden" name="action" value="kt_save_cert">
+			<table class="form-table" style="margin:0">
+				<tr>
+					<th style="padding:8px 0;width:200px"><label for="kt_cert_company_name">Nome da empresa</label></th>
+					<td style="padding:8px 0">
+						<input type="text" id="kt_cert_company_name" name="kt_cert_company_name"
+							value="<?php echo esc_attr( $cert_company ); ?>"
+							style="width:100%;max-width:340px"
+							placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+						<p class="description">Aparece no rodapé lateral e no cabeçalho do certificado.</p>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_cert_logo_url">URL da logo</label></th>
+					<td style="padding:8px 0">
+						<input type="url" id="kt_cert_logo_url" name="kt_cert_logo_url"
+							value="<?php echo esc_attr( $cert_logo_url ); ?>"
+							style="width:100%;max-width:340px"
+							placeholder="https://...">
+						<p class="description">Cole a URL de uma imagem da Biblioteca de Mídia (PNG, SVG ou JPG). Se vazio, exibe o nome da empresa em texto.</p>
+						<?php if ( $cert_logo_url ): ?>
+							<div style="margin-top:8px"><img src="<?php echo esc_url( $cert_logo_url ); ?>" style="max-height:48px;max-width:200px;border:1px solid #e2e8f0;border-radius:4px;padding:4px"></div>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_cert_accent_color">Cor de destaque</label></th>
+					<td style="padding:8px 0;display:flex;align-items:center;gap:10px">
+						<input type="color" id="kt_cert_accent_color" name="kt_cert_accent_color"
+							value="<?php echo esc_attr( $cert_accent ?: $saved_primary ); ?>"
+							style="width:50px;height:32px;padding:2px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+						<span class="description">Barra superior, sublinhados e destaques. Por padrão usa a cor primária do portal.</span>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_cert_show_id">Mostrar ID do certificado</label></th>
+					<td style="padding:8px 0">
+						<label>
+							<input type="checkbox" id="kt_cert_show_id" name="kt_cert_show_id" value="1" <?php checked( $cert_show_id, '1' ); ?>>
+							Exibir o código único no rodapé do certificado
+						</label>
+					</td>
+				</tr>
+			</table>
+			<div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+				<button type="submit" class="button button-primary">Salvar Certificado</button>
+				<a href="<?php echo esc_url( add_query_arg( 'kt_cert_preview', '1', admin_url( 'admin.php?page=kt-dashboard' ) ) ); ?>" target="_blank" class="button">Pré-visualizar</a>
+			</div>
+		</form>
+	</div>
 	<?php endif; ?>
 </div>
