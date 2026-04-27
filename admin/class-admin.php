@@ -75,6 +75,8 @@ class KT_Admin {
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( 'kt_admin' ),
 		] );
+		// Media uploader — necessário para seleção de logo no certificado
+		wp_enqueue_media();
 	}
 
 	/* Aviso de configuração inicial */

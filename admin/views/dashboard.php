@@ -215,6 +215,13 @@
 	$cert_logo_url = get_option( 'kt_cert_logo_url',     '' );
 	$cert_accent   = get_option( 'kt_cert_accent_color', $saved_primary );
 	$cert_show_id  = get_option( 'kt_cert_show_id',      '1' );
+
+	// Tenta puxar o logo do tema automaticamente se ainda não foi configurado
+	$theme_logo_url = '';
+	$theme_logo_id  = get_theme_mod( 'custom_logo' );
+	if ( $theme_logo_id ) {
+		$theme_logo_url = wp_get_attachment_image_url( $theme_logo_id, 'full' ) ?: '';
+	}
 	?>
 	<div class="kt-settings-box" style="margin-top:24px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
 		<h2 style="margin-top:0">Certificado de Conclusão</h2>
@@ -236,16 +243,30 @@
 					</td>
 				</tr>
 				<tr>
-					<th style="padding:8px 0"><label for="kt_cert_logo_url">URL da logo</label></th>
+					<th style="padding:8px 0"><label for="kt_cert_logo_url">Logo</label></th>
 					<td style="padding:8px 0">
-						<input type="url" id="kt_cert_logo_url" name="kt_cert_logo_url"
-							value="<?php echo esc_attr( $cert_logo_url ); ?>"
-							style="width:100%;max-width:340px"
-							placeholder="https://...">
-						<p class="description">Cole a URL de uma imagem da Biblioteca de Mídia (PNG, SVG ou JPG). Se vazio, exibe o nome da empresa em texto.</p>
-						<?php if ( $cert_logo_url ): ?>
-							<div style="margin-top:8px"><img src="<?php echo esc_url( $cert_logo_url ); ?>" style="max-height:48px;max-width:200px;border:1px solid #e2e8f0;border-radius:4px;padding:4px"></div>
-						<?php endif; ?>
+						<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:440px">
+							<input type="url" id="kt_cert_logo_url" name="kt_cert_logo_url"
+								value="<?php echo esc_attr( $cert_logo_url ); ?>"
+								style="flex:1;min-width:200px"
+								placeholder="https://...">
+							<button type="button" id="kt-cert-logo-select" class="button">
+								Selecionar da Biblioteca
+							</button>
+							<?php if ( $theme_logo_url && $cert_logo_url !== $theme_logo_url ): ?>
+							<button type="button" id="kt-cert-logo-theme" class="button"
+								data-url="<?php echo esc_attr( $theme_logo_url ); ?>">
+								Usar logo do site
+							</button>
+							<?php endif; ?>
+						</div>
+						<?php $preview_url = $cert_logo_url ?: $theme_logo_url; ?>
+						<div id="kt-cert-logo-preview" style="margin-top:10px;<?php echo $preview_url ? '' : 'display:none'; ?>">
+							<img id="kt-cert-logo-img" src="<?php echo esc_url( $preview_url ); ?>"
+								style="max-height:52px;max-width:220px;border:1px solid #e2e8f0;border-radius:4px;padding:4px;background:#fafafa">
+							<button type="button" id="kt-cert-logo-remove" class="button-link" style="margin-left:10px;color:#b91c1c;font-size:.85em">Remover</button>
+						</div>
+						<p class="description" style="margin-top:6px">PNG, SVG ou JPG. Se vazio, exibe o nome da empresa em texto.</p>
 					</td>
 				</tr>
 				<tr>
@@ -273,5 +294,43 @@
 			</div>
 		</form>
 	</div>
+	<script>
+	(function($){
+		var frame;
+
+		// Abre o media uploader
+		$('#kt-cert-logo-select').on('click', function(e){
+			e.preventDefault();
+			if ( frame ) { frame.open(); return; }
+			frame = wp.media({
+				title:    'Selecionar Logo do Certificado',
+				button:   { text: 'Usar esta imagem' },
+				multiple: false,
+				library:  { type: 'image' }
+			});
+			frame.on('select', function(){
+				var attachment = frame.state().get('selection').first().toJSON();
+				$('#kt_cert_logo_url').val( attachment.url );
+				$('#kt-cert-logo-img').attr( 'src', attachment.url );
+				$('#kt-cert-logo-preview').show();
+			});
+			frame.open();
+		});
+
+		// Usa o logo do tema
+		$('#kt-cert-logo-theme').on('click', function(){
+			var url = $(this).data('url');
+			$('#kt_cert_logo_url').val( url );
+			$('#kt-cert-logo-img').attr( 'src', url );
+			$('#kt-cert-logo-preview').show();
+		});
+
+		// Remove logo
+		$('#kt-cert-logo-remove').on('click', function(){
+			$('#kt_cert_logo_url').val('');
+			$('#kt-cert-logo-preview').hide();
+		});
+	})(jQuery);
+	</script>
 	<?php endif; ?>
 </div>
