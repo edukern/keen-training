@@ -106,6 +106,8 @@ class KT_Certificate {
 <?php if ( $gfonts_url ): ?>
 <link href="<?php echo esc_url( $gfonts_url ); ?>" rel="stylesheet">
 <?php endif; ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --accent:     <?php echo $accent; ?>;
@@ -358,7 +360,11 @@ class KT_Certificate {
     text-decoration: none;
     display: inline-block;
   }
-  .kt-cert-btn-print { background: var(--accent); color: #fff; }
+  .kt-cert-btn-download { background: var(--accent); color: #fff; }
+  .kt-cert-btn-download:hover { opacity: .88; }
+  .kt-cert-btn-download:disabled { opacity: .6; cursor: wait; }
+  .kt-cert-btn-print { background: transparent; color: #555; border: 1px solid #ccc; }
+  .kt-cert-btn-print:hover { background: #f5f5f5; }
   .kt-cert-btn-close { background: #eee; color: #333; }
 
   @media print {
@@ -412,9 +418,66 @@ class KT_Certificate {
 </div>
 
 <div class="kt-cert-actions">
-  <button class="kt-cert-btn kt-cert-btn-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+  <button class="kt-cert-btn kt-cert-btn-download" id="kt-cert-download"
+    data-name="<?php echo esc_attr( $name ); ?>"
+    data-course="<?php echo esc_attr( $course_title ); ?>">
+    Baixar PDF
+  </button>
+  <button class="kt-cert-btn kt-cert-btn-print" onclick="window.print()">Imprimir</button>
   <button class="kt-cert-btn kt-cert-btn-close" onclick="window.close()">Fechar</button>
 </div>
+
+<script>
+(function () {
+  var btn = document.getElementById('kt-cert-download');
+  if (!btn) return;
+
+  btn.addEventListener('click', function () {
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Gerando PDF…';
+
+    var el = document.querySelector('.certificate');
+
+    // Aguarda fontes do Google Fonts carregarem antes de capturar
+    document.fonts.ready.then(function () {
+      html2canvas(el, {
+        scale:            2,
+        useCORS:          true,
+        allowTaint:       false,
+        backgroundColor:  '#ffffff',
+        logging:          false,
+        onclone: function (clonedDoc) {
+          // Garante que o clone não tem overflow escondido
+          clonedDoc.querySelector('.certificate').style.overflow = 'visible';
+        }
+      }).then(function (canvas) {
+        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+        // A4 paisagem em mm
+        var { jsPDF } = window.jspdf;
+        var pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        var pageW = pdf.internal.pageSize.getWidth();
+        var pageH = pdf.internal.pageSize.getHeight();
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
+
+        var name   = btn.getAttribute('data-name')   || 'colaborador';
+        var course = btn.getAttribute('data-course')  || 'treinamento';
+        var slug   = (name + '-' + course).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        pdf.save('certificado-' + slug + '.pdf');
+
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }).catch(function () {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert('Não foi possível gerar o PDF. Tente usar o botão Imprimir e selecione "Salvar como PDF".');
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>
 		<?php
