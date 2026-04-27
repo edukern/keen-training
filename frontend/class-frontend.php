@@ -287,8 +287,27 @@ class KT_Frontend {
 
 		$attempt_count = KT_Quiz::attempt_count( $member->id, $quiz_id );
 		$best          = KT_Quiz::best_result( $member->id, $quiz_id );
-		// for_attempt=true applies pool selection and shuffle at the PHP level
 		$questions     = KT_Quiz::get_questions( $quiz_id, true );
+
+		// Calcula próximo módulo para exibir botão após aprovação
+		$next_module_url = null;
+		if ( $module_id ) {
+			$module = KT_Course::get_module( $module_id );
+			if ( $module ) {
+				$all_modules = KT_Course::get_modules( $module->course_id );
+				$found = false;
+				foreach ( $all_modules as $m ) {
+					if ( $found ) {
+						$next_module_url = $m->page_id
+							? get_permalink( $m->page_id )
+							: add_query_arg( [ 'kt_view' => 'module', 'module_id' => $m->id ], get_option( 'kt_portal_page_url', home_url( '/' ) ) );
+						break;
+					}
+					if ( (int) $m->id === $module_id ) $found = true;
+				}
+			}
+		}
+
 		include KT_PLUGIN_DIR . 'frontend/views/quiz.php';
 	}
 

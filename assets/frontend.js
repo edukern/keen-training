@@ -238,6 +238,8 @@
 
 			if (resp.success) {
 				var d = resp.data;
+				var nextUrl   = $('#kt-next-mod-url').val() || '';
+				var courseUrl = $('#kt-course-url').val()   || '';
 
 				var scoreHtml = '<div class="kt-score-display">' + d.score + '%</div>';
 				var html = scoreHtml
@@ -246,6 +248,16 @@
 
 				if (d.passed) {
 					$form.hide();
+					// Botões de navegação pós-aprovação
+					var navHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">';
+					if (nextUrl) {
+						navHtml += '<a href="' + escHtml(nextUrl) + '" class="kt-btn kt-btn-primary">Próximo Módulo →</a>';
+					}
+					if (courseUrl) {
+						navHtml += '<a href="' + escHtml(courseUrl) + '" class="kt-btn kt-btn-outline">← Voltar ao Curso</a>';
+					}
+					navHtml += '</div>';
+					html += navHtml;
 				} else {
 					var ilimitado = (d.tentativas_restantes === -1);
 					if (ilimitado || d.tentativas_restantes > 0) {
