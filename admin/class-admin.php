@@ -22,6 +22,7 @@ class KT_Admin {
 			'kt_export_progress', 'kt_dismiss_setup',
 			'kt_import_members', 'kt_import_quiz_questions',
 			'kt_reset_quiz_attempts',
+			'kt_save_pages',
 		];
 		foreach ( $actions as $action ) {
 			add_action( 'admin_post_' . $action, [ $this, 'handle_' . $action ] );
@@ -509,6 +510,15 @@ class KT_Admin {
 		update_option( 'kt_cert_accent_color',  $accent ?: '' );
 		update_option( 'kt_cert_show_id',       ! empty( $_POST['kt_cert_show_id'] ) ? '1' : '0' );
 		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&cert_saved=1' ) );
+		exit;
+	}
+
+	public function handle_kt_save_pages() {
+		check_admin_referer( 'kt_save_pages' );
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+		update_option( 'kt_portal_page_url',  esc_url_raw( $_POST['kt_portal_page_url']  ?? '' ) );
+		update_option( 'kt_manager_page_url', esc_url_raw( $_POST['kt_manager_page_url'] ?? '' ) );
+		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&pages_saved=1' ) );
 		exit;
 	}
 

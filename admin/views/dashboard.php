@@ -104,6 +104,55 @@
 	</div>
 
 	<?php if ( KT_Roles::is_super_admin() ): ?>
+
+	<!-- Páginas do Plugin -->
+	<?php
+	$all_pages        = get_pages( [ 'sort_column' => 'post_title', 'sort_order' => 'ASC' ] );
+	$saved_portal_url = get_option( 'kt_portal_page_url',  '' );
+	$saved_manager_url= get_option( 'kt_manager_page_url', '' );
+	?>
+	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
+		<h2 style="margin-top:0">Páginas do Plugin</h2>
+		<?php if ( isset( $_GET['pages_saved'] ) ): ?>
+			<div class="notice notice-success inline" style="margin-bottom:16px"><p>Páginas salvas.</p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'kt_save_pages' ); ?>
+			<input type="hidden" name="action" value="kt_save_pages">
+			<table class="form-table" style="margin:0">
+				<tr>
+					<th style="padding:8px 0;width:200px"><label for="kt_portal_page">Portal do Colaborador</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_portal_page" name="kt_portal_page_url" style="min-width:280px">
+							<option value="">— Selecione a página —</option>
+							<?php foreach ( $all_pages as $p ): ?>
+							<option value="<?php echo esc_attr( get_permalink( $p->ID ) ); ?>" <?php selected( $saved_portal_url, get_permalink( $p->ID ) ); ?>>
+								<?php echo esc_html( $p->post_title ); ?>
+							</option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">Página com o shortcode <code>[kt_portal]</code>. Colaboradores são redirecionados aqui após o login.</p>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_manager_page">Portal do Gerente</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_manager_page" name="kt_manager_page_url" style="min-width:280px">
+							<option value="">— Selecione a página —</option>
+							<?php foreach ( $all_pages as $p ): ?>
+							<option value="<?php echo esc_attr( get_permalink( $p->ID ) ); ?>" <?php selected( $saved_manager_url, get_permalink( $p->ID ) ); ?>>
+								<?php echo esc_html( $p->post_title ); ?>
+							</option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">Página com o shortcode <code>[kt_gerente]</code>. Gerentes de unidade são redirecionados aqui após o login.</p>
+					</td>
+				</tr>
+			</table>
+			<button type="submit" class="button button-primary" style="margin-top:16px">Salvar Páginas</button>
+		</form>
+	</div>
+
 	<?php
 	$fonts_disponiveis = [
 		''                 => '— Herdar do tema —',
