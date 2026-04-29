@@ -18,7 +18,7 @@
 		<?php else: ?>
 		<?php foreach ( $certs as $cert ): ?>
 			<tr>
-				<td><?php echo esc_html( $cert->display_name ); ?></td>
+				<td><?php echo esc_html( $cert->full_name ?: $cert->display_name ); ?></td>
 				<td><?php echo esc_html( $cert->location_name ?? '—' ); ?></td>
 				<td><?php echo esc_html( $cert->course_title ); ?></td>
 				<td><?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $cert->issued_at ) ) ); ?></td>

@@ -70,7 +70,17 @@ class KT_Certificate {
 			}
 			$member       = KT_Member::get( $cert->member_id );
 			$course       = KT_Course::get( $cert->course_id );
-			$name         = $member ? esc_html( $member->display_name ) : 'Colaborador';
+
+			// Prioridade: first_name + last_name do WP → display_name → 'Colaborador'
+			if ( $member ) {
+				$wp_user   = get_userdata( $member->user_id );
+				$first     = trim( $wp_user ? (string) $wp_user->first_name : '' );
+				$last      = trim( $wp_user ? (string) $wp_user->last_name  : '' );
+				$full_name = trim( "$first $last" );
+				$name      = esc_html( $full_name ?: $member->display_name ?: $member->user_login );
+			} else {
+				$name = 'Colaborador';
+			}
 			$course_title = $course  ? esc_html( $course->title )       : 'Treinamento';
 			$date         = date_i18n( 'd \d\e F \d\e Y', strtotime( $cert->issued_at ) );
 			$uid_display  = esc_html( $cert->cert_uid );

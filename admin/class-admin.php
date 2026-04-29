@@ -194,10 +194,19 @@ class KT_Admin {
 		$location_id = KT_Roles::is_super_admin() ? 0 : KT_Roles::current_user_location_id();
 		$where       = $location_id ? $wpdb->prepare( 'AND m.location_id = %d', $location_id ) : '';
 		$certs       = $wpdb->get_results(
-			"SELECT cert.*, u.display_name, c.title AS course_title, l.name AS location_name
+			"SELECT cert.*,
+			        NULLIF(TRIM(CONCAT(
+			            COALESCE(umf.meta_value, ''), ' ',
+			            COALESCE(uml.meta_value, '')
+			        )), '') AS full_name,
+			        u.display_name,
+			        c.title AS course_title,
+			        l.name  AS location_name
 			 FROM {$wpdb->prefix}kt_certificates cert
 			 JOIN {$wpdb->prefix}kt_members m ON m.id = cert.member_id
 			 JOIN {$wpdb->users} u ON u.ID = m.user_id
+			 LEFT JOIN {$wpdb->usermeta} umf ON umf.user_id = u.ID AND umf.meta_key = 'first_name'
+			 LEFT JOIN {$wpdb->usermeta} uml ON uml.user_id = u.ID AND uml.meta_key = 'last_name'
 			 JOIN {$wpdb->prefix}kt_courses c ON c.id = cert.course_id
 			 LEFT JOIN {$wpdb->prefix}kt_locations l ON l.id = m.location_id
 			 WHERE 1=1 $where
