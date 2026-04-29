@@ -135,7 +135,6 @@
 					<th style="width:200px">Colaborador</th>
 					<th style="width:120px">Função</th>
 					<th>Treinamentos</th>
-					<th style="width:80px"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -182,33 +181,39 @@
 						<?php if ( $has_overdue ): ?><span class="kt-chips-overdue-flag">atrasado</span><?php endif; ?>
 						<span class="kt-chips-toggle-icon">▾</span>
 					</div>
-					<div class="kt-enroll-chips kt-chips-drawer" id="kt-chips-<?php echo absint( $m->id ); ?>" style="display:none">
+					<div class="kt-chips-drawer" id="kt-chips-<?php echo absint( $m->id ); ?>" style="display:none">
 						<?php foreach ( $enrs as $e ):
 							$pct        = KT_Progress::course_progress_pct( $m->id, $e->course_id );
 							$overdue    = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
 							$chip_class = $overdue ? 'overdue' : esc_attr( $e->status );
-							$short      = mb_strlen( $e->course_title ) > 26
-								? mb_substr( $e->course_title, 0, 24, 'UTF-8' ) . '…'
-								: $e->course_title;
 						?>
-						<span class="kt-enroll-chip kt-enroll-chip-<?php echo $chip_class; ?>">
-							<span class="kt-chip-title" title="<?php echo esc_attr( $e->course_title ); ?>"><?php echo esc_html( $short ); ?></span>
-							<span class="kt-chip-pct"> · <?php echo $pct; ?>%</span>
-						</span>
+						<div class="kt-drawer-row">
+							<span class="kt-enroll-chip kt-enroll-chip-<?php echo $chip_class; ?>" style="flex-shrink:0">
+								<?php echo $pct; ?>%
+							</span>
+							<span class="kt-drawer-course-title"><?php echo esc_html( $e->course_title ); ?></span>
+							<span class="kt-drawer-due">
+								<?php if ( $e->due_date ): ?>
+									<span class="<?php echo $overdue ? 'kt-due-late' : ''; ?>">
+										<?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $e->due_date ) ) ); ?>
+									</span>
+								<?php else: ?>
+									<span style="color:#cbd5e1">—</span>
+								<?php endif; ?>
+							</span>
+							<a href="#"
+								class="kt-edit-link kt-edit-member-btn"
+								data-member-id="<?php echo absint( $m->id ); ?>"
+								data-member-name="<?php echo esc_attr( $_name ); ?>"
+								data-enrollments="<?php echo esc_attr( wp_json_encode( $enrs_for_json ) ); ?>">
+								Editar →
+							</a>
+						</div>
 						<?php endforeach; ?>
 					</div>
 					<?php else: ?>
 					<span class="kt-no-enroll">Sem treinamentos</span>
 					<?php endif; ?>
-				</td>
-				<td>
-					<a href="#"
-						class="kt-edit-link kt-edit-member-btn"
-						data-member-id="<?php echo absint( $m->id ); ?>"
-						data-member-name="<?php echo esc_attr( $_name ); ?>"
-						data-enrollments="<?php echo esc_attr( wp_json_encode( $enrs_for_json ) ); ?>">
-						Editar →
-					</a>
 				</td>
 			</tr>
 			<?php endforeach; ?>

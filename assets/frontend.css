@@ -680,6 +680,30 @@
 }
 .kt-chips-summary.open .kt-chips-toggle-icon { transform: rotate(180deg); }
 .kt-chips-drawer { margin-top: 6px; }
+.kt-drawer-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 0;
+	border-bottom: 1px solid #f1f5f9;
+	flex-wrap: wrap;
+}
+.kt-drawer-row:last-child { border-bottom: none; }
+.kt-drawer-course-title {
+	flex: 1;
+	min-width: 0;
+	font-size: .85em;
+	font-weight: 500;
+	color: #1e293b;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.kt-drawer-due {
+	font-size: .78em;
+	color: #64748b;
+	white-space: nowrap;
+}
 
 /* Legacy - keep for any remaining uses */
 .kt-manager-member-row { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:12px; }
