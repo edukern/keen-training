@@ -4,7 +4,7 @@ $wp_user   = get_userdata( $member->user_id );
 $_first    = trim( $wp_user ? (string) $wp_user->first_name : '' );
 $_last     = trim( $wp_user ? (string) $wp_user->last_name  : '' );
 $_full     = trim( "$_first $_last" );
-$nome      = $_full ?: ( $wp_user ? $wp_user->display_name : '' ) ?: '';
+$nome      = $_first ?: $_full ?: ( $wp_user ? $wp_user->display_name : '' ) ?: '';
 ?>
 <div class="kt-portal">
 	<div class="kt-portal-header">
