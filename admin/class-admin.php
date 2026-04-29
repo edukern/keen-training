@@ -12,7 +12,7 @@ class KT_Admin {
 		// Handlers de formulário
 		$actions = [
 			'kt_save_color',    'kt_save_cert',
-			'kt_save_location', 'kt_delete_location',
+			'kt_save_location', 'kt_delete_location', 'kt_sync_manager_roles',
 			'kt_save_position', 'kt_delete_position',
 			'kt_save_member',   'kt_delete_member',
 			'kt_save_course',   'kt_delete_course',
@@ -254,6 +254,13 @@ class KT_Admin {
 		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
 		KT_Location::delete( absint( $_POST['location_id'] ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-locations&deleted=1' ) ); exit;
+	}
+
+	public function handle_kt_sync_manager_roles() {
+		check_admin_referer( 'kt_sync_manager_roles' );
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+		$fixed = KT_Location::sync_manager_roles();
+		wp_redirect( admin_url( 'admin.php?page=kt-locations&roles_synced=' . $fixed ) ); exit;
 	}
 
 	public function handle_kt_save_member() {

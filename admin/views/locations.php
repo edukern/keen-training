@@ -4,8 +4,18 @@
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-locations&action=add' ) ); ?>" class="page-title-action">+ Adicionar Unidade</a>
 	</h1>
 
-	<?php if ( isset( $_GET['saved'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ Unidade salva com sucesso.</p></div><?php endif; ?>
-	<?php if ( isset( $_GET['deleted'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ Unidade excluída.</p></div><?php endif; ?>
+	<?php if ( isset( $_GET['saved'] ) ):        ?><div class="notice notice-success is-dismissible"><p>✓ Unidade salva com sucesso.</p></div><?php endif; ?>
+	<?php if ( isset( $_GET['deleted'] ) ):      ?><div class="notice notice-success is-dismissible"><p>✓ Unidade excluída.</p></div><?php endif; ?>
+	<?php if ( isset( $_GET['roles_synced'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ Permissões sincronizadas — <?php echo absint( $_GET['roles_synced'] ); ?> gerente(s) corrigido(s).</p></div><?php endif; ?>
+
+	<?php if ( ! in_array( $action, [ 'add', 'edit' ] ) ): ?>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:16px">
+		<?php wp_nonce_field( 'kt_sync_manager_roles' ); ?>
+		<input type="hidden" name="action" value="kt_sync_manager_roles">
+		<button type="submit" class="button">Sincronizar permissões dos gerentes</button>
+		<span style="margin-left:8px;color:#646970;font-size:.9em">Corrige gerentes cadastrados que não receberam a permissão correta de acesso.</span>
+	</form>
+	<?php endif; ?>
 
 	<?php if ( in_array( $action, [ 'add', 'edit' ] ) ): ?>
 	<div class="kt-card">

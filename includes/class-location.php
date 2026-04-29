@@ -24,7 +24,12 @@ class KT_Location {
 		] );
 		$location_id = $wpdb->insert_id;
 		if ( ! empty( $data['manager_id'] ) ) {
-			update_user_meta( absint( $data['manager_id'] ), 'kt_location_id', $location_id );
+			$manager_id = absint( $data['manager_id'] );
+			update_user_meta( $manager_id, 'kt_location_id', $location_id );
+			$user = new WP_User( $manager_id );
+			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) && ! in_array( 'kt_super_admin', $user->roles, true ) ) {
+				$user->add_role( 'kt_location_manager' );
+			}
 		}
 		return $location_id;
 	}
@@ -53,6 +58,24 @@ class KT_Location {
 				$user->add_role( 'kt_location_manager' );
 			}
 		}
+	}
+
+	/**
+	 * Percorre todas as unidades e garante que os gerentes têm a role correta.
+	 * Útil para corrigir registros criados antes do fix.
+	 */
+	public static function sync_manager_roles() {
+		$fixed = 0;
+		foreach ( self::get_all() as $loc ) {
+			if ( ! $loc->manager_id ) continue;
+			$user = new WP_User( $loc->manager_id );
+			if ( ! $user->ID ) continue;
+			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) && ! in_array( 'kt_super_admin', $user->roles, true ) ) {
+				$user->add_role( 'kt_location_manager' );
+				$fixed++;
+			}
+		}
+		return $fixed;
 	}
 
 	public static function delete( $id ) {
