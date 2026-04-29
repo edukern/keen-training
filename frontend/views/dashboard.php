@@ -12,6 +12,18 @@ $nome      = $_first ?: $_full ?: ( $wp_user ? $wp_user->display_name : '' ) ?: 
 		<p class="kt-welcome">Olá<?php echo $nome ? ', <strong>' . esc_html( $nome ) . '</strong>' : ''; ?>! Acompanhe seus treinamentos abaixo.</p>
 	</div>
 
+	<?php if ( ! empty( $quote ) ): ?>
+	<div class="kt-daily-quote">
+		<div class="kt-daily-quote-mark">&ldquo;</div>
+		<div class="kt-daily-quote-body">
+			<p class="kt-daily-quote-text"><?php echo esc_html( $quote['text'] ); ?></p>
+			<?php if ( $quote['author'] ): ?>
+				<span class="kt-daily-quote-author">— <?php echo esc_html( $quote['author'] ); ?></span>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php endif; ?>
+
 	<?php if ( isset( $_GET['kt_acesso_negado'] ) ): ?>
 	<div class="kt-notice kt-notice-error" style="background:#fef2f2;border-left:4px solid #ef4444;padding:12px 16px;margin-bottom:20px;border-radius:4px">
 		<strong>Acesso negado.</strong> Você não tem permissão para acessar este conteúdo. Se acredita que isso é um erro, fale com seu gerente.

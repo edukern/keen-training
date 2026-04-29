@@ -3,10 +3,24 @@
 
 	<div class="kt-portal-header">
 		<h2>Painel do Gerente</h2>
-		<?php if ( $location ): ?>
-			<p class="kt-welcome">Unidade: <strong><?php echo esc_html( $location->name ); ?></strong></p>
-		<?php endif; ?>
+		<?php
+		$_mgr      = wp_get_current_user();
+		$_mgr_name = trim( $_mgr->first_name ) ?: $_mgr->display_name;
+		?>
+		<p class="kt-welcome">Olá, <strong><?php echo esc_html( $_mgr_name ); ?></strong>!<?php if ( $location ): ?> — Unidade: <strong><?php echo esc_html( $location->name ); ?></strong><?php endif; ?></p>
 	</div>
+
+	<?php if ( ! empty( $quote ) ): ?>
+	<div class="kt-daily-quote">
+		<div class="kt-daily-quote-mark">&ldquo;</div>
+		<div class="kt-daily-quote-body">
+			<p class="kt-daily-quote-text"><?php echo esc_html( $quote['text'] ); ?></p>
+			<?php if ( $quote['author'] ): ?>
+				<span class="kt-daily-quote-author">— <?php echo esc_html( $quote['author'] ); ?></span>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php endif; ?>
 
 	<?php if ( KT_Roles::is_super_admin() && $locations ): ?>
 	<form method="get" style="margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">

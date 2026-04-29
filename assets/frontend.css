@@ -281,6 +281,41 @@
 .kt-cert-name { flex: 1; font-weight: 600; }
 .kt-cert-date { color: #64748b; font-size: .85em; }
 
+/* --- Frase inspiradora do dia --- */
+.kt-daily-quote {
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+	background: var(--kt-color-primary-light);
+	border-left: 4px solid var(--kt-color-primary);
+	border-radius: 0 10px 10px 0;
+	padding: 14px 18px;
+	margin-bottom: 28px;
+}
+.kt-daily-quote-mark {
+	font-size: 2.4em;
+	line-height: 1;
+	color: var(--kt-color-primary);
+	opacity: .45;
+	flex-shrink: 0;
+	margin-top: -4px;
+	font-family: Georgia, serif;
+}
+.kt-daily-quote-body { flex: 1; }
+.kt-daily-quote-text {
+	font-style: italic;
+	font-size: .93em;
+	color: #1e293b;
+	line-height: 1.65;
+	margin: 0 0 6px;
+}
+.kt-daily-quote-author {
+	font-size: .78em;
+	font-weight: 700;
+	color: var(--kt-color-primary);
+	letter-spacing: .03em;
+}
+
 /* --- Quiz --- */
 .kt-quiz-meta { color: #64748b; font-size: .9em; margin-bottom: 20px; }
 .kt-quiz { margin-top: 8px; }

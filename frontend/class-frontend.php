@@ -131,6 +131,8 @@ class KT_Frontend {
 		$members   = $location_id ? KT_Member::get_all( $location_id ) : [];
 		$courses   = KT_Course::get_all();
 
+		$quote = $this->get_daily_quote( 'manager' );
+
 		// Progresso por membro
 		$member_progress = [];
 		foreach ( $members as $m ) {
@@ -256,6 +258,7 @@ class KT_Frontend {
 	private function render_dashboard( $member ) {
 		$enrollments  = KT_Progress::get_enrollments_for_member( $member->id );
 		$certificates = KT_Certificate::get_all_for_member( $member->id );
+		$quote        = $this->get_daily_quote( 'staff' );
 		include KT_PLUGIN_DIR . 'frontend/views/dashboard.php';
 	}
 
@@ -561,6 +564,138 @@ class KT_Frontend {
 			wp_redirect( add_query_arg( 'kt_acesso_negado', '1', $portal ) );
 			exit;
 		}
+	}
+
+	/* -----------------------------------------------------------------------
+	 * Frases inspiradoras
+	 * -------------------------------------------------------------------- */
+
+	/**
+	 * Retorna a frase do dia para o tipo especificado ('staff' ou 'manager').
+	 * Usa a opção kt_quotes_{type} (JSON). Se vazia, semeia os padrões do PDF.
+	 * A frase é determinística por dia (seed = dia do ano).
+	 *
+	 * @return array|null  [ 'text' => string, 'author' => string ] ou null
+	 */
+	private function get_daily_quote( string $type ): ?array {
+		$key = 'kt_quotes_' . $type;
+		$raw = get_option( $key );
+
+		// Semeia os padrões na primeira execução
+		if ( $raw === false ) {
+			$defaults = self::default_quotes( $type );
+			update_option( $key, wp_json_encode( $defaults ) );
+			$quotes = $defaults;
+		} else {
+			$quotes = json_decode( $raw, true );
+		}
+
+		if ( empty( $quotes ) ) return null;
+
+		$idx = (int) date( 'z' ) % count( $quotes );
+		$line = $quotes[ $idx ];
+
+		// Separa texto do autor pela última ocorrência de " — "
+		$sep = strrpos( $line, ' — ' );
+		if ( $sep !== false ) {
+			$text   = trim( substr( $line, 0, $sep ), "\"\u{201C}\u{201D} " );
+			$author = trim( substr( $line, $sep + 3 ) );
+		} else {
+			$text   = trim( $line, "\"\u{201C}\u{201D} " );
+			$author = '';
+		}
+
+		return [ 'text' => $text, 'author' => $author ];
+	}
+
+	/** Banco de frases padrão (do PDF). Editável pelo admin em Keen Training → Dashboard. */
+	private static function default_quotes( string $type ): array {
+		$manager = [
+			'"Um investimento em conhecimento sempre paga os melhores juros." — Benjamin Franklin',
+			'"A coisa mais linda do aprendizado é que ninguém pode tirar isso de você." — B.B. King',
+			'"Nunca deixe de aprender. O dia em que você para de aprender é o dia em que começa a morrer." — Albert Einstein',
+			'"Estou sempre fazendo o que não consigo fazer — para aprender como fazer." — Pablo Picasso',
+			'"É bom celebrar o sucesso, mas é mais importante aprender com o fracasso." — Bill Gates',
+			'"Posso aceitar o fracasso. Todo mundo fracassa em alguma coisa. Mas não consigo aceitar não tentar." — Michael Jordan',
+			'"Somos o que fazemos repetidamente. Excelência, portanto, não é um ato — é um hábito." — Aristóteles',
+			'"Qualidade é fazer certo quando ninguém está olhando." — Henry Ford',
+			'"Perfeição não é atingível, mas se corrermos atrás dela podemos alcançar a excelência." — Vince Lombardi',
+			'"Faça sempre o melhor que puder. O que você plantar agora, colherá mais tarde." — Og Mandino',
+			'"Você não precisa ser grande para começar, mas precisa começar para ser grande." — Zig Ziglar',
+			'"Não espere. O momento nunca será perfeito." — Napoleon Hill',
+			'"Unir é um começo, manter-se unidos é um progresso, trabalhar juntos é o sucesso." — Henry Ford',
+			'"Se você quer ir rápido, vá sozinho. Se quer ir longe, vá acompanhado." — Provérbio africano',
+			'"Grandes coisas nos negócios nunca são feitas por uma só pessoa. São feitas por um time." — Steve Jobs',
+			'"É incrível o que você pode realizar quando não se importa com quem leva o crédito." — Harry S. Truman',
+			'"A melhor maneira de encontrar a si mesmo é se perder no serviço ao próximo." — Mahatma Gandhi',
+			'"A pergunta mais persistente e urgente da vida é: o que você está fazendo pelos outros?" — Martin Luther King Jr.',
+			'"Para se comunicar bem, é preciso primeiro ouvir bem." — Ernest Hemingway',
+			'"Fale de forma que as pessoas queiram te ouvir. Ouça de forma que as pessoas queiram falar." — Simon Sinek',
+			'"Aproxime-se dos seus clientes. Tão próximo que você já saiba o que eles precisam antes que eles percebam." — Steve Jobs',
+			'"Faça um cliente, não uma venda." — Katherine Barchetti',
+			'"O cliente mais importante é o que veio reclamar — ele te dá a chance de melhorar." — Bill Gates',
+			'"O preço da grandeza é a responsabilidade." — Winston Churchill',
+			'"O exemplo não é a principal maneira de influenciar os outros. É a única." — Albert Schweitzer',
+			'"Um líder é alguém que conhece o caminho, faz o caminho e mostra o caminho." — John C. Maxwell',
+			'"A velocidade do líder é a velocidade do time." — Lee Iacocca',
+			'"A qualidade mais importante da liderança é a integridade." — Dwight D. Eisenhower',
+			'"Antes de ser líder, o sucesso é sobre crescer a si mesmo. Quando você se torna líder, o sucesso é sobre fazer os outros crescerem." — Jack Welch',
+			'"Treine as pessoas bem o suficiente para que possam ir embora. Trate-as bem o suficiente para que não queiram." — Richard Branson',
+			'"Um grande líder não é o que faz grandes coisas. É o que faz as pessoas ao redor fazerem grandes coisas." — Ronald Reagan',
+			'"Se suas ações inspiram outros a sonhar mais, aprender mais, fazer mais e ser mais — você é um líder." — John Quincy Adams',
+			'"Você não constrói um negócio. Você constrói pessoas, e as pessoas constroem o negócio." — Zig Ziglar',
+			'"Cuide dos seus funcionários e eles cuidarão dos seus clientes." — Richard Branson',
+			'"Liderança é sobre fazer os outros melhores como resultado da sua presença — e garantir que esse impacto dure na sua ausência." — Sheryl Sandberg',
+			'"Sempre trate seus liderados exatamente como você gostaria que eles tratassem seus melhores clientes." — Stephen R. Covey',
+			'"Pessoas não são apenas recursos a serem gerenciados, mas fontes de inovação, criatividade e diferenciação estratégica." — Gary Hamel',
+			'"A cultura de uma organização é moldada pelo pior comportamento que o líder está disposto a tolerar." — Steve Gruenert',
+			'"Critique em particular. Elogie em público." — Vince Lombardi',
+			'"O melhor presente que um líder pode dar ao time é a clareza." — Patrick Lencioni',
+			'"Não me diga o que é prioritário. Me mostre onde você gasta seu tempo e seu dinheiro — e eu te direi." — Jim Collins',
+			'"O maior sinal de um mau líder é que ele tem sempre pressa — e nunca tem tempo." — Robert Townsend',
+			'"A função do líder é produzir mais líderes — não mais seguidores." — Ralph Nader',
+			'"Amadores se concentram em destruir os outros. Profissionais se concentram em fazer com que todos melhorem." — Shane Parrish',
+		];
+
+		$staff = [
+			'"Um investimento em conhecimento sempre paga os melhores juros." — Benjamin Franklin',
+			'"A coisa mais linda do aprendizado é que ninguém pode tirar isso de você." — B.B. King',
+			'"Nunca deixe de aprender. O dia em que você para de aprender é o dia em que começa a morrer." — Albert Einstein',
+			'"É bom celebrar o sucesso, mas é mais importante aprender com o fracasso." — Bill Gates',
+			'"Unir é um começo, manter-se unidos é um progresso, trabalhar juntos é o sucesso." — Henry Ford',
+			'"Se você quer ir rápido, vá sozinho. Se quer ir longe, vá acompanhado." — Provérbio africano',
+			'"Somos o que fazemos repetidamente. Excelência, portanto, não é um ato — é um hábito." — Aristóteles',
+			'"Qualidade é fazer certo quando ninguém está olhando." — Henry Ford',
+			'"Faça sempre o melhor que puder. O que você plantar agora, colherá mais tarde." — Og Mandino',
+			'"Você não precisa ser grande para começar, mas precisa começar para ser grande." — Zig Ziglar',
+			'"Não espere. O momento nunca será perfeito." — Napoleon Hill',
+			'"A melhor maneira de encontrar a si mesmo é se perder no serviço ao próximo." — Mahatma Gandhi',
+			'"Para se comunicar bem, é preciso primeiro ouvir bem." — Ernest Hemingway',
+			'"Fale de forma que as pessoas queiram te ouvir. Ouça de forma que as pessoas queiram falar." — Simon Sinek',
+			'"O preço da grandeza é a responsabilidade." — Winston Churchill',
+			'"Aproxime-se dos seus clientes. Tão próximo que você já saiba o que eles precisam antes que eles percebam." — Steve Jobs',
+			'"Faça um cliente, não uma venda." — Katherine Barchetti',
+			'"O cliente mais importante é o que veio reclamar — ele te dá a chance de melhorar." — Bill Gates',
+			'"Perfeição não é atingível, mas se corrermos atrás dela podemos alcançar a excelência." — Vince Lombardi',
+			'"Posso aceitar o fracasso. Todo mundo fracassa em alguma coisa. Mas não consigo aceitar não tentar." — Michael Jordan',
+			'"Grandes coisas nos negócios nunca são feitas por uma só pessoa. São feitas por um time." — Steve Jobs',
+			'"É incrível o que você pode realizar quando não se importa com quem leva o crédito." — Harry S. Truman',
+			'"A pergunta mais persistente e urgente da vida é: o que você está fazendo pelos outros?" — Martin Luther King Jr.',
+			'"Estou sempre fazendo o que não consigo fazer — para aprender como fazer." — Pablo Picasso',
+			'"A mente que se abre a uma nova ideia jamais voltará ao seu tamanho original." — Albert Einstein',
+			'"Nossa maior glória não está em nunca cair, mas em nos levantar cada vez que caímos." — Confúcio',
+			'"Amadores se concentram em destruir os outros. Profissionais se concentram em fazer com que todos melhorem." — Shane Parrish',
+			'"O talento vence jogos, mas só o trabalho em equipe ganha campeonatos." — Michael Jordan',
+			'"A verdadeira influência vem de agregar valor aos outros." — Adam Grant',
+			'"O objetivo é conhecer e entender o cliente tão bem que o produto ou serviço se encaixe nele e se venda sozinho." — Peter Drucker',
+			'"O sucesso geralmente vem para quem está ocupado demais para ficar procurando por ele." — Henry David Thoreau',
+			'"Você não pode voltar atrás e mudar o começo, mas pode começar agora e mudar o final." — C.S. Lewis',
+			'"Acredite que pode — e você já está na metade do caminho." — Theodore Roosevelt',
+			'"Amanhã pertence às pessoas que se preparam para ele hoje." — Malcolm X',
+			'"Clientes não esperam que você seja perfeito. Esperam que você resolva quando algo dá errado." — Donald Porter',
+		];
+
+		return $type === 'manager' ? $manager : $staff;
 	}
 
 	/* -----------------------------------------------------------------------
