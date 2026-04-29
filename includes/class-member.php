@@ -17,11 +17,17 @@ class KT_Member {
 		return $wpdb->get_results(
 			"SELECT m.*, u.display_name, u.user_email,
 			        l.name AS location_name,
-			        pos.name AS position_name
+			        pos.name AS position_name,
+			        NULLIF(TRIM(CONCAT(
+			            COALESCE(umf.meta_value, ''), ' ',
+			            COALESCE(uml.meta_value, '')
+			        )), '') AS full_name
 			 FROM {$wpdb->prefix}kt_members m
 			 JOIN {$wpdb->users} u ON u.ID = m.user_id
 			 LEFT JOIN {$wpdb->prefix}kt_locations l ON l.id = m.location_id
 			 LEFT JOIN {$wpdb->prefix}kt_positions pos ON pos.id = m.position_id
+			 LEFT JOIN {$wpdb->usermeta} umf ON umf.user_id = u.ID AND umf.meta_key = 'first_name'
+			 LEFT JOIN {$wpdb->usermeta} uml ON uml.user_id = u.ID AND uml.meta_key = 'last_name'
 			 $where
 			 ORDER BY u.display_name ASC"
 		);

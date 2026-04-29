@@ -803,10 +803,123 @@
 .kt-quiz-embed-form .kt-question.kt-unanswered { border-color: #fca5a5; background: #fff5f5; }
 .kt-quiz-embed-form .kt-quiz-footer { margin-top: 24px; }
 
+/* --- Modal de edição do colaborador --- */
+.kt-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15,23,42,.45);
+	z-index: 99999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+}
+body.kt-modal-open { overflow: hidden; }
+
+.kt-modal {
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 24px 60px rgba(0,0,0,.18);
+	width: 100%;
+	max-width: 640px;
+	max-height: 88vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.kt-modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 18px 24px 16px;
+	border-bottom: 1px solid #e2e8f0;
+	flex-shrink: 0;
+}
+.kt-modal-header h3 { margin: 0; font-size: 1.05em; font-weight: 700; }
+.kt-modal-close {
+	background: none;
+	border: none;
+	font-size: 1.4em;
+	line-height: 1;
+	cursor: pointer;
+	color: #94a3b8;
+	padding: 0 4px;
+	transition: color .15s;
+}
+.kt-modal-close:hover { color: #1e293b; }
+
+.kt-modal-body {
+	padding: 20px 24px;
+	overflow-y: auto;
+	flex: 1;
+}
+.kt-modal-section { margin-bottom: 24px; }
+.kt-modal-section:last-child { margin-bottom: 0; }
+.kt-modal-section-title {
+	font-size: .72em;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: .08em;
+	color: #64748b;
+	margin: 0 0 12px;
+}
+
+/* Tabela de matrículas no modal */
+.kt-modal-enroll-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: .85em;
+}
+.kt-modal-enroll-table thead th {
+	background: #f8fafc;
+	padding: 7px 10px;
+	text-align: left;
+	font-size: .72em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .06em;
+	color: #94a3b8;
+	border-bottom: 1px solid #e2e8f0;
+}
+.kt-modal-enroll-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+.kt-modal-enroll-table tbody tr:last-child { border-bottom: none; }
+.kt-modal-enroll-table td { padding: 9px 10px; vertical-align: middle; }
+.kt-modal-course-title {
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
+}
+.kt-modal-actions { white-space: nowrap; }
+.kt-modal-row-msg { font-size: .82em; min-height: 1.2em; margin: 6px 0 0; }
+
+/* Linha de atribuição rápida no modal */
+.kt-modal-assign-section { background: #f8fafc; border-radius: 10px; padding: 16px; }
+.kt-modal-assign-row {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+.kt-modal-course-select {
+	flex: 1;
+	min-width: 160px;
+	padding: 7px 10px;
+	border: 1px solid #e2e8f0;
+	border-radius: 7px;
+	font-size: .88em;
+	background: #fff;
+}
+
 /* --- Responsivo --- */
 @media (max-width: 640px) {
 	.kt-courses-grid { grid-template-columns: 1fr; }
 	.kt-module-header { flex-wrap: wrap; }
 	.kt-completion-banner { flex-direction: column; text-align: center; }
 	.kt-portal-header h2 { font-size: 1.4em; }
+	.kt-modal-enroll-table thead { display: none; }
+	.kt-modal-enroll-table td { display: block; padding: 4px 10px; }
+	.kt-modal-enroll-table tr { padding: 10px 0; border-bottom: 1px solid #f1f5f9; display: block; }
+	.kt-modal-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 }

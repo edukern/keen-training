@@ -12,8 +12,9 @@ class KT_Frontend {
 		add_action( 'wp_head',                     [ $this, 'inject_appearance_vars' ] );
 		add_action( 'wp_ajax_kt_complete_module',  [ $this, 'ajax_complete_module' ] );
 		add_action( 'wp_ajax_kt_submit_quiz',      [ $this, 'ajax_submit_quiz' ] );
-		add_action( 'wp_ajax_kt_enroll_member',    [ $this, 'ajax_enroll_member' ] );
-		add_action( 'wp_ajax_kt_unenroll_member',  [ $this, 'ajax_unenroll_member' ] );
+		add_action( 'wp_ajax_kt_enroll_member',      [ $this, 'ajax_enroll_member' ] );
+		add_action( 'wp_ajax_kt_unenroll_member',    [ $this, 'ajax_unenroll_member' ] );
+		add_action( 'wp_ajax_kt_update_due_date',    [ $this, 'ajax_update_due_date' ] );
 		add_action( 'template_redirect',           [ $this, 'maybe_render_certificate' ] );
 		add_action( 'template_redirect',           [ $this, 'enforce_module_page_access' ] );
 		add_filter( 'login_redirect',              [ $this, 'login_redirect' ], 10, 3 );
@@ -196,6 +197,29 @@ class KT_Frontend {
 
 		KT_Progress::unenroll( $member_id, $course_id );
 		wp_send_json_success( [ 'message' => 'Matrícula removida.' ] );
+	}
+
+	public function ajax_update_due_date() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		global $wpdb;
+		$member_id = absint( $_POST['member_id'] ?? 0 );
+		$course_id = absint( $_POST['course_id'] ?? 0 );
+		$due_date  = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
+
+		if ( ! $member_id || ! $course_id ) wp_send_json_error( [ 'message' => 'Parâmetros inválidos.' ] );
+
+		$m = KT_Member::get( $member_id );
+		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$wpdb->update(
+			$wpdb->prefix . 'kt_enrollments',
+			[ 'due_date' => $due_date ],
+			[ 'member_id' => $member_id, 'course_id' => $course_id ]
+		);
+
+		wp_send_json_success( [ 'message' => 'Prazo atualizado.' ] );
 	}
 
 	public function enqueue_assets() {

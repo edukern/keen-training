@@ -96,10 +96,12 @@
 				</div>
 				<!-- Lista de membros -->
 				<div class="kt-member-list" id="kt-member-list">
-					<?php foreach ( $members as $m ): ?>
-					<label class="kt-member-check-item" data-name="<?php echo esc_attr( mb_strtolower( $m->display_name ?: $m->user_login, 'UTF-8' ) ); ?>">
+					<?php foreach ( $members as $m ):
+						$_display = $m->full_name ?: $m->display_name ?: $m->user_login;
+					?>
+					<label class="kt-member-check-item" data-name="<?php echo esc_attr( mb_strtolower( $_display, 'UTF-8' ) ); ?>">
 						<input type="checkbox" class="kt-member-cb" value="<?php echo absint( $m->id ); ?>">
-						<span class="kt-member-check-name"><?php echo esc_html( $m->display_name ?: $m->user_login ); ?></span>
+						<span class="kt-member-check-name"><?php echo esc_html( $_display ); ?></span>
 						<?php if ( $m->position_name ): ?>
 							<span class="kt-member-check-pos"><?php echo esc_html( $m->position_name ); ?></span>
 						<?php endif; ?>
@@ -132,17 +134,33 @@
 				<tr>
 					<th style="width:200px">Colaborador</th>
 					<th style="width:120px">Função</th>
-					<th>Treinamentos <span style="font-size:.85em;opacity:.55;font-weight:400">— × remove e zera o progresso</span></th>
+					<th>Treinamentos</th>
+					<th style="width:80px"></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php foreach ( $members as $m ):
-				$enrs = $member_progress[ $m->id ] ?? [];
+				$enrs        = $member_progress[ $m->id ] ?? [];
+				$_name       = $m->full_name ?: $m->display_name ?: $m->user_login;
+
+				// Monta array de matrículas para o modal (JSON)
+				$enrs_for_json = [];
+				foreach ( $enrs as $e ) {
+					$pct = KT_Progress::course_progress_pct( $m->id, $e->course_id );
+					$overdue = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
+					$enrs_for_json[] = [
+						'course_id'    => (int) $e->course_id,
+						'course_title' => $e->course_title,
+						'status'       => $e->status,
+						'overdue'      => $overdue,
+						'due_date'     => $e->due_date ?: '',
+						'pct'          => $pct,
+					];
+				}
 			?>
 			<tr>
 				<td>
-					<div class="kt-member-name"><?php echo esc_html( $m->display_name ?: $m->user_login ); ?></div>
-					<div class="kt-member-email"><?php echo esc_html( $m->user_email ); ?></div>
+					<div class="kt-member-name"><?php echo esc_html( $_name ); ?></div>
 				</td>
 				<td>
 					<?php if ( $m->position_name ): ?>
@@ -164,16 +182,19 @@
 						<span class="kt-enroll-chip kt-enroll-chip-<?php echo $chip_class; ?>">
 							<span class="kt-chip-title" title="<?php echo esc_attr( $e->course_title ); ?>"><?php echo esc_html( $short ); ?></span>
 							<span class="kt-chip-pct"> · <?php echo $pct; ?>%</span>
-							<button type="button"
-								class="kt-chip-remove kt-unenroll-btn"
-								data-member-id="<?php echo absint( $m->id ); ?>"
-								data-course-id="<?php echo absint( $e->course_id ); ?>"
-								data-course-name="<?php echo esc_attr( $e->course_title ); ?>"
-								title="Remover matrícula">×</button>
 						</span>
 						<?php endforeach; ?>
-						<span class="kt-no-enroll" id="kt-noenroll-<?php echo absint( $m->id ); ?>"<?php echo $enrs ? ' style="display:none"' : ''; ?>>Sem treinamentos atribuídos</span>
+						<span class="kt-no-enroll" id="kt-noenroll-<?php echo absint( $m->id ); ?>"<?php echo $enrs ? ' style="display:none"' : ''; ?>>Sem treinamentos</span>
 					</div>
+				</td>
+				<td>
+					<button type="button"
+						class="kt-btn kt-btn-sm kt-edit-member-btn"
+						data-member-id="<?php echo absint( $m->id ); ?>"
+						data-member-name="<?php echo esc_attr( $_name ); ?>"
+						data-enrollments="<?php echo esc_attr( wp_json_encode( $enrs_for_json ) ); ?>">
+						Editar →
+					</button>
 				</td>
 			</tr>
 			<?php endforeach; ?>
@@ -182,6 +203,19 @@
 	</div>
 	<?php endif; ?>
 
+</div>
+
+<!-- ── Modal de edição do colaborador ── -->
+<div id="kt-member-modal-overlay" class="kt-modal-overlay" style="display:none" aria-modal="true" role="dialog">
+	<div class="kt-modal">
+		<div class="kt-modal-header">
+			<h3 id="kt-modal-title">Editar colaborador</h3>
+			<button type="button" class="kt-modal-close" id="kt-modal-close" aria-label="Fechar">×</button>
+		</div>
+		<div class="kt-modal-body" id="kt-modal-body">
+			<!-- conteúdo injetado via JS -->
+		</div>
+	</div>
 </div>
 
 <script>
@@ -203,7 +237,6 @@
 		$('#kt-selected-count').text( n );
 		$('#kt-assign-btn').prop( 'disabled', n === 0 );
 
-		// Atualiza estado do "selecionar todos"
 		var $all = $('#kt-select-all');
 		var visChecked = $('.kt-member-check-item:not(.kt-item-hidden) .kt-member-cb:checked').length;
 		if ( visChecked === 0 ) {
@@ -214,7 +247,6 @@
 			$all.prop( 'indeterminate', true );
 		}
 
-		// Atualiza label do select-all
 		var total = $('.kt-member-check-item').length;
 		$('#kt-select-all-label').text( visible === total ? 'Selecionar todos (' + total + ')' : 'Selecionar visíveis (' + visible + ')' );
 	}
@@ -256,7 +288,7 @@
 		updateCounter();
 	});
 
-	/* ── Atribuir ── */
+	/* ── Atribuir (bulk) ── */
 	$('#kt-assign-btn').on('click', function(){
 		var courseId   = $('#kt-assign-course').val();
 		var memberIds  = getCheckedIds();
@@ -292,32 +324,214 @@
 		});
 	});
 
-	/* ── Remover matrícula (chip ×) ── */
-	$(document).on('click', '.kt-unenroll-btn', function(){
+	/* ══════════════════════════════════════════
+	   Modal de edição do colaborador
+	══════════════════════════════════════════ */
+
+	var STATUS_LABEL = {
+		nao_iniciado: 'Não iniciado',
+		em_andamento: 'Em andamento',
+		concluido:    'Concluído'
+	};
+
+	function statusChip( status, overdue ) {
+		var cls   = overdue ? 'overdue' : status;
+		var label = overdue ? 'Atrasado' : ( STATUS_LABEL[ status ] || status );
+		return '<span class="kt-enroll-chip kt-enroll-chip-' + cls + '" style="font-size:.78em">' + label + '</span>';
+	}
+
+	function openModal( memberId, memberName, enrollments ) {
+		$('#kt-modal-title').text( memberName );
+
+		/* ── Cursos disponíveis para o select de atribuição ── */
+		var $courseOpts = $('#kt-assign-course option').clone();
+
+		/* ── Monta corpo do modal ── */
+		var html = '';
+
+		// Seção: matrículas existentes
+		if ( enrollments.length ) {
+			html += '<div class="kt-modal-section">';
+			html += '<p class="kt-modal-section-title">Treinamentos atribuídos</p>';
+			html += '<table class="kt-modal-enroll-table">';
+			html += '<thead><tr><th>Curso</th><th>Status</th><th>Prazo</th><th></th></tr></thead>';
+			html += '<tbody>';
+			$.each( enrollments, function( i, e ) {
+				var rowId = 'kt-modal-row-' + memberId + '-' + e.course_id;
+				html += '<tr id="' + rowId + '">';
+				html += '<td class="kt-modal-course-title" title="' + $('<div>').text(e.course_title).html() + '">' + $('<div>').text(e.course_title).html() + '</td>';
+				html += '<td>' + statusChip( e.status, e.overdue ) + ' <small style="color:#94a3b8">' + e.pct + '%</small></td>';
+				html += '<td><input type="date" class="kt-modal-due-input" data-member-id="' + memberId + '" data-course-id="' + e.course_id + '" value="' + e.due_date + '" style="border:1px solid #e2e8f0;border-radius:6px;padding:4px 7px;font-size:.82em"></td>';
+				html += '<td class="kt-modal-actions">';
+				html +=   '<button type="button" class="kt-btn kt-btn-sm kt-modal-save-due" data-member-id="' + memberId + '" data-course-id="' + e.course_id + '">Salvar prazo</button>';
+				html +=   ' <button type="button" class="kt-btn kt-btn-sm kt-modal-unenroll" data-member-id="' + memberId + '" data-course-id="' + e.course_id + '" data-course-name="' + $('<div>').text(e.course_title).html() + '" data-row="' + rowId + '" style="color:#b91c1c;border-color:#fca5a5">Remover</button>';
+				html += '</td>';
+				html += '</tr>';
+			});
+			html += '</tbody></table>';
+			html += '<p class="kt-modal-row-msg" id="kt-modal-enroll-msg"></p>';
+			html += '</div>';
+		} else {
+			html += '<p style="color:#94a3b8;margin-bottom:20px;font-style:italic">Sem treinamentos atribuídos.</p>';
+		}
+
+		// Seção: atribuir novo treinamento
+		html += '<div class="kt-modal-section kt-modal-assign-section">';
+		html += '<p class="kt-modal-section-title">Atribuir novo treinamento</p>';
+		html += '<div class="kt-modal-assign-row">';
+		html +=   '<select id="kt-modal-course-select" class="kt-modal-course-select"><option value="">— Selecione o curso —</option></select>';
+		html +=   '<input type="date" id="kt-modal-assign-due" style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:.88em">';
+		html +=   '<button type="button" id="kt-modal-assign-btn" class="kt-btn kt-btn-primary" data-member-id="' + memberId + '" disabled>Atribuir</button>';
+		html += '</div>';
+		html += '<p class="kt-modal-row-msg" id="kt-modal-assign-msg"></p>';
+		html += '</div>';
+
+		$('#kt-modal-body').html( html );
+
+		// Popula select de cursos (copia do formulário principal)
+		$courseOpts.each(function(){
+			$('#kt-modal-course-select').append( $(this).clone() );
+		});
+		$('#kt-modal-course-select').on('change', function(){
+			$('#kt-modal-assign-btn').prop('disabled', ! $(this).val() );
+		});
+
+		$('#kt-member-modal-overlay').fadeIn( 180 );
+		$('body').addClass('kt-modal-open');
+	}
+
+	function closeModal() {
+		$('#kt-member-modal-overlay').fadeOut( 150 );
+		$('body').removeClass('kt-modal-open');
+	}
+
+	/* Abrir modal */
+	$(document).on('click', '.kt-edit-member-btn', function(){
+		var $btn       = $(this);
+		var memberId   = $btn.data('member-id');
+		var memberName = $btn.data('member-name');
+		var enrollments;
+		try {
+			enrollments = JSON.parse( $btn.attr('data-enrollments') || '[]' );
+		} catch(e) {
+			enrollments = [];
+		}
+		openModal( memberId, memberName, enrollments );
+	});
+
+	/* Fechar modal */
+	$('#kt-modal-close').on('click', closeModal );
+	$('#kt-member-modal-overlay').on('click', function(e){
+		if ( $(e.target).is('#kt-member-modal-overlay') ) closeModal();
+	});
+	$(document).on('keydown', function(e){
+		if ( e.key === 'Escape' ) closeModal();
+	});
+
+	/* ── Salvar prazo ── */
+	$(document).on('click', '.kt-modal-save-due', function(){
+		var $btn      = $(this);
+		var memberId  = $btn.data('member-id');
+		var courseId  = $btn.data('course-id');
+		var $row      = $btn.closest('tr');
+		var dueDate   = $row.find('.kt-modal-due-input').val();
+
+		$btn.prop('disabled', true).text('Salvando…');
+
+		$.post( ktFrontend.ajaxUrl, {
+			action:    'kt_update_due_date',
+			nonce:     ktFrontend.nonce,
+			member_id: memberId,
+			course_id: courseId,
+			due_date:  dueDate,
+		}).done(function(r){
+			var ok = r.success;
+			$('#kt-modal-enroll-msg').text( ok ? 'Prazo salvo!' : (r.data && r.data.message ? r.data.message : 'Erro.') ).css('color', ok ? '#15803d' : '#b91c1c');
+			$btn.prop('disabled', false).text('Salvar prazo');
+			if ( ok ) setTimeout(function(){ $('#kt-modal-enroll-msg').text(''); }, 2000 );
+		}).fail(function(){
+			$('#kt-modal-enroll-msg').text('Erro de conexão.').css('color','#b91c1c');
+			$btn.prop('disabled', false).text('Salvar prazo');
+		});
+	});
+
+	/* ── Remover matrícula (no modal) ── */
+	$(document).on('click', '.kt-modal-unenroll', function(){
 		var $btn       = $(this);
 		var courseName = $btn.data('course-name') || 'este curso';
-		if ( ! confirm( 'Remover matrícula em "' + courseName + '" e zerar todo o progresso?\n\nO colaborador poderá ser rematriculado para refazer do zero.' ) ) return;
+		var rowId      = $btn.data('row');
+		if ( ! confirm( 'Remover matrícula em "' + courseName + '" e zerar todo o progresso?' ) ) return;
 
-		var $chip  = $btn.closest('.kt-enroll-chip');
-		var $chips = $btn.closest('.kt-enroll-chips');
+		$btn.prop('disabled', true);
 
 		$.post( ktFrontend.ajaxUrl, {
 			action:    'kt_unenroll_member',
 			nonce:     ktFrontend.nonce,
 			member_id: $btn.data('member-id'),
-			course_id: $btn.data('course-id')
+			course_id: $btn.data('course-id'),
 		}).done(function(r){
 			if ( r.success ) {
-				$chip.fadeOut( 200, function(){
-					$(this).remove();
-					if ( $chips.find('.kt-enroll-chip').length === 0 ) {
-						$chips.find('.kt-no-enroll').show();
-					}
+				$('#' + rowId).fadeOut( 200, function(){ $(this).remove(); });
+				// Atualiza chips na tabela
+				var memberId = $btn.data('member-id');
+				var courseId = $btn.data('course-id');
+				var $chips   = $('#kt-chips-' + memberId);
+				$chips.find('.kt-enroll-chip').each(function(){
+					// Não temos como identificar o chip pelo course_id facilmente sem data-attr,
+					// então fazemos reload após fechar o modal
 				});
+				$('#kt-modal-enroll-msg').text('Matrícula removida.').css('color','#15803d');
+				// Sinaliza que houve mudança — reload ao fechar
+				$('#kt-member-modal-overlay').data('needsReload', true);
 			}
 		}).fail(function(){
-			alert( 'Erro de conexão. Tente novamente.' );
+			$('#kt-modal-enroll-msg').text('Erro de conexão.').css('color','#b91c1c');
+			$btn.prop('disabled', false);
 		});
+	});
+
+	/* ── Atribuir no modal ── */
+	$(document).on('click', '#kt-modal-assign-btn', function(){
+		var $btn      = $(this);
+		var memberId  = $btn.data('member-id');
+		var courseId  = $('#kt-modal-course-select').val();
+		var dueDate   = $('#kt-modal-assign-due').val();
+		var courseName = $('#kt-modal-course-select option:selected').text();
+
+		if ( ! courseId ) return;
+		if ( ! confirm('Atribuir "' + courseName + '" para este colaborador?') ) return;
+
+		$btn.prop('disabled', true).text('Salvando…');
+
+		$.post( ktFrontend.ajaxUrl, {
+			action:       'kt_enroll_member',
+			nonce:        ktFrontend.nonce,
+			course_id:    courseId,
+			due_date:     dueDate,
+			'member_ids[0]': memberId,
+		}).done(function(r){
+			var ok = r.success;
+			$('#kt-modal-assign-msg')
+				.text( ok ? r.data.message : (r.data && r.data.message ? r.data.message : 'Erro.') )
+				.css('color', ok ? '#15803d' : '#b91c1c');
+			if ( ok ) {
+				$btn.text('Atribuído ✓');
+				$('#kt-member-modal-overlay').data('needsReload', true);
+			} else {
+				$btn.prop('disabled', false).text('Atribuir');
+			}
+		}).fail(function(){
+			$('#kt-modal-assign-msg').text('Erro de conexão.').css('color','#b91c1c');
+			$btn.prop('disabled', false).text('Atribuir');
+		});
+	});
+
+	/* ── Reload ao fechar se houve mudanças ── */
+	$('#kt-modal-close, #kt-member-modal-overlay').on('click', function(e){
+		if ( e.target.id !== 'kt-member-modal-overlay' && e.target.id !== 'kt-modal-close' ) return;
+		if ( $('#kt-member-modal-overlay').data('needsReload') ) {
+			location.reload();
+		}
 	});
 
 })(jQuery);
