@@ -407,38 +407,141 @@
 	padding: 20px 24px;
 	margin-bottom: 28px;
 }
-.kt-manager-enroll-box h3 { margin: 0 0 14px; font-size: 1.05em; font-weight: 700; }
-.kt-enroll-form-row {
+.kt-manager-enroll-box h3 { margin: 0 0 16px; font-size: 1.05em; font-weight: 700; }
+
+/* Assignment form layout */
+.kt-assign-top-row {
 	display: flex;
-	gap: 10px;
+	gap: 12px;
 	flex-wrap: wrap;
 	align-items: flex-end;
+	margin-bottom: 16px;
 }
-.kt-enroll-form-row label { display: block; font-size: .8em; font-weight: 600; color: #64748b; margin-bottom: 4px; }
-.kt-enroll-form-row select,
-.kt-enroll-form-row input[type="date"] {
-	padding: 7px 10px;
-	border: 1px solid #e2e8f0;
-	border-radius: 7px;
-	font-size: .9em;
-	background: #f8fafc;
-	min-width: 160px;
-	max-width: 100%;
-}
-.kt-enroll-bulk-row {
-	border-top: 1px dashed #e2e8f0;
-	padding-top: 12px;
-	margin-top: 12px;
-}
-.kt-enroll-bulk-label {
+.kt-assign-field { display: flex; flex-direction: column; gap: 5px; }
+.kt-assign-field label {
 	font-size: .78em;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: .06em;
-	color: #94a3b8;
-	align-self: center;
-	padding-bottom: 2px;
+	color: #64748b;
 }
+.kt-assign-field select,
+.kt-assign-field input[type="date"] {
+	padding: 8px 12px;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	font-size: .9em;
+	background: #f8fafc;
+	transition: border-color .15s;
+}
+.kt-assign-field select:focus,
+.kt-assign-field input[type="date"]:focus { outline: none; border-color: var(--kt-color-primary); }
+.kt-assign-field-course select { min-width: 240px; }
+.kt-assign-field-date input  { min-width: 155px; }
+
+/* Member picker */
+.kt-member-picker { margin-top: 4px; }
+.kt-member-picker > label {
+	font-size: .78em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .06em;
+	color: #64748b;
+	display: block;
+	margin-bottom: 6px;
+}
+.kt-member-picker-box {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	overflow: hidden;
+	background: #fff;
+	max-width: 520px;
+}
+.kt-member-search-wrap {
+	padding: 8px 12px;
+	border-bottom: 1px solid #f1f5f9;
+	background: #f8fafc;
+}
+.kt-member-search-wrap input {
+	width: 100%;
+	border: none;
+	background: transparent;
+	font-size: .9em;
+	outline: none;
+	color: #1e293b;
+}
+.kt-member-search-wrap input::placeholder { color: #94a3b8; }
+.kt-member-select-all-row {
+	padding: 8px 14px;
+	border-bottom: 1px solid #f1f5f9;
+	background: #f8fafc;
+}
+.kt-member-select-all-row label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: .85em;
+	font-weight: 600;
+	color: #475569;
+	cursor: pointer;
+	user-select: none;
+}
+.kt-member-select-all-row input[type="checkbox"] {
+	accent-color: var(--kt-color-primary);
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+}
+.kt-member-list {
+	max-height: 232px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.kt-member-check-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 14px;
+	cursor: pointer;
+	border-bottom: 1px solid #f8fafc;
+	transition: background .1s;
+	user-select: none;
+}
+.kt-member-check-item:last-child { border-bottom: none; }
+.kt-member-check-item:hover { background: var(--kt-color-primary-light); }
+.kt-member-check-item.kt-item-hidden { display: none; }
+.kt-member-check-item input[type="checkbox"] {
+	accent-color: var(--kt-color-primary);
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+}
+.kt-member-check-name { flex: 1; font-size: .9em; font-weight: 500; }
+.kt-member-check-pos {
+	font-size: .75em;
+	background: #f1f5f9;
+	color: #64748b;
+	padding: 1px 7px;
+	border-radius: 20px;
+	white-space: nowrap;
+}
+.kt-member-no-results {
+	padding: 16px;
+	text-align: center;
+	color: #94a3b8;
+	font-size: .85em;
+	display: none;
+}
+
+.kt-assign-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 12px;
+	max-width: 520px;
+}
+.kt-assign-counter { font-size: .85em; color: #64748b; }
+.kt-assign-counter strong { color: var(--kt-color-primary); }
 
 /* Members compact table */
 .kt-manager-members { }

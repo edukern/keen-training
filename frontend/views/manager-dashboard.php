@@ -47,53 +47,63 @@
 	<div class="kt-manager-enroll-box">
 		<h3>Atribuir Treinamento</h3>
 
-		<!-- Individual -->
-		<div class="kt-enroll-form-row">
-			<div>
-				<label>Colaborador</label>
-				<select id="kt-enroll-member" style="min-width:180px">
-					<option value="">— Selecione —</option>
+		<!-- Passo 1: Curso + Prazo -->
+		<div class="kt-assign-top-row">
+			<div class="kt-assign-field kt-assign-field-course">
+				<label>Curso</label>
+				<select id="kt-assign-course">
+					<option value="">— Selecione o curso —</option>
+					<?php foreach ( $courses as $c ): ?>
+						<option value="<?php echo absint( $c->id ); ?>"><?php echo esc_html( $c->title ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<div class="kt-assign-field kt-assign-field-date">
+				<label>Prazo (opcional)</label>
+				<input type="date" id="kt-assign-due">
+			</div>
+		</div>
+
+		<!-- Passo 2: Selecionar colaboradores (aparece após escolher curso) -->
+		<?php if ( $members ): ?>
+		<div class="kt-member-picker" id="kt-member-picker" style="display:none">
+			<label>Colaboradores</label>
+			<div class="kt-member-picker-box">
+				<!-- Busca -->
+				<div class="kt-member-search-wrap">
+					<input type="text" id="kt-member-search" placeholder="&#128269; Buscar por nome…" autocomplete="off">
+				</div>
+				<!-- Selecionar todos -->
+				<div class="kt-member-select-all-row">
+					<label>
+						<input type="checkbox" id="kt-select-all">
+						<span id="kt-select-all-label">Selecionar todos</span>
+					</label>
+				</div>
+				<!-- Lista de membros -->
+				<div class="kt-member-list" id="kt-member-list">
 					<?php foreach ( $members as $m ): ?>
-						<option value="<?php echo absint( $m->id ); ?>"><?php echo esc_html( $m->display_name ?: $m->user_login ); ?></option>
+					<label class="kt-member-check-item" data-name="<?php echo esc_attr( mb_strtolower( $m->display_name ?: $m->user_login, 'UTF-8' ) ); ?>">
+						<input type="checkbox" class="kt-member-cb" value="<?php echo absint( $m->id ); ?>">
+						<span class="kt-member-check-name"><?php echo esc_html( $m->display_name ?: $m->user_login ); ?></span>
+						<?php if ( $m->position_name ): ?>
+							<span class="kt-member-check-pos"><?php echo esc_html( $m->position_name ); ?></span>
+						<?php endif; ?>
+					</label>
 					<?php endforeach; ?>
-				</select>
+					<div class="kt-member-no-results" id="kt-no-results">Nenhum colaborador encontrado.</div>
+				</div>
 			</div>
-			<div>
-				<label>Curso</label>
-				<select id="kt-enroll-course" style="min-width:200px">
-					<option value="">— Selecione —</option>
-					<?php foreach ( $courses as $c ): ?>
-						<option value="<?php echo absint( $c->id ); ?>"><?php echo esc_html( $c->title ); ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-			<div>
-				<label>Prazo (opcional)</label>
-				<input type="date" id="kt-enroll-due">
-			</div>
-			<button type="button" id="kt-enroll-btn" class="kt-btn kt-btn-primary">Atribuir</button>
-		</div>
 
-		<!-- Bulk: toda a unidade -->
-		<div class="kt-enroll-form-row kt-enroll-bulk-row">
-			<span class="kt-enroll-bulk-label">Toda a unidade →</span>
-			<div>
-				<label>Curso</label>
-				<select id="kt-bulk-course" style="min-width:200px">
-					<option value="">— Selecione —</option>
-					<?php foreach ( $courses as $c ): ?>
-						<option value="<?php echo absint( $c->id ); ?>"><?php echo esc_html( $c->title ); ?></option>
-					<?php endforeach; ?>
-				</select>
+			<!-- Rodapé: contador + botão -->
+			<div class="kt-assign-footer">
+				<span class="kt-assign-counter"><strong id="kt-selected-count">0</strong> selecionado(s)</span>
+				<button type="button" id="kt-assign-btn" class="kt-btn kt-btn-primary" disabled>Atribuir →</button>
 			</div>
-			<div>
-				<label>Prazo (opcional)</label>
-				<input type="date" id="kt-bulk-due">
-			</div>
-			<button type="button" id="kt-bulk-btn" class="kt-btn kt-btn-outline">Atribuir a todos</button>
 		</div>
+		<?php endif; ?>
 
-		<p id="kt-enroll-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
+		<p id="kt-enroll-msg" style="margin:12px 0 0;font-size:.88em;min-height:1.2em"></p>
 	</div>
 	<?php endif; ?>
 
@@ -108,7 +118,7 @@
 				<tr>
 					<th style="width:200px">Colaborador</th>
 					<th style="width:120px">Função</th>
-					<th>Treinamentos <span style="font-size:.85em;opacity:.6;font-weight:400">(clique × para remover e zerar progresso)</span></th>
+					<th>Treinamentos <span style="font-size:.85em;opacity:.55;font-weight:400">— × remove e zera o progresso</span></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -130,11 +140,11 @@
 				<td>
 					<div class="kt-enroll-chips" id="kt-chips-<?php echo absint( $m->id ); ?>">
 						<?php foreach ( $enrs as $e ):
-							$pct     = KT_Progress::course_progress_pct( $m->id, $e->course_id );
-							$overdue = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
+							$pct        = KT_Progress::course_progress_pct( $m->id, $e->course_id );
+							$overdue    = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
 							$chip_class = $overdue ? 'overdue' : esc_attr( $e->status );
-							$short = mb_strlen( $e->course_title ) > 26
-								? mb_substr( $e->course_title, 0, 24 ) . '…'
+							$short      = mb_strlen( $e->course_title ) > 26
+								? mb_substr( $e->course_title, 0, 24, 'UTF-8' ) . '…'
 								: $e->course_title;
 						?>
 						<span class="kt-enroll-chip kt-enroll-chip-<?php echo $chip_class; ?>">
@@ -144,7 +154,8 @@
 								class="kt-chip-remove kt-unenroll-btn"
 								data-member-id="<?php echo absint( $m->id ); ?>"
 								data-course-id="<?php echo absint( $e->course_id ); ?>"
-								title="Remover matrícula e zerar progresso em &quot;<?php echo esc_attr( $e->course_title ); ?>&quot;">×</button>
+								data-course-name="<?php echo esc_attr( $e->course_title ); ?>"
+								title="Remover matrícula">×</button>
 						</span>
 						<?php endforeach; ?>
 						<span class="kt-no-enroll" id="kt-noenroll-<?php echo absint( $m->id ); ?>"<?php echo $enrs ? ' style="display:none"' : ''; ?>>Sem treinamentos atribuídos</span>
@@ -162,50 +173,116 @@
 <script>
 (function($){
 
-	var locationId = <?php echo absint( $location_id ); ?>;
-
+	/* ── Helpers ── */
 	function showMsg( msg, ok ) {
 		$('#kt-enroll-msg').text( msg ).css( 'color', ok ? '#15803d' : '#b91c1c' );
 	}
 
-	function enrollAjax( memberId, courseId, dueDate ) {
-		showMsg( 'Salvando…', true );
-		$.post( ktFrontend.ajaxUrl, {
-			action:      'kt_enroll_member',
-			nonce:       ktFrontend.nonce,
-			member_id:   memberId,
-			course_id:   courseId,
-			due_date:    dueDate,
-			location_id: locationId
-		}).done(function(r){
-			showMsg( r.success ? r.data.message : ( r.data && r.data.message ? r.data.message : 'Erro.' ), r.success );
-			if ( r.success ) setTimeout(function(){ location.reload(); }, 700 );
-		}).fail(function(){
-			showMsg( 'Erro de conexão.', false );
-		});
+	function getCheckedIds() {
+		return $('.kt-member-cb:checked').map(function(){ return parseInt($(this).val()); }).get();
 	}
 
-	// Atribuição individual
-	$('#kt-enroll-btn').on('click', function(){
-		var memberId = $('#kt-enroll-member').val();
-		var courseId = $('#kt-enroll-course').val();
-		if ( ! memberId || ! courseId ) { showMsg( 'Selecione colaborador e curso.', false ); return; }
-		enrollAjax( memberId, courseId, $('#kt-enroll-due').val() );
+	function updateCounter() {
+		var n       = getCheckedIds().length;
+		var visible = $('.kt-member-check-item:not(.kt-item-hidden)').length;
+
+		$('#kt-selected-count').text( n );
+		$('#kt-assign-btn').prop( 'disabled', n === 0 );
+
+		// Atualiza estado do "selecionar todos"
+		var $all = $('#kt-select-all');
+		var visChecked = $('.kt-member-check-item:not(.kt-item-hidden) .kt-member-cb:checked').length;
+		if ( visChecked === 0 ) {
+			$all.prop( 'indeterminate', false ).prop( 'checked', false );
+		} else if ( visChecked === visible ) {
+			$all.prop( 'indeterminate', false ).prop( 'checked', true );
+		} else {
+			$all.prop( 'indeterminate', true );
+		}
+
+		// Atualiza label do select-all
+		var total = $('.kt-member-check-item').length;
+		$('#kt-select-all-label').text( visible === total ? 'Selecionar todos (' + total + ')' : 'Selecionar visíveis (' + visible + ')' );
+	}
+
+	/* ── Mostrar picker ao selecionar curso ── */
+	$('#kt-assign-course').on('change', function(){
+		if ( $(this).val() ) {
+			$('#kt-member-picker').slideDown( 180 );
+		} else {
+			$('#kt-member-picker').slideUp( 180 );
+			$('.kt-member-cb').prop( 'checked', false );
+			updateCounter();
+		}
 	});
 
-	// Atribuição bulk (toda a unidade)
-	$('#kt-bulk-btn').on('click', function(){
-		var courseId = $('#kt-bulk-course').val();
-		if ( ! courseId ) { showMsg( 'Selecione o curso para atribuir a todos.', false ); return; }
-		if ( ! confirm( 'Atribuir este curso a todos os colaboradores da unidade?\n\nColaboradores que já estão matriculados não serão afetados.' ) ) return;
-		enrollAjax( 0, courseId, $('#kt-bulk-due').val() );
+	/* ── Busca de membros ── */
+	$('#kt-member-search').on('input', function(){
+		var q = $(this).val().toLowerCase().trim();
+		var hasVisible = false;
+		$('.kt-member-check-item').each(function(){
+			var name = $(this).data('name') || '';
+			var match = ! q || name.indexOf( q ) !== -1;
+			$(this).toggleClass( 'kt-item-hidden', ! match );
+			if ( match ) hasVisible = true;
+		});
+		$('#kt-no-results').toggle( ! hasVisible );
+		updateCounter();
 	});
 
-	// Remover matrícula + zerar progresso (chip ×)
+	/* ── Selecionar todos (visíveis) ── */
+	$('#kt-select-all').on('change', function(){
+		var checked = $(this).prop('checked');
+		$('.kt-member-check-item:not(.kt-item-hidden) .kt-member-cb').prop( 'checked', checked );
+		updateCounter();
+	});
+
+	/* ── Checkbox individual ── */
+	$(document).on('change', '.kt-member-cb', function(){
+		updateCounter();
+	});
+
+	/* ── Atribuir ── */
+	$('#kt-assign-btn').on('click', function(){
+		var courseId   = $('#kt-assign-course').val();
+		var memberIds  = getCheckedIds();
+		var dueDate    = $('#kt-assign-due').val();
+		var courseName = $('#kt-assign-course option:selected').text();
+
+		if ( ! courseId ) { showMsg( 'Selecione um curso.', false ); return; }
+		if ( memberIds.length === 0 ) { showMsg( 'Selecione ao menos um colaborador.', false ); return; }
+
+		var confirmMsg = memberIds.length === 1
+			? 'Atribuir "' + courseName + '" para 1 colaborador?'
+			: 'Atribuir "' + courseName + '" para ' + memberIds.length + ' colaboradores?';
+		if ( ! confirm( confirmMsg ) ) return;
+
+		showMsg( 'Salvando…', true );
+		$('#kt-assign-btn').prop( 'disabled', true ).text( 'Salvando…' );
+
+		var data = {
+			action:    'kt_enroll_member',
+			nonce:     ktFrontend.nonce,
+			course_id: courseId,
+			due_date:  dueDate,
+		};
+		$.each( memberIds, function( i, id ){ data[ 'member_ids[' + i + ']' ] = id; });
+
+		$.post( ktFrontend.ajaxUrl, data ).done(function(r){
+			showMsg( r.success ? r.data.message : ( r.data && r.data.message ? r.data.message : 'Erro.' ), r.success );
+			if ( r.success ) setTimeout(function(){ location.reload(); }, 700 );
+			else $('#kt-assign-btn').prop('disabled', false).text('Atribuir →');
+		}).fail(function(){
+			showMsg( 'Erro de conexão.', false );
+			$('#kt-assign-btn').prop('disabled', false).text('Atribuir →');
+		});
+	});
+
+	/* ── Remover matrícula (chip ×) ── */
 	$(document).on('click', '.kt-unenroll-btn', function(){
-		var $btn      = $(this);
-		var courseName = $btn.attr('title') ? $btn.attr('title').replace('Remover matrícula e zerar progresso em "','').replace('"','') : 'este curso';
-		if ( ! confirm( 'Remover matrícula e zerar todo o progresso em "' + courseName + '"?\n\nO colaborador poderá ser rematriculado para refazer o curso do zero.' ) ) return;
+		var $btn       = $(this);
+		var courseName = $btn.data('course-name') || 'este curso';
+		if ( ! confirm( 'Remover matrícula em "' + courseName + '" e zerar todo o progresso?\n\nO colaborador poderá ser rematriculado para refazer do zero.' ) ) return;
 
 		var $chip  = $btn.closest('.kt-enroll-chip');
 		var $chips = $btn.closest('.kt-enroll-chips');

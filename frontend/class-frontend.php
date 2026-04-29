@@ -159,31 +159,27 @@ class KT_Frontend {
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) wp_send_json_error();
 
-		$member_id = absint( $_POST['member_id'] );
-		$course_id = absint( $_POST['course_id'] );
-		$due_date  = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
+		$course_id  = absint( $_POST['course_id'] ?? 0 );
+		$due_date   = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
+		$member_ids = array_values( array_filter( array_map( 'absint', (array) ( $_POST['member_ids'] ?? [] ) ) ) );
 
 		if ( ! $course_id ) wp_send_json_error( [ 'message' => 'Curso não informado.' ] );
+		if ( empty( $member_ids ) ) wp_send_json_error( [ 'message' => 'Selecione ao menos um colaborador.' ] );
 
-		// member_id = 0 → atribuir para toda a unidade (bulk)
-		if ( $member_id === 0 ) {
-			$location_id = KT_Roles::is_super_admin()
-				? absint( $_POST['location_id'] ?? 0 )
-				: KT_Roles::current_user_location_id();
-			if ( ! KT_Roles::can_manage_location( $location_id ) ) {
-				wp_send_json_error( [ 'message' => 'Sem permissão para esta unidade.' ] );
-			}
-			KT_Progress::enroll_location( $location_id, $course_id, $due_date );
-			wp_send_json_success( [ 'message' => 'Treinamento atribuído a todos os colaboradores.' ] );
+		$enrolled = 0;
+		foreach ( $member_ids as $mid ) {
+			$m = KT_Member::get( $mid );
+			if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) continue;
+			KT_Progress::enroll( [ $mid ], $course_id, $due_date );
+			$enrolled++;
 		}
 
-		// Atribuição individual
-		$m = KT_Member::get( $member_id );
-		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) {
-			wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
-		}
-		KT_Progress::enroll( [ $member_id ], $course_id, $due_date );
-		wp_send_json_success( [ 'message' => 'Matrícula realizada com sucesso.' ] );
+		if ( $enrolled === 0 ) wp_send_json_error( [ 'message' => 'Nenhuma matrícula realizada. Verifique permissões.' ] );
+
+		$msg = $enrolled === 1
+			? 'Matrícula realizada com sucesso.'
+			: "{$enrolled} colaboradores matriculados com sucesso.";
+		wp_send_json_success( [ 'message' => $msg ] );
 	}
 
 	public function ajax_unenroll_member() {
