@@ -620,10 +620,11 @@ class KT_Frontend {
 		$line = $quotes[ $idx ];
 
 		// Separa texto do autor pela última ocorrência de " — "
-		$sep = strrpos( $line, ' — ' );
+		// Usa mb_ para tratar o em dash (U+2014) como 1 caractere, não 3 bytes.
+		$sep = mb_strrpos( $line, ' — ', 0, 'UTF-8' );
 		if ( $sep !== false ) {
-			$text   = trim( substr( $line, 0, $sep ), "\"\u{201C}\u{201D} " );
-			$author = trim( substr( $line, $sep + 3 ) );
+			$text   = trim( mb_substr( $line, 0, $sep, 'UTF-8' ), "\"\u{201C}\u{201D} " );
+			$author = trim( mb_substr( $line, $sep + 3, null, 'UTF-8' ) );
 		} else {
 			$text   = trim( $line, "\"\u{201C}\u{201D} " );
 			$author = '';
