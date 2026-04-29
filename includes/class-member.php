@@ -226,8 +226,16 @@ class KT_Member {
 				}
 			}
 
-			// Gera username único a partir do e-mail
-			$base_user = sanitize_user( strstr( $email, '@', true ) );
+			// Split nome em first/last (necessário antes de gerar o username)
+			$name_parts = explode( ' ', trim( $nome ) );
+			$first_name = $name_parts[0];
+			$last_name  = count( $name_parts ) > 1 ? $name_parts[ count( $name_parts ) - 1 ] : '';
+
+			// Gera username no formato primeironome.ultimosobrenome
+			$base_user = sanitize_user( mb_strtolower(
+				$first_name . ( $last_name ? '.' . $last_name : '' ),
+				'UTF-8'
+			) );
 			$username  = $base_user;
 			$suffix    = 1;
 			while ( username_exists( $username ) || email_exists( $email ) ) {
@@ -261,11 +269,6 @@ class KT_Member {
 				$suffix++;
 			}
 
-			// Split nome em first/last
-			$parts      = explode( ' ', $nome, 2 );
-			$first_name = $parts[0];
-			$last_name   = $parts[1] ?? '';
-
 			// Resolve position_id pelo nome da função
 			$position_id = null;
 			if ( $funcao ) {
@@ -280,10 +283,10 @@ class KT_Member {
 				}
 			}
 
-			// Senha: usa a padrão definida pelo admin, ou gera automaticamente
+			// Senha: usa a padrão definida pelo admin, ou aplica o padrão da empresa
 			$temp_pass = ! empty( $default_password )
 				? $default_password
-				: ucfirst( $first_name ) . date( 'Y' ) . '!';
+				: 'fazerbemfeito';
 
 			$r = self::create( [
 				'first_name'  => $first_name,
