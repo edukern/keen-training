@@ -28,6 +28,17 @@
 .kt-portal-header { margin-bottom: 32px; }
 .kt-portal-header h2 { font-size: 1.9em; margin-bottom: 4px; }
 .kt-welcome { color: #5a6a7a; margin: 0 0 16px; }
+
+/* Header do gerente com botão à direita */
+.kt-manager-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+.kt-manager-header-text { flex: 1; min-width: 0; }
+.kt-manager-portal-btn { white-space: nowrap; align-self: center; }
 .kt-course-desc { color: #5a6a7a; margin-bottom: 20px; }
 
 /* --- Login prompt --- */

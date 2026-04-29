@@ -1,13 +1,21 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <div class="kt-portal kt-manager-dashboard">
 
-	<div class="kt-portal-header">
-		<h2>Painel do Gerente</h2>
-		<?php
-		$_mgr      = wp_get_current_user();
-		$_mgr_name = trim( $_mgr->first_name ) ?: $_mgr->display_name;
-		?>
-		<p class="kt-welcome">Olá, <strong><?php echo esc_html( $_mgr_name ); ?></strong>!<?php if ( $location ): ?> — Unidade: <strong><?php echo esc_html( $location->name ); ?></strong><?php endif; ?></p>
+	<div class="kt-portal-header kt-manager-header">
+		<div class="kt-manager-header-text">
+			<h2>Painel do Gerente</h2>
+			<?php
+			$_mgr       = wp_get_current_user();
+			$_mgr_name  = trim( $_mgr->first_name ) ?: $_mgr->display_name;
+			$_portal_url = get_option( 'kt_portal_page_url' );
+			?>
+			<p class="kt-welcome">Olá, <strong><?php echo esc_html( $_mgr_name ); ?></strong>!<?php if ( $location ): ?> — Unidade: <strong><?php echo esc_html( $location->name ); ?></strong><?php endif; ?></p>
+		</div>
+		<?php if ( $_portal_url ): ?>
+		<a href="<?php echo esc_url( $_portal_url ); ?>" class="kt-btn kt-btn-outline kt-manager-portal-btn">
+			📚 Meus Treinamentos
+		</a>
+		<?php endif; ?>
 	</div>
 
 	<?php if ( ! empty( $quote ) ): ?>
