@@ -163,11 +163,27 @@ class KT_Frontend {
 		$course_id = absint( $_POST['course_id'] );
 		$due_date  = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
 
-		$m = KT_Member::get( $member_id );
-		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+		if ( ! $course_id ) wp_send_json_error( [ 'message' => 'Curso não informado.' ] );
 
+		// member_id = 0 → atribuir para toda a unidade (bulk)
+		if ( $member_id === 0 ) {
+			$location_id = KT_Roles::is_super_admin()
+				? absint( $_POST['location_id'] ?? 0 )
+				: KT_Roles::current_user_location_id();
+			if ( ! KT_Roles::can_manage_location( $location_id ) ) {
+				wp_send_json_error( [ 'message' => 'Sem permissão para esta unidade.' ] );
+			}
+			KT_Progress::enroll_location( $location_id, $course_id, $due_date );
+			wp_send_json_success( [ 'message' => 'Treinamento atribuído a todos os colaboradores.' ] );
+		}
+
+		// Atribuição individual
+		$m = KT_Member::get( $member_id );
+		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) {
+			wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+		}
 		KT_Progress::enroll( [ $member_id ], $course_id, $due_date );
-		wp_send_json_success( [ 'message' => 'Matrícula realizada.' ] );
+		wp_send_json_success( [ 'message' => 'Matrícula realizada com sucesso.' ] );
 	}
 
 	public function ajax_unenroll_member() {

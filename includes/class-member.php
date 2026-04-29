@@ -16,10 +16,12 @@ class KT_Member {
 		$where = $conditions ? 'WHERE ' . implode( ' AND ', $conditions ) : '';
 		return $wpdb->get_results(
 			"SELECT m.*, u.display_name, u.user_email,
-			        l.name AS location_name
+			        l.name AS location_name,
+			        pos.name AS position_name
 			 FROM {$wpdb->prefix}kt_members m
 			 JOIN {$wpdb->users} u ON u.ID = m.user_id
 			 LEFT JOIN {$wpdb->prefix}kt_locations l ON l.id = m.location_id
+			 LEFT JOIN {$wpdb->prefix}kt_positions pos ON pos.id = m.position_id
 			 $where
 			 ORDER BY u.display_name ASC"
 		);
@@ -119,7 +121,13 @@ class KT_Member {
 
 	public static function delete( $id ) {
 		global $wpdb;
-		$wpdb->delete( $wpdb->prefix . 'kt_members', [ 'id' => absint( $id ) ] );
+		$id = absint( $id );
+		// Cascade: remove all training data before deleting the member record
+		$wpdb->delete( $wpdb->prefix . 'kt_progress',     [ 'member_id' => $id ] );
+		$wpdb->delete( $wpdb->prefix . 'kt_enrollments',  [ 'member_id' => $id ] );
+		$wpdb->delete( $wpdb->prefix . 'kt_quiz_results', [ 'member_id' => $id ] );
+		$wpdb->delete( $wpdb->prefix . 'kt_certificates', [ 'member_id' => $id ] );
+		$wpdb->delete( $wpdb->prefix . 'kt_members',      [ 'id' => $id ] );
 	}
 
 	/**

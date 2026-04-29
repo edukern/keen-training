@@ -46,11 +46,46 @@ class KT_Progress {
 		self::enroll( $members, $course_id, $due_date );
 	}
 
+	/**
+	 * Remove matrícula e apaga todo o progresso do colaborador neste curso:
+	 * conclusões de módulos, resultados de quiz e certificado.
+	 * Permite rematriculação limpa (reciclagem).
+	 */
 	public static function unenroll( $member_id, $course_id ) {
 		global $wpdb;
+		$member_id = absint( $member_id );
+		$course_id = absint( $course_id );
+
+		// Apaga conclusões de módulos deste curso
+		$wpdb->query( $wpdb->prepare(
+			"DELETE p FROM {$wpdb->prefix}kt_progress p
+			 INNER JOIN {$wpdb->prefix}kt_modules m ON m.id = p.module_id
+			 WHERE p.member_id = %d AND m.course_id = %d",
+			$member_id, $course_id
+		) );
+
+		// Apaga resultados de avaliações vinculadas ao curso ou a seus módulos
+		$wpdb->query( $wpdb->prepare(
+			"DELETE qr FROM {$wpdb->prefix}kt_quiz_results qr
+			 INNER JOIN {$wpdb->prefix}kt_quizzes q ON q.id = qr.quiz_id
+			 WHERE qr.member_id = %d
+			   AND (q.course_id = %d
+			        OR q.module_id IN (
+			            SELECT id FROM {$wpdb->prefix}kt_modules WHERE course_id = %d
+			        ))",
+			$member_id, $course_id, $course_id
+		) );
+
+		// Apaga certificado emitido
+		$wpdb->delete( $wpdb->prefix . 'kt_certificates', [
+			'member_id' => $member_id,
+			'course_id' => $course_id,
+		] );
+
+		// Apaga a matrícula
 		$wpdb->delete( $wpdb->prefix . 'kt_enrollments', [
-			'member_id' => absint( $member_id ),
-			'course_id' => absint( $course_id ),
+			'member_id' => $member_id,
+			'course_id' => $course_id,
 		] );
 	}
 

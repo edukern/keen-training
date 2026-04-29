@@ -399,6 +399,7 @@
 .kt-manager-stat-value { font-size: 2em; font-weight: 700; color: var(--kt-color-primary); line-height: 1.1; }
 .kt-manager-stat-label { font-size: .82em; color: #64748b; margin-top: 4px; }
 
+/* Enrollment box */
 .kt-manager-enroll-box {
 	background: #fff;
 	border: 1px solid #e2e8f0;
@@ -406,22 +407,118 @@
 	padding: 20px 24px;
 	margin-bottom: 28px;
 }
-.kt-manager-enroll-box h3 { margin: 0 0 14px; font-size: 1em; }
+.kt-manager-enroll-box h3 { margin: 0 0 14px; font-size: 1.05em; font-weight: 700; }
+.kt-enroll-form-row {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: flex-end;
+}
+.kt-enroll-form-row label { display: block; font-size: .8em; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+.kt-enroll-form-row select,
+.kt-enroll-form-row input[type="date"] {
+	padding: 7px 10px;
+	border: 1px solid #e2e8f0;
+	border-radius: 7px;
+	font-size: .9em;
+	background: #f8fafc;
+	min-width: 160px;
+	max-width: 100%;
+}
+.kt-enroll-bulk-row {
+	border-top: 1px dashed #e2e8f0;
+	padding-top: 12px;
+	margin-top: 12px;
+}
+.kt-enroll-bulk-label {
+	font-size: .78em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .06em;
+	color: #94a3b8;
+	align-self: center;
+	padding-bottom: 2px;
+}
 
-.kt-manager-members h3 { margin: 0 0 16px; font-size: 1em; }
-.kt-manager-member-row {
+/* Members compact table */
+.kt-manager-members { }
+.kt-manager-members h3 { margin: 0 0 14px; font-size: 1.05em; font-weight: 700; }
+.kt-members-table {
+	width: 100%;
+	border-collapse: collapse;
 	background: #fff;
 	border: 1px solid #e2e8f0;
 	border-radius: 12px;
-	padding: 16px 20px;
-	margin-bottom: 12px;
+	overflow: hidden;
+	font-size: .9em;
 }
-.kt-manager-member-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.kt-manager-position { font-size: .8em; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 20px; }
-.kt-manager-enrollments { display: flex; flex-direction: column; gap: 10px; }
-.kt-manager-enroll-row { padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-.kt-manager-enroll-title { font-size: .9em; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-.kt-manager-enroll-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kt-members-table thead th {
+	background: #f8fafc;
+	padding: 10px 16px;
+	text-align: left;
+	font-size: .75em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .07em;
+	color: #64748b;
+	border-bottom: 1px solid #e2e8f0;
+}
+.kt-members-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+.kt-members-table tbody tr:last-child { border-bottom: none; }
+.kt-members-table tbody tr:hover { background: #fafbfc; }
+.kt-members-table td { padding: 10px 16px; vertical-align: middle; }
+.kt-member-name { font-weight: 600; }
+.kt-member-email { font-size: .78em; color: #94a3b8; margin-top: 1px; }
+.kt-manager-position { font-size: .78em; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+
+/* Enrollment chips */
+.kt-enroll-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.kt-enroll-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 6px 3px 10px;
+	border-radius: 20px;
+	font-size: .78em;
+	font-weight: 600;
+	white-space: nowrap;
+	max-width: 240px;
+	overflow: hidden;
+}
+.kt-enroll-chip-nao_iniciado { background: #f1f5f9; color: #64748b; }
+.kt-enroll-chip-em_andamento  { background: #fef9c3; color: #854d0e; }
+.kt-enroll-chip-concluido     { background: #dcfce7; color: #14532d; }
+.kt-enroll-chip-overdue       { background: #fee2e2; color: #7f1d1d; }
+.kt-chip-title { overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.kt-chip-pct { opacity: .75; }
+.kt-chip-remove {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.1em;
+	line-height: 1;
+	padding: 0 1px;
+	opacity: .5;
+	transition: opacity .15s;
+	flex-shrink: 0;
+}
+.kt-chip-remove:hover { opacity: 1; }
+.kt-no-enroll { color: #94a3b8; font-size: .82em; font-style: italic; }
+
+/* Legacy - keep for any remaining uses */
+.kt-manager-member-row { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:12px; }
+.kt-manager-member-info { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
+.kt-manager-enrollments { display:flex;flex-direction:column;gap:10px; }
+.kt-manager-enroll-row { padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0; }
+.kt-manager-enroll-title { font-size:.9em;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px; }
+.kt-manager-enroll-progress { display:flex;align-items:center;gap:10px;flex-wrap:wrap; }
+
+@media (max-width: 640px) {
+	.kt-members-table thead { display: none; }
+	.kt-members-table tbody tr { display: block; padding: 12px 16px; }
+	.kt-members-table td { display: block; padding: 2px 0; border: none; }
+	.kt-members-table td:first-child { margin-bottom: 6px; }
+}
 
 /* --- Quiz v2.0 — Progress bar --- */
 .kt-quiz-progress {
