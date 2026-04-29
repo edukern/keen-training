@@ -143,11 +143,15 @@
 				$enrs        = $member_progress[ $m->id ] ?? [];
 				$_name       = $m->full_name ?: $m->display_name ?: $m->user_login;
 
-				// Monta array de matrículas para o modal (JSON)
+				// Calcula média de progresso e detecta atraso
+				$pcts = [];
+				$has_overdue = false;
 				$enrs_for_json = [];
 				foreach ( $enrs as $e ) {
-					$pct = KT_Progress::course_progress_pct( $m->id, $e->course_id );
+					$pct     = KT_Progress::course_progress_pct( $m->id, $e->course_id );
 					$overdue = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
+					if ( $overdue ) $has_overdue = true;
+					$pcts[] = $pct;
 					$enrs_for_json[] = [
 						'course_id'    => (int) $e->course_id,
 						'course_title' => $e->course_title,
@@ -157,6 +161,8 @@
 						'pct'          => $pct,
 					];
 				}
+				$avg_pct   = $pcts ? round( array_sum( $pcts ) / count( $pcts ) ) : 0;
+				$enr_count = count( $enrs );
 			?>
 			<tr>
 				<td>
@@ -170,7 +176,13 @@
 					<?php endif; ?>
 				</td>
 				<td>
-					<div class="kt-enroll-chips" id="kt-chips-<?php echo absint( $m->id ); ?>">
+					<?php if ( $enrs ): ?>
+					<div class="kt-chips-summary" data-target="kt-chips-<?php echo absint( $m->id ); ?>">
+						<span class="kt-chips-avg"><?php echo $avg_pct; ?>% <span class="kt-chips-count">(<?php echo $enr_count; ?> curso<?php echo $enr_count !== 1 ? 's' : ''; ?>)</span></span>
+						<?php if ( $has_overdue ): ?><span class="kt-chips-overdue-flag">atrasado</span><?php endif; ?>
+						<span class="kt-chips-toggle-icon">▾</span>
+					</div>
+					<div class="kt-enroll-chips kt-chips-drawer" id="kt-chips-<?php echo absint( $m->id ); ?>" style="display:none">
 						<?php foreach ( $enrs as $e ):
 							$pct        = KT_Progress::course_progress_pct( $m->id, $e->course_id );
 							$overdue    = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
@@ -184,17 +196,19 @@
 							<span class="kt-chip-pct"> · <?php echo $pct; ?>%</span>
 						</span>
 						<?php endforeach; ?>
-						<span class="kt-no-enroll" id="kt-noenroll-<?php echo absint( $m->id ); ?>"<?php echo $enrs ? ' style="display:none"' : ''; ?>>Sem treinamentos</span>
 					</div>
+					<?php else: ?>
+					<span class="kt-no-enroll">Sem treinamentos</span>
+					<?php endif; ?>
 				</td>
 				<td>
-					<button type="button"
-						class="kt-btn kt-btn-sm kt-edit-member-btn"
+					<a href="#"
+						class="kt-edit-link kt-edit-member-btn"
 						data-member-id="<?php echo absint( $m->id ); ?>"
 						data-member-name="<?php echo esc_attr( $_name ); ?>"
 						data-enrollments="<?php echo esc_attr( wp_json_encode( $enrs_for_json ) ); ?>">
 						Editar →
-					</button>
+					</a>
 				</td>
 			</tr>
 			<?php endforeach; ?>
@@ -250,6 +264,23 @@
 		var total = $('.kt-member-check-item').length;
 		$('#kt-select-all-label').text( visible === total ? 'Selecionar todos (' + total + ')' : 'Selecionar visíveis (' + visible + ')' );
 	}
+
+	/* ── Toggle de treinamentos na tabela ── */
+	$(document).on('click', '.kt-chips-summary', function(){
+		var $summary = $(this);
+		var targetId = $summary.data('target');
+		var $drawer  = $('#' + targetId);
+		var isOpen   = $summary.hasClass('open');
+		$summary.toggleClass('open', ! isOpen);
+		if ( isOpen ) {
+			$drawer.slideUp( 160 );
+		} else {
+			$drawer.slideDown( 160 );
+		}
+	});
+
+	/* ── Evita navegação no link Editar ── */
+	$(document).on('click', '.kt-edit-link', function(e){ e.preventDefault(); });
 
 	/* ── Mostrar picker ao selecionar curso ── */
 	$('#kt-assign-course').on('change', function(){

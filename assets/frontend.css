@@ -286,8 +286,8 @@
 	display: flex;
 	gap: 14px;
 	align-items: flex-start;
-	background: var(--kt-color-primary-light);
-	border-left: 4px solid var(--kt-color-primary);
+	background: #f8fafc;
+	border-left: 4px solid #cbd5e1;
 	border-radius: 0 10px 10px 0;
 	padding: 14px 18px;
 	margin-bottom: 28px;
@@ -295,8 +295,8 @@
 .kt-daily-quote-mark {
 	font-size: 2.4em;
 	line-height: 1;
-	color: var(--kt-color-primary);
-	opacity: .45;
+	color: #94a3b8;
+	opacity: .7;
 	flex-shrink: 0;
 	margin-top: -4px;
 	font-family: Georgia, serif;
@@ -642,6 +642,44 @@
 }
 .kt-chip-remove:hover { opacity: 1; }
 .kt-no-enroll { color: #94a3b8; font-size: .82em; font-style: italic; }
+
+/* Link "Editar →" na tabela do gerente */
+.kt-edit-link {
+	color: #64748b;
+	font-size: .85em;
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+}
+.kt-edit-link:hover { color: var(--kt-color-primary); text-decoration: underline; }
+
+/* Toggle de treinamentos na tabela */
+.kt-chips-summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	user-select: none;
+}
+.kt-chips-avg { font-size: .88em; font-weight: 600; color: #1e293b; }
+.kt-chips-count { font-weight: 400; color: #94a3b8; font-size: .9em; }
+.kt-chips-overdue-flag {
+	font-size: .7em;
+	background: #fee2e2;
+	color: #b91c1c;
+	padding: 1px 7px;
+	border-radius: 10px;
+	font-weight: 600;
+}
+.kt-chips-toggle-icon {
+	color: #94a3b8;
+	font-size: .8em;
+	transition: transform .18s;
+	line-height: 1;
+}
+.kt-chips-summary.open .kt-chips-toggle-icon { transform: rotate(180deg); }
+.kt-chips-drawer { margin-top: 6px; }
 
 /* Legacy - keep for any remaining uses */
 .kt-manager-member-row { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:12px; }
