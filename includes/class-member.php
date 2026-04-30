@@ -186,12 +186,20 @@ class KT_Member {
 		}, $row );
 
 		// Mapeia índices das colunas
-		$col_nome    = array_search( 'NOME',    $header );
-		$col_email   = array_search( 'E-MAIL',  $header );
-		if ( $col_email === false ) $col_email = array_search( 'EMAIL', $header );
-		$col_unidade = array_search( 'UNIDADE', $header );
-		$col_funcao  = array_search( 'FUNÇÃO',  $header );
-		if ( $col_funcao === false ) $col_funcao = array_search( 'FUNCAO', $header );
+		$col_nome      = array_search( 'NOME',               $header );
+		$col_email     = array_search( 'E-MAIL',             $header );
+		if ( $col_email === false )  $col_email  = array_search( 'EMAIL',     $header );
+		$col_unidade   = array_search( 'UNIDADE',            $header );
+		$col_funcao    = array_search( 'FUNÇÃO',             $header );
+		if ( $col_funcao === false ) $col_funcao = array_search( 'FUNCAO',    $header );
+		$col_admissao  = array_search( 'DATA DE ADMISSÃO',   $header );
+		if ( $col_admissao === false )    $col_admissao    = array_search( 'ADMISSÃO',   $header );
+		if ( $col_admissao === false )    $col_admissao    = array_search( 'ADMISSAO',   $header );
+		if ( $col_admissao === false )    $col_admissao    = array_search( 'HIRE DATE',  $header );
+		$col_aniversario = array_search( 'DATA DE ANIVERSÁRIO', $header );
+		if ( $col_aniversario === false ) $col_aniversario = array_search( 'ANIVERSÁRIO',  $header );
+		if ( $col_aniversario === false ) $col_aniversario = array_search( 'ANIVERSARIO',  $header );
+		if ( $col_aniversario === false ) $col_aniversario = array_search( 'BIRTH DATE',   $header );
 
 		if ( $col_nome === false || $col_email === false ) {
 			$result['errors'][] = 'O arquivo precisa ter as colunas NOME e E-MAIL.';
@@ -210,10 +218,16 @@ class KT_Member {
 			$line++;
 			if ( count( $row ) < 2 ) continue;
 
-			$nome    = trim( $row[ $col_nome ]  ?? '' );
-			$email   = sanitize_email( trim( $row[ $col_email ] ?? '' ) );
-			$unidade = $col_unidade !== false ? trim( $row[ $col_unidade ] ?? '' ) : '';
-			$funcao  = $col_funcao  !== false ? trim( $row[ $col_funcao ]  ?? '' ) : '';
+			$nome        = trim( $row[ $col_nome ]  ?? '' );
+			$email       = sanitize_email( trim( $row[ $col_email ] ?? '' ) );
+			$unidade     = $col_unidade    !== false ? trim( $row[ $col_unidade ]    ?? '' ) : '';
+			$funcao      = $col_funcao     !== false ? trim( $row[ $col_funcao ]     ?? '' ) : '';
+			$admissao    = $col_admissao   !== false ? trim( $row[ $col_admissao ]   ?? '' ) : '';
+			$aniversario = $col_aniversario !== false ? trim( $row[ $col_aniversario ] ?? '' ) : '';
+
+			// Normaliza datas: aceita DD/MM/AAAA ou AAAA-MM-DD → sempre salva AAAA-MM-DD
+			$admissao    = self::normalize_date( $admissao );
+			$aniversario = self::normalize_date( $aniversario );
 
 			if ( empty( $nome ) || empty( $email ) ) {
 				$result['errors'][] = "Linha $line: NOME e E-MAIL são obrigatórios — pulada.";
@@ -305,6 +319,8 @@ class KT_Member {
 				'password'    => $temp_pass,
 				'location_id' => $location_id,
 				'position_id' => $position_id,
+				'hire_date'   => $admissao,
+				'birth_date'  => $aniversario,
 			] );
 
 			if ( is_wp_error( $r ) ) {
@@ -323,5 +339,30 @@ class KT_Member {
 
 		fclose( $handle );
 		return $result;
+	}
+
+	/**
+	 * Normaliza uma string de data para o formato AAAA-MM-DD.
+	 * Aceita: AAAA-MM-DD (ISO), DD/MM/AAAA, DD-MM-AAAA.
+	 * Retorna '' se a data for vazia ou inválida.
+	 */
+	private static function normalize_date( $value ) {
+		$value = trim( $value );
+		if ( $value === '' ) return '';
+
+		// Já está em ISO: AAAA-MM-DD
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			return checkdate( (int) substr( $value, 5, 2 ), (int) substr( $value, 8, 2 ), (int) substr( $value, 0, 4 ) )
+				? $value : '';
+		}
+
+		// DD/MM/AAAA ou DD-MM-AAAA
+		if ( preg_match( '/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $value, $m ) ) {
+			[ , $d, $mo, $y ] = $m;
+			return checkdate( (int) $mo, (int) $d, (int) $y )
+				? sprintf( '%04d-%02d-%02d', $y, $mo, $d ) : '';
+		}
+
+		return '';
 	}
 }

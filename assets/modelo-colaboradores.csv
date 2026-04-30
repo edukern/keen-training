@@ -1,4 +1,4 @@
-NOME;E-MAIL;UNIDADE;FUNÇÃO
-João Silva;joao.silva@empresa.com.br;Sede SP;Vendas
-Maria Souza;maria.souza@empresa.com.br;Filial RJ;Administrativo
-Carlos Lima;carlos.lima@empresa.com.br;Sede SP;Operações
+NOME;E-MAIL;UNIDADE;FUNÇÃO;DATA DE ADMISSÃO;DATA DE ANIVERSÁRIO
+João Silva;joao.silva@empresa.com.br;Sede SP;Vendas;2023-03-15;1990-07-22
+Maria Souza;maria.souza@empresa.com.br;Filial RJ;Administrativo;2021-08-01;1988-11-05
+Carlos Lima;carlos.lima@empresa.com.br;Sede SP;Operações;2024-01-10;1995-04-30

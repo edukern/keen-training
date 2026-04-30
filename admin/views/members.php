@@ -18,13 +18,15 @@
 		<h2>Importar Colaboradores por CSV</h2>
 		<p>Faça upload de um arquivo <code>.csv</code> com as colunas abaixo. O separador pode ser <strong>ponto-e-vírgula (;)</strong> ou vírgula (,).</p>
 
-		<table class="widefat striped" style="max-width:620px;margin-bottom:20px">
+		<table class="widefat striped" style="max-width:680px;margin-bottom:20px">
 			<thead><tr><th>Coluna</th><th>Obrigatória?</th><th>Exemplo</th></tr></thead>
 			<tbody>
 				<tr><td><strong>NOME</strong></td><td>Sim</td><td>João Silva</td></tr>
 				<tr><td><strong>E-MAIL</strong></td><td>Sim</td><td>joao@empresa.com.br</td></tr>
 				<tr><td><strong>UNIDADE</strong></td><td>Não</td><td>Sede SP</td></tr>
 				<tr><td><strong>FUNÇÃO</strong></td><td>Não</td><td>Vendedor(a)</td></tr>
+				<tr><td><strong>DATA DE ADMISSÃO</strong></td><td>Não</td><td>2023-03-15 <em style="color:#888">ou</em> 15/03/2023</td></tr>
+				<tr><td><strong>DATA DE ANIVERSÁRIO</strong></td><td>Não</td><td>1990-07-22 <em style="color:#888">ou</em> 22/07/1990</td></tr>
 			</tbody>
 		</table>
 
