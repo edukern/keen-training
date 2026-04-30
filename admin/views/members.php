@@ -240,6 +240,13 @@
 	$all_positions_bulk = KT_Position::get_all();
 	?>
 
+	<!-- Form de delete (único, fora do bulk — preenchido via JS) -->
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-delete-member-form">
+		<?php wp_nonce_field( 'kt_delete_member' ); ?>
+		<input type="hidden" name="action" value="kt_delete_member">
+		<input type="hidden" name="member_id" value="" id="kt-delete-member-id">
+	</form>
+
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-bulk-form">
 		<?php wp_nonce_field( 'kt_bulk_members' ); ?>
 		<input type="hidden" name="action" value="kt_bulk_members">
@@ -319,12 +326,8 @@
 					<td>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=edit&id=' . $m->id ) ); ?>">Editar</a>
 						&nbsp;|&nbsp;
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" onsubmit="return confirm('Remover este colaborador do Keen Training? A conta WordPress não será excluída.')">
-							<?php wp_nonce_field( 'kt_delete_member' ); ?>
-							<input type="hidden" name="action" value="kt_delete_member">
-							<input type="hidden" name="member_id" value="<?php echo absint( $m->id ); ?>">
-							<button type="submit" class="button-link kt-delete-link">Remover</button>
-						</form>
+						<button type="button" class="button-link kt-delete-link"
+							onclick="ktDeleteMember(<?php echo absint( $m->id ); ?>)">Remover</button>
 					</td>
 				</tr>
 			<?php endforeach; ?>
@@ -374,6 +377,12 @@
 		document.getElementById('kt-bulk-apply').disabled = (
 			!action || document.querySelectorAll('.kt-member-check:checked').length === 0
 		);
+	}
+
+	function ktDeleteMember(id) {
+		if ( ! confirm('Remover este colaborador do Keen Training? A conta WordPress não será excluída.') ) return;
+		document.getElementById('kt-delete-member-id').value = id;
+		document.getElementById('kt-delete-member-form').submit();
 	}
 
 	function ktBulkConfirm() {
