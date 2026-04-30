@@ -265,6 +265,7 @@
 		<?php wp_nonce_field( 'kt_delete_member' ); ?>
 		<input type="hidden" name="action" value="kt_delete_member">
 		<input type="hidden" name="member_id" value="" id="kt-delete-member-id">
+		<input type="hidden" name="delete_user" value="0" id="kt-delete-user-flag">
 	</form>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-bulk-form">
@@ -280,7 +281,8 @@
 				<option value="">— Ação em massa —</option>
 				<option value="location">Alterar Unidade</option>
 				<option value="position">Alterar Função</option>
-				<option value="remove">Remover Selecionados</option>
+				<option value="remove">Remover do Keen Training</option>
+				<option value="remove_with_user">Remover + Excluir conta WP</option>
 			</select>
 
 			<span id="kt-bulk-loc-wrap" style="display:none">
@@ -350,7 +352,10 @@
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=edit&id=' . $m->id ) ); ?>">Editar</a>
 						&nbsp;|&nbsp;
 						<button type="button" class="button-link kt-delete-link"
-							onclick="ktDeleteMember(<?php echo absint( $m->id ); ?>)">Remover</button>
+							onclick="ktDeleteMember(<?php echo absint( $m->id ); ?>, false)">Remover</button>
+						&nbsp;|&nbsp;
+						<button type="button" class="button-link kt-delete-link"
+							onclick="ktDeleteMember(<?php echo absint( $m->id ); ?>, true)">Excluir conta</button>
 					</td>
 				</tr>
 			<?php endforeach; ?>
@@ -400,10 +405,10 @@
 		document.getElementById('kt-bulk-pos-wrap').style.display = action === 'position' ? '' : 'none';
 		btn.disabled = ( !action || document.querySelectorAll('.kt-member-check:checked').length === 0 );
 		// Botão vermelho para remoção, primário para demais
-		if ( action === 'remove' ) {
+		if ( action === 'remove' || action === 'remove_with_user' ) {
 			btn.classList.remove('button-primary');
 			btn.classList.add('button-danger-kt');
-			btn.textContent = 'Remover';
+			btn.textContent = action === 'remove_with_user' ? 'Remover + Excluir conta' : 'Remover';
 		} else {
 			btn.classList.add('button-primary');
 			btn.classList.remove('button-danger-kt');
@@ -411,9 +416,13 @@
 		}
 	}
 
-	function ktDeleteMember(id) {
-		if ( ! confirm('Remover este colaborador do Keen Training? A conta WordPress não será excluída.') ) return;
-		document.getElementById('kt-delete-member-id').value = id;
+	function ktDeleteMember(id, deleteUser) {
+		var msg = deleteUser
+			? 'Remover este colaborador E excluir a conta WordPress?\n\nTodo o histórico de treinamentos será apagado e o login no site será desativado permanentemente. Esta ação não pode ser desfeita.'
+			: 'Remover este colaborador do Keen Training?\n\nA conta WordPress será mantida, mas todo o histórico de treinamentos será apagado.';
+		if ( ! confirm(msg) ) return;
+		document.getElementById('kt-delete-member-id').value    = id;
+		document.getElementById('kt-delete-user-flag').value    = deleteUser ? '1' : '0';
 		document.getElementById('kt-delete-member-form').submit();
 	}
 
@@ -423,6 +432,9 @@
 		if ( n === 0 || !action.value ) return false;
 		if ( action.value === 'remove' ) {
 			return confirm( '⚠ Remover ' + n + ' colaborador(es) do Keen Training?\n\nAs contas WordPress NÃO serão excluídas, mas todo o histórico de treinamentos, progresso e certificados será apagado. Esta ação não pode ser desfeita.' );
+		}
+		if ( action.value === 'remove_with_user' ) {
+			return confirm( '⚠ Remover ' + n + ' colaborador(es) E excluir as contas WordPress?\n\nOs logins no site serão desativados permanentemente e todo o histórico de treinamentos será apagado. Esta ação não pode ser desfeita.' );
 		}
 		var label = action.options[action.selectedIndex].text;
 		return confirm( 'Aplicar "' + label + '" para ' + n + ' colaborador(es)?' );

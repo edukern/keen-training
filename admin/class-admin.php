@@ -300,7 +300,7 @@ class KT_Admin {
 		$bulk_action = sanitize_key( $_POST['bulk_action'] ?? '' );
 		$member_ids  = array_filter( array_map( 'absint', (array) ( $_POST['member_ids'] ?? [] ) ) );
 
-		if ( empty( $member_ids ) || ! in_array( $bulk_action, [ 'location', 'position', 'remove' ], true ) ) {
+		if ( empty( $member_ids ) || ! in_array( $bulk_action, [ 'location', 'position', 'remove', 'remove_with_user' ], true ) ) {
 			wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_error=1' ) ); exit;
 		}
 
@@ -310,12 +310,20 @@ class KT_Admin {
 		] ) );
 
 		// ── Remoção em massa ───────────────────────────────────────────────
-		if ( $bulk_action === 'remove' ) {
-			$removed = 0;
+		if ( $bulk_action === 'remove' || $bulk_action === 'remove_with_user' ) {
+			$removed     = 0;
+			$delete_user = ( $bulk_action === 'remove_with_user' );
+			if ( $delete_user ) {
+				require_once ABSPATH . 'wp-admin/includes/user.php';
+			}
 			foreach ( $member_ids as $mid ) {
 				$m = KT_Member::get( $mid );
 				if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) continue;
+				$user_id = (int) $m->user_id;
 				KT_Member::delete( $mid );
+				if ( $delete_user && $user_id ) {
+					wp_delete_user( $user_id );
+				}
 				$removed++;
 			}
 			wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_removed=' . $removed . ( $qs ? '&' . $qs : '' ) ) ); exit;
@@ -351,10 +359,16 @@ class KT_Admin {
 
 	public function handle_kt_delete_member() {
 		$this->verify( 'kt_delete_member' );
-		$id = absint( $_POST['member_id'] );
-		$m  = KT_Member::get( $id );
+		$id          = absint( $_POST['member_id'] );
+		$delete_user = ! empty( $_POST['delete_user'] ) && $_POST['delete_user'] === '1';
+		$m           = KT_Member::get( $id );
 		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_die( 'Acesso negado.' );
+		$user_id = (int) $m->user_id;
 		KT_Member::delete( $id );
+		if ( $delete_user && $user_id ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			wp_delete_user( $user_id );
+		}
 		wp_redirect( admin_url( 'admin.php?page=kt-members&deleted=1' ) ); exit;
 	}
 
