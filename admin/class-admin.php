@@ -466,7 +466,12 @@ class KT_Admin {
 		$due_date    = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
 		$target_type = sanitize_key( $_POST['target_type'] ?? 'member' );
 
-		if ( $target_type === 'location' ) {
+		if ( $target_type === 'all' ) {
+			if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+			$all = KT_Member::get_all();
+			$ids = wp_list_pluck( $all, 'id' );
+			KT_Progress::enroll( $ids, $course_id, $due_date );
+		} elseif ( $target_type === 'location' ) {
 			$loc_id = absint( $_POST['location_id'] );
 			if ( ! KT_Roles::can_manage_location( $loc_id ) ) wp_die( 'Acesso negado.' );
 			KT_Progress::enroll_location( $loc_id, $course_id, $due_date );

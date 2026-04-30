@@ -33,7 +33,10 @@
 					<th>Atribuir para</th>
 					<td>
 						<label style="margin-right:20px"><input type="radio" name="target_type" value="member" checked> Colaboradores específicos</label>
-						<label><input type="radio" name="target_type" value="location"> Toda uma unidade</label>
+						<label style="margin-right:20px"><input type="radio" name="target_type" value="location"> Toda uma unidade</label>
+						<?php if ( KT_Roles::is_super_admin() ): ?>
+						<label><input type="radio" name="target_type" value="all"> Todos os colaboradores</label>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr id="kt-members-row">

@@ -8,15 +8,11 @@
 		if (row) row.style.display = (row.style.display === 'none' ? 'table-row' : 'none');
 	};
 
-	/* Toggle alvo da matrícula: colaboradores ↔ unidade */
+	/* Toggle alvo da matrícula: colaboradores ↔ unidade ↔ todos */
 	$(document).on('change', 'input[name="target_type"]', function () {
-		if ($(this).val() === 'location') {
-			$('#kt-members-row').hide();
-			$('#kt-location-row').show();
-		} else {
-			$('#kt-members-row').show();
-			$('#kt-location-row').hide();
-		}
+		var val = $(this).val();
+		$('#kt-members-row').toggle(val === 'member');
+		$('#kt-location-row').toggle(val === 'location');
 	});
 
 	/* -----------------------------------------------------------------------
