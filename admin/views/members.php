@@ -11,6 +11,7 @@
 	<?php if ( isset( $_GET['import_done'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ <?php echo esc_html( urldecode( $_GET['import_done'] ) ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['import_error'] ) ): ?><div class="notice notice-error is-dismissible"><p>⚠ <?php echo esc_html( urldecode( $_GET['import_error'] ) ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['bulk_done'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ <?php echo absint( $_GET['bulk_done'] ); ?> colaborador(es) atualizado(s).</p></div><?php endif; ?>
+	<?php if ( isset( $_GET['bulk_removed'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ <?php echo absint( $_GET['bulk_removed'] ); ?> colaborador(es) removido(s).</p></div><?php endif; ?>
 	<?php if ( isset( $_GET['bulk_error'] ) ): ?><div class="notice notice-error is-dismissible"><p>⚠ Selecione ao menos um colaborador e uma ação.</p></div><?php endif; ?>
 
 	<?php if ( $action === 'import' ): ?>
@@ -269,6 +270,7 @@
 				<option value="">— Ação em massa —</option>
 				<option value="location">Alterar Unidade</option>
 				<option value="position">Alterar Função</option>
+				<option value="remove">Remover Selecionados</option>
 			</select>
 
 			<span id="kt-bulk-loc-wrap" style="display:none">
@@ -383,11 +385,20 @@
 
 	function ktBulkActionChange() {
 		var action = document.getElementById('kt-bulk-action').value;
+		var btn    = document.getElementById('kt-bulk-apply');
 		document.getElementById('kt-bulk-loc-wrap').style.display = action === 'location' ? '' : 'none';
 		document.getElementById('kt-bulk-pos-wrap').style.display = action === 'position' ? '' : 'none';
-		document.getElementById('kt-bulk-apply').disabled = (
-			!action || document.querySelectorAll('.kt-member-check:checked').length === 0
-		);
+		btn.disabled = ( !action || document.querySelectorAll('.kt-member-check:checked').length === 0 );
+		// Botão vermelho para remoção, primário para demais
+		if ( action === 'remove' ) {
+			btn.classList.remove('button-primary');
+			btn.classList.add('button-danger-kt');
+			btn.textContent = 'Remover';
+		} else {
+			btn.classList.add('button-primary');
+			btn.classList.remove('button-danger-kt');
+			btn.textContent = 'Aplicar';
+		}
 	}
 
 	function ktDeleteMember(id) {
@@ -399,8 +410,11 @@
 	function ktBulkConfirm() {
 		var n      = document.querySelectorAll('.kt-member-check:checked').length;
 		var action = document.getElementById('kt-bulk-action');
-		var label  = action.options[action.selectedIndex].text;
 		if ( n === 0 || !action.value ) return false;
+		if ( action.value === 'remove' ) {
+			return confirm( '⚠ Remover ' + n + ' colaborador(es) do Keen Training?\n\nAs contas WordPress NÃO serão excluídas, mas todo o histórico de treinamentos, progresso e certificados será apagado. Esta ação não pode ser desfeita.' );
+		}
+		var label = action.options[action.selectedIndex].text;
 		return confirm( 'Aplicar "' + label + '" para ' + n + ' colaborador(es)?' );
 	}
 	</script>

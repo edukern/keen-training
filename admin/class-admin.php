@@ -300,10 +300,28 @@ class KT_Admin {
 		$bulk_action = sanitize_key( $_POST['bulk_action'] ?? '' );
 		$member_ids  = array_filter( array_map( 'absint', (array) ( $_POST['member_ids'] ?? [] ) ) );
 
-		if ( empty( $member_ids ) || ! in_array( $bulk_action, [ 'location', 'position' ], true ) ) {
+		if ( empty( $member_ids ) || ! in_array( $bulk_action, [ 'location', 'position', 'remove' ], true ) ) {
 			wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_error=1' ) ); exit;
 		}
 
+		$qs = http_build_query( array_filter( [
+			'loc' => absint( $_POST['filter_loc'] ?? 0 ),
+			'pos' => absint( $_POST['filter_pos'] ?? 0 ),
+		] ) );
+
+		// ── Remoção em massa ───────────────────────────────────────────────
+		if ( $bulk_action === 'remove' ) {
+			$removed = 0;
+			foreach ( $member_ids as $mid ) {
+				$m = KT_Member::get( $mid );
+				if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) continue;
+				KT_Member::delete( $mid );
+				$removed++;
+			}
+			wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_removed=' . $removed . ( $qs ? '&' . $qs : '' ) ) ); exit;
+		}
+
+		// ── Alteração em massa ─────────────────────────────────────────────
 		$updated = 0;
 		foreach ( $member_ids as $mid ) {
 			$m = KT_Member::get( $mid );
@@ -328,10 +346,6 @@ class KT_Admin {
 			$updated++;
 		}
 
-		$qs = http_build_query( array_filter( [
-			'loc' => absint( $_POST['filter_loc'] ?? 0 ),
-			'pos' => absint( $_POST['filter_pos'] ?? 0 ),
-		] ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_done=' . $updated . ( $qs ? '&' . $qs : '' ) ) ); exit;
 	}
 

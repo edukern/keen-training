@@ -200,6 +200,18 @@ tr.kt-overdue { background-color: #fff5f5 !important; }
 .kt-answer-row input[type="text"] { flex: 1; }
 .kt-add-answer { margin-top: 8px; }
 
+/* Botão de remoção em massa */
+.button-danger-kt {
+	background: #b32d2e !important;
+	border-color: #8a1b1c !important;
+	color: #fff !important;
+}
+.button-danger-kt:hover {
+	background: #8a1b1c !important;
+	border-color: #6b1314 !important;
+	color: #fff !important;
+}
+
 /* --- Barra de ações em massa (colaboradores) --- */
 .kt-bulk-bar {
 	display: flex;
