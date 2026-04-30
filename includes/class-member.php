@@ -193,10 +193,12 @@ class KT_Member {
 		$col_funcao    = array_search( 'FUNÇÃO',             $header );
 		if ( $col_funcao === false ) $col_funcao = array_search( 'FUNCAO',    $header );
 		$col_admissao  = array_search( 'DATA DE ADMISSÃO',   $header );
+		if ( $col_admissao === false )    $col_admissao    = array_search( 'DATA DE ADMISSAO', $header );
 		if ( $col_admissao === false )    $col_admissao    = array_search( 'ADMISSÃO',   $header );
 		if ( $col_admissao === false )    $col_admissao    = array_search( 'ADMISSAO',   $header );
 		if ( $col_admissao === false )    $col_admissao    = array_search( 'HIRE DATE',  $header );
 		$col_aniversario = array_search( 'DATA DE ANIVERSÁRIO', $header );
+		if ( $col_aniversario === false ) $col_aniversario = array_search( 'DATA DE ANIVERSARIO', $header );
 		if ( $col_aniversario === false ) $col_aniversario = array_search( 'ANIVERSÁRIO',  $header );
 		if ( $col_aniversario === false ) $col_aniversario = array_search( 'ANIVERSARIO',  $header );
 		if ( $col_aniversario === false ) $col_aniversario = array_search( 'BIRTH DATE',   $header );
