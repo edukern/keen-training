@@ -148,13 +148,17 @@
 
 	/* -----------------------------------------------------------------------
 	 * renderReview — build HTML review section from snapshot
+	 * startOpen: true = expanded by default (used on fail)
 	 * -------------------------------------------------------------------- */
-	function renderReview(snapshot) {
+	function renderReview(snapshot, startOpen) {
 		if (!snapshot || !snapshot.length) return '';
 
+		var btnLabel  = startOpen ? 'Ocultar revisão ▲' : 'Ver revisão das respostas ▼';
+		var bodyStyle = startOpen ? '' : 'display:none';
+
 		var html = '<div class="kt-review-section">'
-			+ '<button type="button" class="kt-btn kt-btn-sm kt-review-toggle" style="margin-bottom:12px">Ver revisão das respostas ▼</button>'
-			+ '<div class="kt-review-body" style="display:none">';
+			+ '<button type="button" class="kt-btn kt-btn-sm kt-review-toggle" style="margin-bottom:12px">' + btnLabel + '</button>'
+			+ '<div class="kt-review-body" style="' + bodyStyle + '">';
 
 		for (var i = 0; i < snapshot.length; i++) {
 			var q = snapshot[i];
@@ -241,38 +245,43 @@
 				var nextUrl   = $('#kt-next-mod-url').val() || '';
 				var courseUrl = $('#kt-course-url').val()   || '';
 
+				// Sempre esconde o formulário — o resultado substitui a tela
+				$form.hide();
+
 				var scoreHtml = '<div class="kt-score-display">' + d.score + '%</div>';
 				var html = scoreHtml
 					+ '<p class="kt-result-message">' + escHtml(d.message) + '</p>'
 					+ '<p>Acertos: <strong>' + d.correct + ' de ' + d.total + '</strong></p>';
 
+				var actionHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">';
 				if (d.passed) {
-					$form.hide();
 					// Botões de navegação pós-aprovação
-					var navHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">';
 					if (nextUrl) {
-						navHtml += '<a href="' + escHtml(nextUrl) + '" class="kt-btn kt-btn-primary">Próximo Módulo →</a>';
+						actionHtml += '<a href="' + escHtml(nextUrl) + '" class="kt-btn kt-btn-primary">Próximo Módulo →</a>';
 					}
 					if (courseUrl) {
-						navHtml += '<a href="' + escHtml(courseUrl) + '" class="kt-btn kt-btn-outline">← Voltar ao Curso</a>';
+						actionHtml += '<a href="' + escHtml(courseUrl) + '" class="kt-btn kt-btn-outline">← Voltar ao Curso</a>';
 					}
-					navHtml += '</div>';
-					html += navHtml;
 				} else {
 					var ilimitado = (d.tentativas_restantes === -1);
 					if (ilimitado || d.tentativas_restantes > 0) {
 						if (!ilimitado) {
-							html += '<p>Tentativas restantes: <strong>' + d.tentativas_restantes + '</strong></p>';
+							actionHtml += '<span style="align-self:center;font-size:.88em;color:#64748b">Tentativas restantes: <strong>' + d.tentativas_restantes + '</strong></span>';
 						}
-						html += '<button type="button" class="kt-btn kt-btn-primary" id="kt-retry-btn">' + ktFrontend.i18n.tentar_nov + '</button>';
+						actionHtml += '<button type="button" class="kt-btn kt-btn-primary" id="kt-retry-btn">↺ Refazer Avaliação</button>';
 					} else {
-						html += '<p>Você não tem mais tentativas disponíveis. Fale com seu gerente.</p>';
+						actionHtml += '<span style="color:#64748b;font-size:.9em">Sem tentativas restantes. Fale com seu gerente.</span>';
+					}
+					if (courseUrl) {
+						actionHtml += '<a href="' + escHtml(courseUrl) + '" class="kt-btn kt-btn-outline">← Voltar ao Curso</a>';
 					}
 				}
+				actionHtml += '</div>';
+				html += actionHtml;
 
-				// Review section
+				// Revisão: aberta por padrão na reprova, colapsada na aprovação
 				if (d.snapshot && d.snapshot.length) {
-					html += renderReview(d.snapshot);
+					html += renderReview(d.snapshot, !d.passed);
 				}
 
 				$result
@@ -333,27 +342,32 @@
 			if (resp.success) {
 				var d = resp.data;
 
+				// Sempre esconde o formulário
+				$form.slideUp(200);
+
 				var scoreHtml = '<div class="kt-score-display">' + d.score + '%</div>';
 				var html = scoreHtml
 					+ '<p class="kt-result-message">' + escHtml(d.message) + '</p>'
 					+ '<p>Acertos: <strong>' + d.correct + ' de ' + d.total + '</strong></p>';
 
-				if (d.passed) {
-					$form.slideUp(300);
-				} else {
+				var actionHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">';
+				if (!d.passed) {
 					var ilimitado = (d.tentativas_restantes === -1);
 					if (ilimitado || d.tentativas_restantes > 0) {
 						if (!ilimitado) {
-							html += '<p>Tentativas restantes: <strong>' + d.tentativas_restantes + '</strong></p>';
+							actionHtml += '<span style="align-self:center;font-size:.88em;color:#64748b">Tentativas restantes: <strong>' + d.tentativas_restantes + '</strong></span>';
 						}
-						html += '<button type="button" class="kt-btn kt-btn-primary kt-embed-retry-btn" data-quiz-id="' + quizId + '">' + ktFrontend.i18n.tentar_nov + '</button>';
+						actionHtml += '<button type="button" class="kt-btn kt-btn-primary kt-embed-retry-btn" data-quiz-id="' + quizId + '">↺ Refazer Avaliação</button>';
 					} else {
-						html += '<p>Você não tem mais tentativas disponíveis. Fale com seu gerente.</p>';
+						actionHtml += '<span style="color:#64748b;font-size:.9em">Sem tentativas restantes. Fale com seu gerente.</span>';
 					}
 				}
+				actionHtml += '</div>';
+				html += actionHtml;
 
+				// Revisão: aberta por padrão na reprova
 				if (d.snapshot && d.snapshot.length) {
-					html += renderReview(d.snapshot);
+					html += renderReview(d.snapshot, !d.passed);
 				}
 
 				$result
@@ -395,16 +409,17 @@
 		$('html, body').animate({ scrollTop: $embed.offset().top - 80 }, 400);
 	});
 
-	/* Botão tentar novamente (portal) */
+	/* Botão refazer avaliação (portal) */
 	$(document).on('click', '#kt-retry-btn', function () {
-		$('#kt-quiz-result').hide();
-		$('#kt-quiz-form').show();
-		$('.kt-answer-option').removeClass('selected');
-		$('.kt-response-input').prop('checked', false);
-		$('.kt-unanswered').removeClass('kt-unanswered');
-		$('.kt-unanswered-msg').remove();
+		$('#kt-quiz-result').hide().removeClass('kt-result-pass kt-result-fail');
+		var $form = $('#kt-quiz-form');
+		$form.find('.kt-answer-option').removeClass('selected');
+		$form.find('.kt-response-input').prop('checked', false);
+		$form.find('.kt-unanswered').removeClass('kt-unanswered');
+		$form.find('.kt-unanswered-msg').remove();
+		$form.show();
 		updateProgress();
-		$('html, body').animate({ scrollTop: $('#kt-quiz-form').offset().top - 80 }, 400);
+		$('html, body').animate({ scrollTop: $form.offset().top - 80 }, 400);
 	});
 
 	/* Helper: alerta embutido */
