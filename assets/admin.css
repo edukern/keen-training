@@ -200,6 +200,24 @@ tr.kt-overdue { background-color: #fff5f5 !important; }
 .kt-answer-row input[type="text"] { flex: 1; }
 .kt-add-answer { margin-top: 8px; }
 
+/* --- Barra de ações em massa (colaboradores) --- */
+.kt-bulk-bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-bottom: none;
+	border-radius: 4px 4px 0 0;
+	padding: 8px 12px;
+}
+.kt-bulk-count {
+	font-size: .85em;
+	color: #646970;
+	min-width: 90px;
+}
+
 /* Grid de restrições responsivo */
 @media (max-width: 782px) {
 	.kt-restriction-grid { grid-template-columns: 1fr; }

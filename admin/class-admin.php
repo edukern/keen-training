@@ -24,6 +24,7 @@ class KT_Admin {
 			'kt_reset_quiz_attempts',
 			'kt_save_pages',
 			'kt_save_quotes',
+			'kt_bulk_members',
 		];
 		foreach ( $actions as $action ) {
 			add_action( 'admin_post_' . $action, [ $this, 'handle_' . $action ] );
@@ -289,6 +290,48 @@ class KT_Admin {
 			}
 		}
 		wp_redirect( admin_url( 'admin.php?page=kt-members&saved=1' ) ); exit;
+	}
+
+	public function handle_kt_bulk_members() {
+		$this->verify( 'kt_bulk_members' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) wp_die( 'Acesso negado.' );
+
+		$bulk_action = sanitize_key( $_POST['bulk_action'] ?? '' );
+		$member_ids  = array_filter( array_map( 'absint', (array) ( $_POST['member_ids'] ?? [] ) ) );
+
+		if ( empty( $member_ids ) || ! in_array( $bulk_action, [ 'location', 'position' ], true ) ) {
+			wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_error=1' ) ); exit;
+		}
+
+		$updated = 0;
+		foreach ( $member_ids as $mid ) {
+			$m = KT_Member::get( $mid );
+			if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) continue;
+
+			if ( $bulk_action === 'location' ) {
+				$new_loc = absint( $_POST['bulk_location_id'] ?? 0 );
+				if ( ! $new_loc ) continue;
+				KT_Member::update( $mid, [
+					'location_id' => $new_loc,
+					'position_id' => $m->position_id,
+					'hire_date'   => $m->hire_date,
+				] );
+			} elseif ( $bulk_action === 'position' ) {
+				$new_pos = absint( $_POST['bulk_position_id'] ?? 0 ) ?: null;
+				KT_Member::update( $mid, [
+					'location_id' => $m->location_id,
+					'position_id' => $new_pos,
+					'hire_date'   => $m->hire_date,
+				] );
+			}
+			$updated++;
+		}
+
+		$qs = http_build_query( array_filter( [
+			'loc' => absint( $_POST['filter_loc'] ?? 0 ),
+			'pos' => absint( $_POST['filter_pos'] ?? 0 ),
+		] ) );
+		wp_redirect( admin_url( 'admin.php?page=kt-members&bulk_done=' . $updated . ( $qs ? '&' . $qs : '' ) ) ); exit;
 	}
 
 	public function handle_kt_delete_member() {

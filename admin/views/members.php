@@ -10,6 +10,8 @@
 	<?php if ( isset( $_GET['error'] ) ): ?><div class="notice notice-error is-dismissible"><p>⚠ <?php echo esc_html( urldecode( $_GET['error'] ) ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['import_done'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ <?php echo esc_html( urldecode( $_GET['import_done'] ) ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['import_error'] ) ): ?><div class="notice notice-error is-dismissible"><p>⚠ <?php echo esc_html( urldecode( $_GET['import_error'] ) ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['bulk_done'] ) ): ?><div class="notice notice-success is-dismissible"><p>✓ <?php echo absint( $_GET['bulk_done'] ); ?> colaborador(es) atualizado(s).</p></div><?php endif; ?>
+	<?php if ( isset( $_GET['bulk_error'] ) ): ?><div class="notice notice-error is-dismissible"><p>⚠ Selecione ao menos um colaborador e uma ação.</p></div><?php endif; ?>
 
 	<?php if ( $action === 'import' ): ?>
 	<div class="kt-card">
@@ -235,59 +237,152 @@
 	$filter_loc  = KT_Roles::is_super_admin() ? absint( $_GET['loc'] ?? 0 ) : $current_loc;
 	$filter_pos  = absint( $_GET['pos'] ?? 0 );
 	$all_members = KT_Member::get_all( $filter_loc, $filter_pos );
+	$all_positions_bulk = KT_Position::get_all();
 	?>
-	<table class="wp-list-table widefat fixed striped">
-		<thead>
-			<tr>
-				<th>Nome</th>
-				<th>E-mail</th>
-				<th>Unidade</th>
-				<th>Função</th>
-				<th>Admissão</th>
-				<th>Ações</th>
-			</tr>
-		</thead>
-		<tbody>
-		<?php if ( ! $all_members ): ?>
-			<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Nenhum colaborador encontrado. <a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=add' ) ); ?>">Adicionar →</a></td></tr>
-		<?php else: ?>
-		<?php foreach ( $all_members as $m ): ?>
-			<tr>
-				<td><strong><?php echo esc_html( $m->display_name ); ?></strong></td>
-				<td><?php echo esc_html( $m->user_email ); ?></td>
-				<td><?php echo esc_html( $m->location_name ?? '—' ); ?></td>
-				<td>
-					<?php
-					if ( $m->position_id ) {
-						$pos = KT_Position::get( $m->position_id );
-						if ( $pos ) {
-							echo '<span style="display:inline-flex;align-items:center;gap:6px">'
-								. '<span style="width:10px;height:10px;border-radius:50%;background:' . esc_attr( $pos->color ) . ';flex-shrink:0"></span>'
-								. esc_html( $pos->name )
-								. '</span>';
+
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-bulk-form">
+		<?php wp_nonce_field( 'kt_bulk_members' ); ?>
+		<input type="hidden" name="action" value="kt_bulk_members">
+		<input type="hidden" name="filter_loc" value="<?php echo absint( $filter_loc ); ?>">
+		<input type="hidden" name="filter_pos" value="<?php echo absint( $filter_pos ); ?>">
+
+		<!-- Barra de ações em massa -->
+		<div class="kt-bulk-bar" id="kt-bulk-bar">
+			<span class="kt-bulk-count" id="kt-bulk-count">0 selecionado(s)</span>
+			<select name="bulk_action" id="kt-bulk-action" onchange="ktBulkActionChange()">
+				<option value="">— Ação em massa —</option>
+				<option value="location">Alterar Unidade</option>
+				<option value="position">Alterar Função</option>
+			</select>
+
+			<span id="kt-bulk-loc-wrap" style="display:none">
+				<select name="bulk_location_id">
+					<option value="">— Selecionar Unidade —</option>
+					<?php foreach ( $locations as $loc ): ?>
+					<option value="<?php echo absint( $loc->id ); ?>"><?php echo esc_html( $loc->name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</span>
+
+			<span id="kt-bulk-pos-wrap" style="display:none">
+				<select name="bulk_position_id">
+					<option value="">— Sem função —</option>
+					<?php foreach ( $all_positions_bulk as $pos ): ?>
+					<option value="<?php echo absint( $pos->id ); ?>"><?php echo esc_html( $pos->name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</span>
+
+			<button type="submit" class="button button-primary" id="kt-bulk-apply" disabled onclick="return ktBulkConfirm()">Aplicar</button>
+		</div>
+
+		<table class="wp-list-table widefat fixed striped">
+			<thead>
+				<tr>
+					<th style="width:32px"><input type="checkbox" id="kt-check-all" title="Selecionar todos"></th>
+					<th>Nome</th>
+					<th>E-mail</th>
+					<th>Unidade</th>
+					<th>Função</th>
+					<th>Admissão</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php if ( ! $all_members ): ?>
+				<tr><td colspan="7" style="text-align:center;padding:20px;color:#888">Nenhum colaborador encontrado. <a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=add' ) ); ?>">Adicionar →</a></td></tr>
+			<?php else: ?>
+			<?php foreach ( $all_members as $m ): ?>
+				<tr>
+					<td><input type="checkbox" name="member_ids[]" value="<?php echo absint( $m->id ); ?>" class="kt-member-check"></td>
+					<td><strong><?php echo esc_html( $m->full_name ?: $m->display_name ); ?></strong></td>
+					<td><?php echo esc_html( $m->user_email ); ?></td>
+					<td><?php echo esc_html( $m->location_name ?? '—' ); ?></td>
+					<td>
+						<?php
+						if ( $m->position_id ) {
+							$pos = KT_Position::get( $m->position_id );
+							if ( $pos ) {
+								echo '<span style="display:inline-flex;align-items:center;gap:6px">'
+									. '<span style="width:10px;height:10px;border-radius:50%;background:' . esc_attr( $pos->color ) . ';flex-shrink:0"></span>'
+									. esc_html( $pos->name )
+									. '</span>';
+							} else {
+								echo '<em style="color:#aaa">—</em>';
+							}
 						} else {
 							echo '<em style="color:#aaa">—</em>';
 						}
-					} else {
-						echo '<em style="color:#aaa">—</em>';
-					}
-					?>
-				</td>
-				<td><?php echo $m->hire_date ? esc_html( date_i18n( 'd/m/Y', strtotime( $m->hire_date ) ) ) : '—'; ?></td>
-				<td>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=edit&id=' . $m->id ) ); ?>">Editar</a>
-					&nbsp;|&nbsp;
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" onsubmit="return confirm('Remover este colaborador do Keen Training? A conta WordPress não será excluída.')">
-						<?php wp_nonce_field( 'kt_delete_member' ); ?>
-						<input type="hidden" name="action" value="kt_delete_member">
-						<input type="hidden" name="member_id" value="<?php echo absint( $m->id ); ?>">
-						<button type="submit" class="button-link kt-delete-link">Remover</button>
-					</form>
-				</td>
-			</tr>
-		<?php endforeach; ?>
-		<?php endif; ?>
-		</tbody>
-	</table>
+						?>
+					</td>
+					<td><?php echo $m->hire_date ? esc_html( date_i18n( 'd/m/Y', strtotime( $m->hire_date ) ) ) : '—'; ?></td>
+					<td>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=edit&id=' . $m->id ) ); ?>">Editar</a>
+						&nbsp;|&nbsp;
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" onsubmit="return confirm('Remover este colaborador do Keen Training? A conta WordPress não será excluída.')">
+							<?php wp_nonce_field( 'kt_delete_member' ); ?>
+							<input type="hidden" name="action" value="kt_delete_member">
+							<input type="hidden" name="member_id" value="<?php echo absint( $m->id ); ?>">
+							<button type="submit" class="button-link kt-delete-link">Remover</button>
+						</form>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+			<?php endif; ?>
+			</tbody>
+		</table>
+	</form>
+
+	<script>
+	(function(){
+		var $checkAll  = document.getElementById('kt-check-all');
+		var $applyBtn  = document.getElementById('kt-bulk-apply');
+		var $countSpan = document.getElementById('kt-bulk-count');
+
+		function getChecked() {
+			return document.querySelectorAll('.kt-member-check:checked');
+		}
+		function updateBar() {
+			var n = getChecked().length;
+			$countSpan.textContent = n + ' selecionado(s)';
+			$applyBtn.disabled = ( n === 0 || !document.getElementById('kt-bulk-action').value );
+		}
+
+		if ($checkAll) {
+			$checkAll.addEventListener('change', function(){
+				document.querySelectorAll('.kt-member-check').forEach(function(cb){ cb.checked = $checkAll.checked; });
+				updateBar();
+			});
+		}
+		document.querySelectorAll('.kt-member-check').forEach(function(cb){
+			cb.addEventListener('change', function(){
+				$checkAll.indeterminate = false;
+				var all   = document.querySelectorAll('.kt-member-check').length;
+				var chkd  = getChecked().length;
+				if ( chkd === 0 )    $checkAll.checked = false;
+				else if ( chkd === all ) $checkAll.checked = true;
+				else                 { $checkAll.checked = false; $checkAll.indeterminate = true; }
+				updateBar();
+			});
+		});
+	})();
+
+	function ktBulkActionChange() {
+		var action = document.getElementById('kt-bulk-action').value;
+		document.getElementById('kt-bulk-loc-wrap').style.display = action === 'location' ? '' : 'none';
+		document.getElementById('kt-bulk-pos-wrap').style.display = action === 'position' ? '' : 'none';
+		document.getElementById('kt-bulk-apply').disabled = (
+			!action || document.querySelectorAll('.kt-member-check:checked').length === 0
+		);
+	}
+
+	function ktBulkConfirm() {
+		var n      = document.querySelectorAll('.kt-member-check:checked').length;
+		var action = document.getElementById('kt-bulk-action');
+		var label  = action.options[action.selectedIndex].text;
+		if ( n === 0 || !action.value ) return false;
+		return confirm( 'Aplicar "' + label + '" para ' + n + ' colaborador(es)?' );
+	}
+	</script>
 	<?php endif; ?>
 </div>
