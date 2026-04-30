@@ -137,18 +137,11 @@ class KT_Notifications {
 			// ── Aniversário de nascimento ──────────────────────────────────
 			if ( $m->birth_date ) {
 				$diff = self::days_until_annual( $m->birth_date, $today_ts, $today_y );
-				if ( $diff !== false && $diff >= 0 && $diff < $days_ahead ) {
-					$year_of_event = ( $diff === 0 && (int) date( 'md', strtotime( $m->birth_date ) ) === (int) date( 'md', $today_ts ) )
-						? $today_y
-						: ( strtotime( date( 'Y', $today_ts ) . substr( $m->birth_date, 4 ) ) >= $today_ts ? $today_y : $today_y + 1 );
-					$age = $year_of_event - (int) substr( $m->birth_date, 0, 4 );
-
+				if ( $diff !== false && $diff >= 7 && $diff < $days_ahead ) {
 					$birthdays[] = [
-						'name'       => $name,
-						'location'   => $m->location_name ?? '—',
-						'date'       => self::format_md( $m->birth_date ),
-						'days_until' => $diff,
-						'extra'      => $age . ' ' . ( $age === 1 ? 'ano' : 'anos' ),
+						'name'     => $name,
+						'location' => $m->location_name ?? '—',
+						'date'     => self::format_md( $m->birth_date ),
 					];
 				}
 			}
@@ -156,7 +149,7 @@ class KT_Notifications {
 			// ── Aniversário de empresa ─────────────────────────────────────
 			if ( $m->hire_date ) {
 				$diff = self::days_until_annual( $m->hire_date, $today_ts, $today_y );
-				if ( $diff !== false && $diff >= 0 && $diff < $days_ahead ) {
+				if ( $diff !== false && $diff >= 7 && $diff < $days_ahead ) {
 					$hire_y        = (int) substr( $m->hire_date, 0, 4 );
 					$year_of_event = strtotime( $today_y . substr( $m->hire_date, 4 ) ) >= $today_ts
 						? $today_y
@@ -164,11 +157,10 @@ class KT_Notifications {
 					$years = $year_of_event - $hire_y;
 
 					$anniversaries[] = [
-						'name'       => $name,
-						'location'   => $m->location_name ?? '—',
-						'date'       => self::format_md( $m->hire_date ),
-						'days_until' => $diff,
-						'extra'      => $years . ' ' . ( $years === 1 ? 'ano de empresa' : 'anos de empresa' ),
+						'name'     => $name,
+						'location' => $m->location_name ?? '—',
+						'date'     => self::format_md( $m->hire_date ),
+						'extra'    => $years . ' ' . ( $years === 1 ? 'ano' : 'anos' ),
 					];
 				}
 			}
@@ -242,10 +234,6 @@ class KT_Notifications {
 					. esc_html( $ev['location'] ) . '</td>
 				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-weight:600">'
 					. esc_html( $ev['date'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#64748b;font-size:.9em">'
-					. esc_html( $ev['extra'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">'
-					. self::days_label( $ev['days_until'] ) . '</td>
 			</tr>';
 		}
 
@@ -260,8 +248,6 @@ class KT_Notifications {
 					. esc_html( $ev['date'] ) . '</td>
 				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#64748b;font-size:.9em">'
 					. esc_html( $ev['extra'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">'
-					. self::days_label( $ev['days_until'] ) . '</td>
 			</tr>';
 		}
 
@@ -281,8 +267,6 @@ class KT_Notifications {
 					<th style=\"{$th_style}\">Nome</th>
 					<th style=\"{$th_style}\">Unidade</th>
 					<th style=\"{$th_style}\">Data</th>
-					<th style=\"{$th_style}\">Idade</th>
-					<th style=\"{$th_style}\">Quando</th>
 				</tr></thead>
 				<tbody>{$rows_b}</tbody>
 			</table>";
@@ -301,8 +285,7 @@ class KT_Notifications {
 					<th style=\"{$th_style}\">Nome</th>
 					<th style=\"{$th_style}\">Unidade</th>
 					<th style=\"{$th_style}\">Data</th>
-					<th style=\"{$th_style}\">Tempo</th>
-					<th style=\"{$th_style}\">Quando</th>
+					<th style=\"{$th_style}\">Tempo de empresa</th>
 				</tr></thead>
 				<tbody>{$rows_a}</tbody>
 			</table>";
@@ -321,7 +304,7 @@ class KT_Notifications {
 	<!-- Header -->
 	<tr><td style=\"background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:28px 32px\">
 		<p style=\"margin:0;font-size:1.3em;font-weight:700;color:#fff\">{$site_name}</p>
-		<p style=\"margin:4px 0 0;font-size:.9em;color:#94a3b8\">Keen Training — Datas Especiais</p>
+		<p style=\"margin:4px 0 0;font-size:.9em;color:#94a3b8\">Datas Especiais dos Colaboradores</p>
 	</td></tr>
 
 	<!-- Body -->
@@ -336,7 +319,7 @@ class KT_Notifications {
 		{$anniversary_section}
 
 		<p style=\"margin:40px 0 0;font-size:.82em;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px\">
-			Este e-mail foi gerado automaticamente pelo plugin <strong>Keen Training</strong> em <em>" . esc_html( get_bloginfo( 'url' ) ) . "</em>.<br>
+			Este e-mail foi gerado automaticamente pelo plugin <strong>Keen Training</strong>.<br>
 			Para alterar as configurações de notificação, acesse o painel administrativo → Keen Training → Painel.
 		</p>
 	</td></tr>
