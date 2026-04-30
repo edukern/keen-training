@@ -494,9 +494,13 @@ class KT_Admin {
 
 		$send_email       = ! empty( $_POST['send_welcome_email'] );
 		$default_password = sanitize_text_field( $_POST['default_password'] ?? '' );
-		$result           = KT_Member::import_csv( $file, $default_loc, $send_email, $default_password );
+		$update_existing  = ! empty( $_POST['update_existing'] );
+		$result           = KT_Member::import_csv( $file, $default_loc, $send_email, $default_password, $update_existing );
 
-		$msg = "Importação concluída: {$result['created']} colaborador(es) criado(s), {$result['skipped']} já existia(m).";
+		$msg = "Importação concluída: {$result['created']} criado(s)";
+		if ( $result['updated'] ) $msg .= ", {$result['updated']} atualizado(s)";
+		if ( $result['skipped'] ) $msg .= ", {$result['skipped']} já existia(m) (não alterado(s))";
+		$msg .= '.';
 		if ( $result['errors'] ) {
 			$msg .= ' Avisos: ' . implode( ' | ', $result['errors'] );
 		}

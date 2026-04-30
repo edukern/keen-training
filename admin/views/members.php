@@ -80,6 +80,16 @@
 					</td>
 				</tr>
 				<tr>
+					<th>Atualizar existentes</th>
+					<td>
+						<label style="display:flex;align-items:center;gap:8px">
+							<input type="checkbox" name="update_existing" value="1">
+							<span>Atualizar dados de colaboradores que já existem no sistema</span>
+						</label>
+						<p class="description">Se marcado, colaboradores com o mesmo e-mail terão <strong>unidade, função, data de admissão e data de aniversário</strong> atualizados com os valores do CSV (campos vazios no CSV preservam o valor atual). Se desmarcado, duplicatas são ignoradas.</p>
+					</td>
+				</tr>
+				<tr>
 					<th>E-mail de boas-vindas</th>
 					<td>
 						<label style="display:flex;align-items:center;gap:8px">

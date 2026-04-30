@@ -160,8 +160,8 @@ class KT_Member {
 	 * @param string $default_password Senha fixa para todos os usuários. Se vazia, gera automaticamente.
 	 * @return array { created, skipped, errors[] }
 	 */
-	public static function import_csv( $file_path, $default_loc = 0, $send_email = false, $default_password = '' ) {
-		$result = [ 'created' => 0, 'skipped' => 0, 'errors' => [] ];
+	public static function import_csv( $file_path, $default_loc = 0, $send_email = false, $default_password = '', $update_existing = false ) {
+		$result = [ 'created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => [] ];
 
 		$handle = fopen( $file_path, 'r' );
 		if ( ! $handle ) {
@@ -254,6 +254,20 @@ class KT_Member {
 			$first_name = $name_parts[0];
 			$last_name  = count( $name_parts ) > 1 ? $name_parts[ count( $name_parts ) - 1 ] : '';
 
+			// Resolve position_id pelo nome da função (antes do while para usar no update também)
+			$position_id = null;
+			if ( $funcao ) {
+				foreach ( KT_Position::get_all() as $pos ) {
+					if ( mb_strtolower( $pos->name, 'UTF-8' ) === mb_strtolower( $funcao, 'UTF-8' ) ) {
+						$position_id = (int) $pos->id;
+						break;
+					}
+				}
+				if ( ! $position_id ) {
+					$result['errors'][] = "Linha $line: função \"$funcao\" não encontrada — colaborador criado sem função. Crie a função em Keen Training → Funções.";
+				}
+			}
+
 			// Gera username no formato primeironome.ultimosobrenome
 			$base_user = sanitize_user( mb_strtolower(
 				$first_name . ( $last_name ? '.' . $last_name : '' ),
@@ -262,22 +276,37 @@ class KT_Member {
 			$username  = $base_user;
 			$suffix    = 1;
 			while ( username_exists( $username ) || email_exists( $email ) ) {
-				// Se o e-mail já existe, apenas vincula se não for membro ainda
+				// Se o e-mail já existe, trata duplicata
 				if ( email_exists( $email ) ) {
 					$existing = get_user_by( 'email', $email );
 					if ( $existing ) {
 						global $wpdb;
-						$already = $wpdb->get_var( $wpdb->prepare(
+						$already_id = $wpdb->get_var( $wpdb->prepare(
 							"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d", $existing->ID
 						) );
-						if ( $already ) {
-							$result['skipped']++;
+						if ( $already_id ) {
+							if ( $update_existing ) {
+								// Atualiza apenas os campos que vieram preenchidos no CSV
+								$existing_m = self::get( $already_id );
+								$update_data = [
+									'location_id' => $location_id ?: $existing_m->location_id,
+									'position_id' => $position_id  ?? $existing_m->position_id,
+									'hire_date'   => $admissao    ?: $existing_m->hire_date,
+									'birth_date'  => $aniversario ?: $existing_m->birth_date,
+								];
+								self::update( $already_id, $update_data );
+								$result['updated']++;
+							} else {
+								$result['skipped']++;
+							}
 						} else {
-							// Vincula usuário existente
+							// Usuário WP existe mas ainda não é colaborador — vincula
 							$r = self::create( [
 								'existing_user_id' => $existing->ID,
 								'location_id'      => $location_id,
 								'position_id'      => $position_id,
+								'hire_date'        => $admissao,
+								'birth_date'       => $aniversario,
 							] );
 							if ( is_wp_error( $r ) ) {
 								$result['errors'][] = "Linha $line ($email): " . $r->get_error_message();
@@ -290,20 +319,6 @@ class KT_Member {
 				}
 				$username = $base_user . $suffix;
 				$suffix++;
-			}
-
-			// Resolve position_id pelo nome da função
-			$position_id = null;
-			if ( $funcao ) {
-				foreach ( KT_Position::get_all() as $pos ) {
-					if ( mb_strtolower( $pos->name, 'UTF-8' ) === mb_strtolower( $funcao, 'UTF-8' ) ) {
-						$position_id = (int) $pos->id;
-						break;
-					}
-				}
-				if ( ! $position_id ) {
-					$result['errors'][] = "Linha $line: função \"$funcao\" não encontrada — colaborador criado sem função. Crie a função em Keen Training → Funções.";
-				}
 			}
 
 			// Senha: usa a padrão definida pelo admin, ou aplica o padrão da empresa
