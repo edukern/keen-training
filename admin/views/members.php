@@ -192,6 +192,13 @@
 					<th><label for="hire_date">Data de Admissão</label></th>
 					<td><input type="date" id="hire_date" name="hire_date" value="<?php echo $member ? esc_attr( $member->hire_date ) : ''; ?>"></td>
 				</tr>
+				<tr>
+					<th><label for="birth_date">Data de Aniversário</label></th>
+					<td>
+						<input type="date" id="birth_date" name="birth_date" value="<?php echo $member ? esc_attr( $member->birth_date ) : ''; ?>">
+						<p class="description">Usada para enviar notificações de felicitação ao time de marketing.</p>
+					</td>
+				</tr>
 			</table>
 			<p>
 				<?php submit_button( $action === 'edit' ? 'Atualizar Colaborador' : 'Adicionar Colaborador', 'primary', 'submit', false ); ?>
@@ -292,12 +299,13 @@
 					<th>Unidade</th>
 					<th>Função</th>
 					<th>Admissão</th>
+					<th>Aniversário</th>
 					<th>Ações</th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php if ( ! $all_members ): ?>
-				<tr><td colspan="7" style="text-align:center;padding:20px;color:#888">Nenhum colaborador encontrado. <a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=add' ) ); ?>">Adicionar →</a></td></tr>
+				<tr><td colspan="8" style="text-align:center;padding:20px;color:#888">Nenhum colaborador encontrado. <a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=add' ) ); ?>">Adicionar →</a></td></tr>
 			<?php else: ?>
 			<?php foreach ( $all_members as $m ): ?>
 				<tr>
@@ -322,7 +330,8 @@
 						}
 						?>
 					</td>
-					<td><?php echo $m->hire_date ? esc_html( date_i18n( 'd/m/Y', strtotime( $m->hire_date ) ) ) : '—'; ?></td>
+					<td><?php echo $m->hire_date  ? esc_html( date_i18n( 'd/m/Y', strtotime( $m->hire_date ) ) )  : '—'; ?></td>
+					<td><?php echo $m->birth_date ? esc_html( date_i18n( 'd/m',   strtotime( $m->birth_date ) ) ) : '—'; ?></td>
 					<td>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=edit&id=' . $m->id ) ); ?>">Editar</a>
 						&nbsp;|&nbsp;

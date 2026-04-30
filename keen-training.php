@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Keen Training
  * Description: Plataforma de onboarding e treinamento corporativo. Gerencie colaboradores, cursos, avaliações, progresso e certificados por unidade.
- * Version:     2.2.3
+ * Version:     2.3.0
  * Author:      Keenfisher
  * Text Domain: keen-training
  * Domain Path: /languages
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KT_VERSION',    '2.2.3' );
+define( 'KT_VERSION',    '2.3.0' );
 define( 'KT_PLUGIN_FILE', __FILE__ );
 define( 'KT_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -40,8 +40,9 @@ spl_autoload_register( function ( $class ) {
 		'KT_Quiz'        => KT_PLUGIN_DIR . 'includes/class-quiz.php',
 		'KT_Progress'    => KT_PLUGIN_DIR . 'includes/class-progress.php',
 		'KT_Certificate' => KT_PLUGIN_DIR . 'includes/class-certificate.php',
-		'KT_Admin'       => KT_PLUGIN_DIR . 'admin/class-admin.php',
-		'KT_Frontend'    => KT_PLUGIN_DIR . 'frontend/class-frontend.php',
+		'KT_Admin'         => KT_PLUGIN_DIR . 'admin/class-admin.php',
+		'KT_Frontend'      => KT_PLUGIN_DIR . 'frontend/class-frontend.php',
+		'KT_Notifications' => KT_PLUGIN_DIR . 'includes/class-notifications.php',
 	];
 	if ( isset( $map[ $class ] ) ) {
 		require_once $map[ $class ];
@@ -61,10 +62,19 @@ add_action( 'admin_head', function() {
 } );
 
 register_activation_hook( __FILE__, [ 'KT_Installer', 'activate' ] );
-register_deactivation_hook( __FILE__, [ 'KT_Installer', 'deactivate' ] );
+register_deactivation_hook( __FILE__, function() {
+	KT_Installer::deactivate();
+	// Remove o cron diário de aniversários ao desativar o plugin
+	$ts = wp_next_scheduled( 'kt_birthday_digest_check' );
+	if ( $ts ) wp_unschedule_event( $ts, 'kt_birthday_digest_check' );
+} );
+
+// Callback do cron (registrado antes do plugins_loaded para garantir disponibilidade)
+add_action( 'kt_birthday_digest_check', [ 'KT_Notifications', 'maybe_send' ] );
 
 function kt_init() {
 	KT_Installer::maybe_upgrade();
+	KT_Notifications::maybe_schedule();
 	if ( is_admin() ) {
 		new KT_Admin();
 	}

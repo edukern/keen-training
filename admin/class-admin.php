@@ -25,6 +25,7 @@ class KT_Admin {
 			'kt_save_pages',
 			'kt_save_quotes',
 			'kt_bulk_members',
+			'kt_save_notifications',
 		];
 		foreach ( $actions as $action ) {
 			add_action( 'admin_post_' . $action, [ $this, 'handle_' . $action ] );
@@ -602,6 +603,50 @@ class KT_Admin {
 		if ( $rows ) fputcsv( $out, array_keys( $rows[0] ), ';' );
 		foreach ( $rows as $row ) fputcsv( $out, array_values( $row ), ';' );
 		fclose( $out );
+		exit;
+	}
+
+	public function handle_kt_save_notifications() {
+		check_admin_referer( 'kt_save_notifications' );
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+
+		$email     = sanitize_email( $_POST['kt_notif_email']      ?? '' );
+		$frequency = sanitize_key(   $_POST['kt_notif_frequency']  ?? '' );
+		$day       = absint(          $_POST['kt_notif_day']        ?? 1  );
+
+		// Valida frequência
+		if ( ! in_array( $frequency, [ 'weekly', 'monthly', '' ], true ) ) {
+			$frequency = '';
+		}
+
+		// Para mensal, garante dia válido (1-28)
+		if ( $frequency === 'monthly' ) {
+			$day = max( 1, min( 28, $day ) );
+		}
+		// Para semanal, garante dia válido (0-6)
+		if ( $frequency === 'weekly' ) {
+			$day = max( 0, min( 6, $day ) );
+		}
+
+		// Janela de dias
+		$days_ahead_weekly  = absint( $_POST['kt_notif_days_ahead_weekly']  ?? 7  );
+		$days_ahead_monthly = absint( $_POST['kt_notif_days_ahead_monthly'] ?? 30 );
+		$days_ahead = ( $frequency === 'monthly' ) ? $days_ahead_monthly : $days_ahead_weekly;
+
+		update_option( 'kt_notif_email',      $email );
+		update_option( 'kt_notif_frequency',  $frequency );
+		update_option( 'kt_notif_day',        $day );
+		update_option( 'kt_notif_days_ahead', $days_ahead );
+
+		// Re-agenda o cron caso esteja desativado
+		KT_Notifications::maybe_schedule();
+
+		// Envio de teste
+		if ( ! empty( $_POST['kt_notif_test_send'] ) && $email ) {
+			KT_Notifications::send_digest( $email, $days_ahead ?: 7 );
+		}
+
+		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&notif_saved=1' ) );
 		exit;
 	}
 }

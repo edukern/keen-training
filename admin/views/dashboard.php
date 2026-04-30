@@ -508,5 +508,148 @@
 		</form>
 	</div>
 
+	<!-- Notificações de Aniversário -->
+	<?php
+	$notif_email     = get_option( 'kt_notif_email',      '' );
+	$notif_frequency = get_option( 'kt_notif_frequency',  '' );
+	$notif_day       = absint( get_option( 'kt_notif_day', 1 ) );
+	$notif_days_ahead= absint( get_option( 'kt_notif_days_ahead', 7 ) );
+
+	$days_names = [
+		0 => 'Domingo', 1 => 'Segunda-feira', 2 => 'Terça-feira',
+		3 => 'Quarta-feira', 4 => 'Quinta-feira', 5 => 'Sexta-feira', 6 => 'Sábado',
+	];
+	?>
+	<div class="kt-settings-box" style="margin-top:24px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
+		<h2 style="margin-top:0">🎂 Notificações de Aniversário</h2>
+		<p class="description" style="margin-bottom:16px">
+			Configure um e-mail para receber automaticamente a lista de colaboradores com
+			<strong>aniversário de nascimento</strong> e <strong>aniversário de empresa</strong>
+			nos próximos dias — perfeito para o time de marketing preparar as mensagens de felicitação.
+		</p>
+		<?php if ( isset( $_GET['notif_saved'] ) ): ?>
+			<div class="notice notice-success inline" style="margin-bottom:16px"><p>✓ Configurações de notificação salvas.</p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-notif-form">
+			<?php wp_nonce_field( 'kt_save_notifications' ); ?>
+			<input type="hidden" name="action" value="kt_save_notifications">
+
+			<table class="form-table" style="margin:0">
+				<tr>
+					<th style="padding:8px 0;width:200px"><label for="kt_notif_email">E-mail de destino</label></th>
+					<td style="padding:8px 0">
+						<input type="email" id="kt_notif_email" name="kt_notif_email"
+							value="<?php echo esc_attr( $notif_email ); ?>"
+							style="width:100%;max-width:340px"
+							placeholder="marketing@suaempresa.com.br">
+						<p class="description">Endereço que receberá o digest de datas especiais.</p>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_notif_frequency">Frequência</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_notif_frequency" name="kt_notif_frequency"
+							onchange="ktNotifToggle()" style="min-width:180px">
+							<option value="" <?php selected( $notif_frequency, '' ); ?>>— Desativado —</option>
+							<option value="weekly"  <?php selected( $notif_frequency, 'weekly'  ); ?>>Semanal</option>
+							<option value="monthly" <?php selected( $notif_frequency, 'monthly' ); ?>>Mensal</option>
+						</select>
+					</td>
+				</tr>
+			</table>
+
+			<!-- Opções semanais -->
+			<div id="kt-notif-weekly" style="<?php echo $notif_frequency === 'weekly' ? '' : 'display:none'; ?>">
+				<table class="form-table" style="margin:0">
+					<tr>
+						<th style="padding:8px 0;width:200px"><label for="kt_notif_day_weekly">Dia de envio</label></th>
+						<td style="padding:8px 0">
+							<select id="kt_notif_day_weekly" name="kt_notif_day" style="min-width:180px">
+								<?php foreach ( $days_names as $val => $label ): ?>
+								<option value="<?php echo esc_attr( $val ); ?>"
+									<?php selected( ( $notif_frequency === 'weekly' ? $notif_day : 1 ), $val ); ?>>
+									<?php echo esc_html( $label ); ?>
+								</option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th style="padding:8px 0"><label for="kt_notif_days_ahead_weekly">Janela de dias</label></th>
+						<td style="padding:8px 0">
+							<select id="kt_notif_days_ahead_weekly" name="kt_notif_days_ahead_weekly" style="min-width:120px">
+								<option value="3"  <?php selected( $notif_frequency === 'weekly' ? $notif_days_ahead : 7, 3 ); ?>>3 dias</option>
+								<option value="7"  <?php selected( $notif_frequency === 'weekly' ? $notif_days_ahead : 7, 7 ); ?>>7 dias</option>
+								<option value="14" <?php selected( $notif_frequency === 'weekly' ? $notif_days_ahead : 7, 14 ); ?>>14 dias</option>
+							</select>
+							<p class="description">Listar aniversários que ocorrem nos próximos X dias a partir da data do envio.</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<!-- Opções mensais -->
+			<div id="kt-notif-monthly" style="<?php echo $notif_frequency === 'monthly' ? '' : 'display:none'; ?>">
+				<table class="form-table" style="margin:0">
+					<tr>
+						<th style="padding:8px 0;width:200px"><label for="kt_notif_day_monthly">Dia do mês</label></th>
+						<td style="padding:8px 0">
+							<input type="number" id="kt_notif_day_monthly" name="kt_notif_day"
+								min="1" max="28" style="width:70px"
+								value="<?php echo esc_attr( $notif_frequency === 'monthly' ? $notif_day : 1 ); ?>">
+							<p class="description">Dia do mês em que o e-mail será enviado (1–28).</p>
+						</td>
+					</tr>
+					<tr>
+						<th style="padding:8px 0"><label for="kt_notif_days_ahead_monthly">Janela de dias</label></th>
+						<td style="padding:8px 0">
+							<select id="kt_notif_days_ahead_monthly" name="kt_notif_days_ahead_monthly" style="min-width:120px">
+								<option value="14" <?php selected( $notif_frequency === 'monthly' ? $notif_days_ahead : 30, 14 ); ?>>14 dias</option>
+								<option value="30" <?php selected( $notif_frequency === 'monthly' ? $notif_days_ahead : 30, 30 ); ?>>30 dias</option>
+								<option value="60" <?php selected( $notif_frequency === 'monthly' ? $notif_days_ahead : 30, 60 ); ?>>60 dias</option>
+							</select>
+							<p class="description">Listar aniversários que ocorrem nos próximos X dias a partir da data do envio.</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+				<button type="submit" class="button button-primary">Salvar Notificações</button>
+				<label style="display:flex;align-items:center;gap:6px;font-size:.9em;color:#475569">
+					<input type="checkbox" name="kt_notif_test_send" value="1">
+					Enviar e-mail de teste agora
+				</label>
+			</div>
+			<?php if ( $notif_frequency && $notif_email ): ?>
+			<p class="description" style="margin-top:10px">
+				📅 Próximo envio configurado:
+				<strong>
+				<?php
+				if ( $notif_frequency === 'weekly' ) {
+					echo esc_html( 'toda ' . $days_names[ $notif_day ] );
+				} else {
+					echo esc_html( 'todo dia ' . $notif_day . ' do mês' );
+				}
+				?>
+				</strong> → <em><?php echo esc_html( $notif_email ); ?></em>
+			</p>
+			<?php endif; ?>
+		</form>
+	</div>
+
+	<script>
+	function ktNotifToggle() {
+		var freq = document.getElementById('kt_notif_frequency').value;
+		document.getElementById('kt-notif-weekly').style.display  = freq === 'weekly'  ? '' : 'none';
+		document.getElementById('kt-notif-monthly').style.display = freq === 'monthly' ? '' : 'none';
+		// Garante que apenas um campo 'kt_notif_day' seja submetido
+		document.getElementById('kt_notif_day_weekly').disabled  = freq !== 'weekly';
+		document.getElementById('kt_notif_day_monthly').disabled = freq !== 'monthly';
+	}
+	// Inicializa estado correto dos campos disabled ao carregar
+	(function(){ ktNotifToggle(); })();
+	</script>
+
 	<?php endif; ?>
 </div>

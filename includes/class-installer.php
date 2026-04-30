@@ -49,6 +49,7 @@ class KT_Installer {
 			location_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 			position_id BIGINT UNSIGNED          DEFAULT NULL,
 			hire_date   DATE                     DEFAULT NULL,
+			birth_date  DATE                     DEFAULT NULL,
 			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY user_id (user_id),
@@ -275,8 +276,18 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
+		// Migrações introduzidas na v2.3.0
+		// -----------------------------------------------------------------
+		if ( version_compare( $installed, '2.3.0', '<' ) ) {
+			$mem_cols = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}kt_members" );
+			if ( ! in_array( 'birth_date', $mem_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$wpdb->prefix}kt_members ADD COLUMN birth_date DATE DEFAULT NULL AFTER hire_date" );
+			}
+		}
+
+		// -----------------------------------------------------------------
 		// Adicione blocos futuros aqui, ex:
-		// if ( version_compare( $installed, '2.1.0', '<' ) ) { ... }
+		// if ( version_compare( $installed, '2.4.0', '<' ) ) { ... }
 		// -----------------------------------------------------------------
 
 		update_option( 'kt_db_version', KT_VERSION );

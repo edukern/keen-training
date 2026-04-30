@@ -98,7 +98,8 @@ class KT_Member {
 			'user_id'     => $user_id,
 			'location_id' => $location_id,
 			'position_id' => $position_id,
-			'hire_date'   => ! empty( $data['hire_date'] ) ? sanitize_text_field( $data['hire_date'] ) : null,
+			'hire_date'   => ! empty( $data['hire_date'] )   ? sanitize_text_field( $data['hire_date'] )   : null,
+			'birth_date'  => ! empty( $data['birth_date'] )  ? sanitize_text_field( $data['birth_date'] )  : null,
 		] );
 
 		return $wpdb->insert_id;
@@ -113,12 +114,20 @@ class KT_Member {
 		$position_id = ! empty( $data['position_id'] ) ? absint( $data['position_id'] ) : null;
 		update_user_meta( $member->user_id, 'kt_location_id', $location_id );
 
+		// birth_date: usa o valor do POST se presente, senão preserva o existente
+		if ( array_key_exists( 'birth_date', $data ) ) {
+			$birth_date = ! empty( $data['birth_date'] ) ? sanitize_text_field( $data['birth_date'] ) : null;
+		} else {
+			$birth_date = $member->birth_date ?? null;
+		}
+
 		$wpdb->update(
 			$wpdb->prefix . 'kt_members',
 			[
 				'location_id' => $location_id,
 				'position_id' => $position_id,
 				'hire_date'   => ! empty( $data['hire_date'] ) ? sanitize_text_field( $data['hire_date'] ) : null,
+				'birth_date'  => $birth_date,
 			],
 			[ 'id' => absint( $id ) ]
 		);
