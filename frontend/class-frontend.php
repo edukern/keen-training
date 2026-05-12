@@ -803,6 +803,8 @@ class KT_Frontend {
 		$email       = sanitize_email( $_POST['email']            ?? '' );
 		$role        = sanitize_key( $_POST['role']               ?? '' );
 		$location_id = absint( $_POST['location_id']              ?? 0 );
+		$hire_date   = sanitize_text_field( $_POST['hire_date']   ?? '' ) ?: null;
+		$birth_date  = sanitize_text_field( $_POST['birth_date']  ?? '' ) ?: null;
 		$send_email  = ! empty( $_POST['send_email'] );
 
 		if ( ! $first_name || ! $email ) {
@@ -820,15 +822,21 @@ class KT_Frontend {
 			wp_send_json_error( [ 'message' => 'Função inválida.' ] );
 		}
 
-		// Gera username a partir do e-mail
-		$base_user = sanitize_user( strstr( $email, '@', true ), true );
-		$username  = $base_user;
-		$suffix    = 1;
+		// Gera username: primeiro nome + "." + último sobrenome (sem acentos, minúsculas)
+		$fn_clean   = strtolower( remove_accents( $first_name ) );
+		$ln_clean   = strtolower( remove_accents( $last_name ) );
+		$fn_part    = sanitize_user( preg_replace( '/[^a-z]/', '', explode( ' ', $fn_clean )[0] ), true );
+		$ln_words   = array_filter( explode( ' ', $ln_clean ) );
+		$ln_part    = sanitize_user( preg_replace( '/[^a-z]/', '', end( $ln_words ) ?: '' ), true );
+		$base_user  = $fn_part . ( $ln_part ? '.' . $ln_part : '' );
+		if ( ! $base_user ) $base_user = sanitize_user( strstr( $email, '@', true ), true );
+		$username   = $base_user;
+		$suffix     = 1;
 		while ( username_exists( $username ) ) {
 			$username = $base_user . $suffix++;
 		}
 
-		$password = wp_generate_password( 12, false );
+		$password = 'fazerbemfeito';
 		$user_id  = wp_create_user( $username, $password, $email );
 
 		if ( is_wp_error( $user_id ) ) {
@@ -850,31 +858,41 @@ class KT_Frontend {
 			$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $user_id ], [ 'id' => $location_id ] );
 		}
 
-		// Colaborador → criar registro de membro
+		// Colaborador → criar registro de membro com datas
 		if ( $role === 'kt_staff' && $location_id ) {
-			KT_Member::create( [ 'user_id' => $user_id, 'location_id' => $location_id ] );
+			KT_Member::create( [
+				'user_id'     => $user_id,
+				'location_id' => $location_id,
+				'hire_date'   => $hire_date,
+				'birth_date'  => $birth_date,
+			] );
 		}
 
-		// E-mail de boas-vindas com link de definição de senha
+		// Monta mensagem de acesso para o admin copiar
+		$login_url    = wp_login_url();
+		$first_word   = explode( ' ', trim( $first_name ) )[0];
+		$access_msg   = "Olá, {$first_word}! 👋\n\n"
+			. "O portal de treinamentos já está disponível para você! 🎉\n\n"
+			. "Acesse agora pelo link:\n"
+			. "🔗 {$login_url}\n\n"
+			. "Usuário: {$username}\n"
+			. "Senha: {$password}\n\n"
+			. "Caso não consiga acessar com esse usuário, tente com o seu e-mail — a senha é a mesma.\n\n"
+			. "Qualquer dúvida, é só chamar! 😊";
+
+		// E-mail de boas-vindas com credenciais
 		if ( $send_email ) {
-			$user_obj = get_user_by( 'ID', $user_id );
-			$key      = get_password_reset_key( $user_obj );
-			if ( ! is_wp_error( $key ) ) {
-				$reset_url = network_site_url( 'wp-login.php?action=rp&key=' . $key . '&login=' . rawurlencode( $username ) );
-				$subject   = sprintf( 'Bem-vindo(a) ao %s', get_bloginfo( 'name' ) );
-				$message   = sprintf(
-					"Olá, %s!\n\nSua conta foi criada. Clique no link abaixo para definir sua senha de acesso:\n\n%s\n\nAté logo!",
-					$first_name, $reset_url
-				);
-				wp_mail( $email, $subject, $message );
-			}
+			$subject = sprintf( 'Seu acesso ao portal de treinamentos — %s', get_bloginfo( 'name' ) );
+			wp_mail( $email, $subject, $access_msg );
 		}
 
 		wp_send_json_success( [
-			'message'  => 'Usuário criado com sucesso.',
-			'user_id'  => $user_id,
-			'name'     => trim( $first_name . ' ' . $last_name ),
-			'username' => $username,
+			'message'    => 'Usuário criado com sucesso.',
+			'user_id'    => $user_id,
+			'name'       => trim( $first_name . ' ' . $last_name ),
+			'username'   => $username,
+			'first_word' => $first_word,
+			'access_msg' => $access_msg,
 		] );
 	}
 

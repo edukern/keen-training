@@ -295,8 +295,13 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
+		// Migrações introduzidas na v2.4.1
+		// (sem mudanças de schema — bump de versão para rastreamento)
+		// -----------------------------------------------------------------
+
+		// -----------------------------------------------------------------
 		// Adicione blocos futuros aqui, ex:
-		// if ( version_compare( $installed, '2.4.0', '<' ) ) { ... }
+		// if ( version_compare( $installed, '2.5.0', '<' ) ) { ... }
 		// -----------------------------------------------------------------
 
 		update_option( 'kt_db_version', KT_VERSION );

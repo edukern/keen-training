@@ -303,15 +303,24 @@ $current_url = get_permalink();
 	<div class="kt-admin-tab-content">
 		<div class="kt-manager-enroll-box">
 			<h3>Criar Novo Usuário</h3>
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+			<!-- Linha 1: Nome e Sobrenome -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome <span style="color:#ef4444">*</span></label>
-					<input type="text" id="kt-u-first" placeholder="Nome" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+					<input type="text" id="kt-u-first" placeholder="Ex: PEDRO" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
-					<input type="text" id="kt-u-last" placeholder="Sobrenome" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+					<input type="text" id="kt-u-last" placeholder="Ex: SANTOS DA SILVA" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
+			</div>
+			<p style="font-size:.82em;color:#b45309;background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:6px 10px;margin:0 0 16px">
+				⚠ Escreva o nome completo em CAPS LOCK. Ex: <strong>PEDRO SANTOS DA SILVA</strong>
+			</p>
+
+			<!-- Linha 2: E-mail, Função, Datas -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail <span style="color:#ef4444">*</span></label>
 					<input type="email" id="kt-u-email" placeholder="email@exemplo.com" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
@@ -324,6 +333,14 @@ $current_url = get_permalink();
 						<option value="kt_location_manager">Gerente de Unidade</option>
 						<option value="kt_staff">Colaborador</option>
 					</select>
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
+					<input type="date" id="kt-u-hire-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
+					<input type="date" id="kt-u-birth-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
 			</div>
 
@@ -341,11 +358,23 @@ $current_url = get_permalink();
 			<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
 				<label style="display:flex;align-items:center;gap:8px;font-size:.9em;cursor:pointer">
 					<input type="checkbox" id="kt-u-send-email" checked>
-					Enviar e-mail com link para definição de senha
+					Enviar e-mail com as credenciais de acesso
 				</label>
 				<button type="button" id="kt-create-user-btn" class="kt-btn kt-btn-primary">Criar usuário</button>
 			</div>
 			<p id="kt-user-msg" style="margin:12px 0 0;font-size:.88em;min-height:1.2em"></p>
+
+			<!-- Mensagem de acesso copiável (aparece após criação bem-sucedida) -->
+			<div id="kt-access-msg-wrap" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid #e2e8f0">
+				<label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9em">
+					📋 Mensagem de acesso — copie e envie ao colaborador:
+				</label>
+				<textarea id="kt-access-msg-text" readonly style="width:100%;height:170px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:.84em;line-height:1.55;resize:vertical;box-sizing:border-box;color:#1e293b;background:#f8fafc;font-family:inherit"></textarea>
+				<div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+					<button type="button" id="kt-copy-access-msg" class="kt-btn kt-btn-outline">📋 Copiar mensagem</button>
+					<span id="kt-copy-confirm" style="display:none;color:#15803d;font-size:.88em;font-weight:600">✓ Copiado!</span>
+				</div>
+			</div>
 		</div>
 
 		<!-- Lista de usuários KT -->
@@ -627,20 +656,40 @@ $('#kt-create-user-btn').on('click',function(){
 	var first=$('#kt-u-first').val().trim(), last=$('#kt-u-last').val().trim();
 	var email=$('#kt-u-email').val().trim(), role=$('#kt-u-role').val();
 	var loc=$('#kt-u-location').val(), sendEmail=$('#kt-u-send-email').prop('checked')?1:0;
+	var hireDate=$('#kt-u-hire-date').val(), birthDate=$('#kt-u-birth-date').val();
 
 	if(!first||!email||!role){msg('#kt-user-msg','Preencha nome, e-mail e função.',false);return;}
 
 	$b.prop('disabled',true).text('Criando…');
-	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail})
+	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate})
 	.done(function(r){
-		msg('#kt-user-msg',r.success?'✓ Usuário "'+r.data.name+'" criado! Login: '+r.data.username:(r.data&&r.data.message?r.data.message:'Erro.'),r.success);
 		if(r.success){
+			msg('#kt-user-msg','✓ Usuário "'+r.data.name+'" criado! Login: '+r.data.username,true);
 			$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
 			$('#kt-u-role').val('').trigger('change');
-			setTimeout(function(){location.reload();},1500);
+			$('#kt-u-hire-date,#kt-u-birth-date').val('');
+			$('#kt-access-msg-wrap').show();
+			$('#kt-access-msg-text').val(r.data.access_msg||'');
+			$('#kt-copy-confirm').hide();
+			// Reload the users list after a pause
+			setTimeout(function(){location.reload();},4000);
+		} else {
+			msg('#kt-user-msg',(r.data&&r.data.message?r.data.message:'Erro.'),false);
 		}
 		$b.prop('disabled',false).text('Criar usuário');
 	}).fail(function(){ msg('#kt-user-msg','Erro de conexão.',false); $b.prop('disabled',false).text('Criar usuário'); });
+});
+
+$('#kt-copy-access-msg').on('click',function(){
+	var $ta=$('#kt-access-msg-text');
+	$ta.select();
+	if(navigator.clipboard&&window.isSecureContext){
+		navigator.clipboard.writeText($ta.val()).then(function(){
+			$('#kt-copy-confirm').show(); setTimeout(function(){$('#kt-copy-confirm').hide();},2500);
+		});
+	} else {
+		try{ document.execCommand('copy'); $('#kt-copy-confirm').show(); setTimeout(function(){$('#kt-copy-confirm').hide();},2500); }catch(e){}
+	}
 });
 
 /* ══════════════ TAB: FUNÇÕES ══════════════ */
