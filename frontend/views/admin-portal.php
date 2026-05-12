@@ -413,6 +413,7 @@ $current_url = get_permalink();
 				<td>
 					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn"
 					        data-id="<?php echo absint($u->ID); ?>"
+					        data-login="<?php echo esc_attr($u->user_login); ?>"
 					        data-first="<?php echo esc_attr($u->first_name); ?>"
 					        data-last="<?php echo esc_attr($u->last_name); ?>"
 					        data-email="<?php echo esc_attr($u->user_email); ?>"
@@ -522,6 +523,11 @@ $current_url = get_permalink();
 		</div>
 		<div class="kt-modal-body">
 			<input type="hidden" id="kt-edit-user-id">
+			<!-- Usuário (login) — somente leitura -->
+			<div style="margin-bottom:14px">
+				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Usuário (login)</label>
+				<input type="text" id="kt-edit-u-login" readonly style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;background:#f8fafc;color:#64748b;cursor:default">
+			</div>
 			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome</label>
@@ -543,6 +549,14 @@ $current_url = get_permalink();
 						<option value="kt_staff">Colaborador</option>
 					</select>
 				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
+					<input type="date" id="kt-edit-u-hire" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
+					<input type="date" id="kt-edit-u-birth" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
 			</div>
 			<!-- Unidade (Gerente ou Colaborador) -->
 			<div id="kt-edit-u-location-wrap" style="display:none;margin-bottom:14px">
@@ -553,19 +567,6 @@ $current_url = get_permalink();
 					<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
 					<?php endforeach; ?>
 				</select>
-			</div>
-			<!-- Datas (Colaborador) -->
-			<div id="kt-edit-u-dates-wrap" style="display:none;margin-bottom:14px">
-				<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-					<div>
-						<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
-						<input type="date" id="kt-edit-u-hire" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-					</div>
-					<div>
-						<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
-						<input type="date" id="kt-edit-u-birth" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-					</div>
-				</div>
 			</div>
 			<div style="display:flex;gap:10px;margin-top:4px">
 				<button type="button" id="kt-save-user-btn" class="kt-btn kt-btn-primary">Salvar</button>
@@ -777,18 +778,18 @@ $('#kt-copy-access-msg').on('click',function(){
 
 /* ══════════════ MODAL: EDITAR USUÁRIO ══════════════ */
 
-function updateEditUserLocationLabel(){
+function updateEditUserRole(){
 	var r=$('#kt-edit-u-role').val();
 	$('#kt-edit-u-location-wrap').toggle(r==='kt_location_manager'||r==='kt_staff');
 	$('#kt-edit-u-location-label').text(r==='kt_location_manager'?'Unidade (gerente da unidade)':'Unidade do colaborador');
-	$('#kt-edit-u-dates-wrap').toggle(r==='kt_staff');
 }
 
-$('#kt-edit-u-role').on('change', updateEditUserLocationLabel);
+$('#kt-edit-u-role').on('change', updateEditUserRole);
 
 $(document).on('click','.kt-edit-user-btn',function(){
 	var $b=$(this);
 	$('#kt-edit-user-id').val($b.data('id'));
+	$('#kt-edit-u-login').val($b.data('login')||'');
 	$('#kt-edit-u-first').val($b.data('first'));
 	$('#kt-edit-u-last').val($b.data('last'));
 	$('#kt-edit-u-email').val($b.data('email'));
