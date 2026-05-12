@@ -456,6 +456,38 @@ $current_url = get_permalink();
 				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
 				$u_pos_id  = $_md ? (int)($_md->position_id ?? 0) : 0;
 			?>
+			<tr id="kt-user-row-<?php echo absint($u->ID); ?>">
+				<td class="kt-u-name"><?php echo esc_html($u->user_login); ?></td>
+				<td class="kt-u-email" style="color:#64748b;font-size:.9em"><?php echo esc_html($u->user_email); ?></td>
+				<td class="kt-u-role"><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
+				<td class="kt-u-loc" style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
+				<td style="white-space:nowrap">
+					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn"
+					        data-id="<?php echo absint($u->ID); ?>"
+					        data-login="<?php echo esc_attr($u->user_login); ?>"
+					        data-first="<?php echo esc_attr($u->first_name); ?>"
+					        data-last="<?php echo esc_attr($u->last_name); ?>"
+					        data-email="<?php echo esc_attr($u->user_email); ?>"
+					        data-role="<?php echo esc_attr($u_role); ?>"
+					        data-location="<?php echo absint($u_loc_id); ?>"
+					        data-hire="<?php echo esc_attr($u_hire); ?>"
+					        data-birth="<?php echo esc_attr($u_birth); ?>"
+					        data-position="<?php echo absint($u_pos_id); ?>">Editar</button>
+					<?php if ( $u->ID !== get_current_user_id() && ! in_array('administrator', $u->roles, true) ): ?>
+					<button type="button" class="kt-btn kt-btn-sm kt-delete-user-btn"
+					        style="color:#b91c1c;border-color:#fca5a5;margin-left:4px"
+					        data-id="<?php echo absint($u->ID); ?>"
+					        data-login="<?php echo esc_attr($u->user_login); ?>">Excluir</button>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+			<?php if (!$kt_all_users): ?>
+			<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Nenhum usuário encontrado.</td></tr>
+			<?php endif; ?>
+			</tbody>
+		</table>
+	</div><!-- /tab usuarios -->
 	<?php endif; ?>
 
 </div><!-- /kt-admin-portal -->
