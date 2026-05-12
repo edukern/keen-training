@@ -149,14 +149,18 @@
 						<?php if ( $overdue ): ?><span class="kt-badge kt-badge-overdue">Atrasado</span><?php endif; ?>
 					</td>
 					<td><?php echo $en->due_date ? esc_html( date_i18n( 'd/m/Y', strtotime( $en->due_date ) ) ) : '—'; ?></td>
-					<td>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" onsubmit="return confirm('Remover esta matrícula?')">
-							<?php wp_nonce_field( 'kt_delete_enrollment' ); ?>
-							<input type="hidden" name="action" value="kt_delete_enrollment">
-							<input type="hidden" name="member_id" value="<?php echo absint( $en->member_id ); ?>">
-							<input type="hidden" name="course_id" value="<?php echo absint( $en->course_id ); ?>">
-							<button type="submit" class="button-link kt-delete-link">Remover</button>
-						</form>
+					<td><?php
+						$delete_url = wp_nonce_url(
+							add_query_arg( [
+								'action'    => 'kt_delete_enrollment',
+								'member_id' => $en->member_id,
+								'course_id' => $en->course_id,
+							], admin_url( 'admin-post.php' ) ),
+							'kt_delete_enrollment'
+						);
+						?><a href="<?php echo esc_url( $delete_url ); ?>"
+						   class="button-link kt-delete-link"
+						   onclick="return confirm('Remover esta matrícula?')">Remover</a>
 					</td>
 				</tr>
 			<?php endforeach; ?>

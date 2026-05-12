@@ -487,11 +487,11 @@ class KT_Admin {
 	}
 
 	public function handle_kt_delete_enrollment() {
-		$this->verify( 'kt_delete_enrollment' );
-		$mid = absint( $_POST['member_id'] );
+		check_admin_referer( 'kt_delete_enrollment' );
+		$mid = absint( $_REQUEST['member_id'] );
 		$m   = KT_Member::get( $mid );
 		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_die( 'Acesso negado.' );
-		KT_Progress::unenroll( $mid, absint( $_POST['course_id'] ) );
+		KT_Progress::unenroll( $mid, absint( $_REQUEST['course_id'] ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-enrollments&deleted=1' ) ); exit;
 	}
 
