@@ -406,7 +406,7 @@ $current_url = get_permalink();
 				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
 			?>
 			<tr id="kt-user-row-<?php echo absint($u->ID); ?>">
-				<td class="kt-u-name"><?php echo esc_html($u->display_name); ?></td>
+				<td class="kt-u-name"><?php echo esc_html($u->user_login); ?></td>
 				<td class="kt-u-email" style="color:#64748b;font-size:.9em"><?php echo esc_html($u->user_email); ?></td>
 				<td class="kt-u-role"><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
 				<td class="kt-u-loc" style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
@@ -821,7 +821,7 @@ $('#kt-save-user-btn').on('click',function(){
 		msg('#kt-user-modal-msg',r.success?r.data.message:(r.data&&r.data.message?r.data.message:'Erro.'),r.success);
 		if(r.success){
 			var $row=$('#kt-user-row-'+uid);
-			$row.find('.kt-u-name').text(r.data.display_name);
+			// kt-u-name sempre mostra user_login — não alterar aqui
 			$row.find('.kt-u-email').text(email);
 			$row.find('.kt-u-role span').text(r.data.role_label);
 			$row.find('.kt-u-loc').text(r.data.loc_name||'—');
