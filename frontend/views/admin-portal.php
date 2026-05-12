@@ -304,80 +304,9 @@ $current_url = get_permalink();
 	══════════════════════════════════════════════════════ -->
 	<?php elseif ( $active_tab === 'usuarios' ): ?>
 	<div class="kt-admin-tab-content">
-		<div class="kt-manager-enroll-box">
-			<h3>Criar Novo Usuário</h3>
 
-			<!-- Linha 1: Nome e Sobrenome -->
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px">
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome <span style="color:#ef4444">*</span></label>
-					<input type="text" id="kt-u-first" placeholder="Ex: PEDRO" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
-					<input type="text" id="kt-u-last" placeholder="Ex: SANTOS DA SILVA" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-			</div>
-			<p style="font-size:.82em;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;margin:0 0 16px">
-				⚠ Escreva o nome completo em CAPS LOCK. Ex: <strong>PEDRO SANTOS DA SILVA</strong>
-			</p>
-
-			<!-- Linha 2: E-mail, Função, Datas -->
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail <span style="color:#ef4444">*</span></label>
-					<input type="email" id="kt-u-email" placeholder="email@exemplo.com" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função <span style="color:#ef4444">*</span></label>
-					<select id="kt-u-role" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-						<option value="">— Selecione —</option>
-						<option value="kt_admin">Administrador</option>
-						<option value="kt_location_manager">Gerente de Unidade</option>
-						<option value="kt_staff">Colaborador</option>
-					</select>
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
-					<input type="date" id="kt-u-hire-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
-					<input type="date" id="kt-u-birth-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-			</div>
-
-			<!-- Campo de unidade (aparece para Gerente e Colaborador) -->
-			<div id="kt-u-location-wrap" style="display:none;margin-bottom:16px">
-				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-u-location-label">Unidade</label>
-				<select id="kt-u-location" style="min-width:280px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px">
-					<option value="">— Selecione a unidade —</option>
-					<?php foreach ( $locations as $loc ): ?>
-					<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-
-			<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-				<label style="display:flex;align-items:center;gap:8px;font-size:.9em;cursor:pointer">
-					<input type="checkbox" id="kt-u-send-email" checked>
-					Enviar e-mail com as credenciais de acesso
-				</label>
-				<button type="button" id="kt-create-user-btn" class="kt-btn kt-btn-primary">Criar usuário</button>
-			</div>
-			<p id="kt-user-msg" style="margin:12px 0 0;font-size:.88em;min-height:1.2em"></p>
-
-			<!-- Mensagem de acesso copiável (aparece após criação bem-sucedida) -->
-			<div id="kt-access-msg-wrap" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid #e2e8f0">
-				<label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9em">
-					📋 Mensagem de acesso — copie e envie ao colaborador:
-				</label>
-				<textarea id="kt-access-msg-text" readonly style="width:100%;height:170px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:.84em;line-height:1.55;resize:vertical;box-sizing:border-box;color:#1e293b;background:#f8fafc;font-family:inherit"></textarea>
-				<div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-					<button type="button" id="kt-copy-access-msg" class="kt-btn kt-btn-outline">📋 Copiar mensagem</button>
-					<span id="kt-copy-confirm" style="display:none;color:#15803d;font-size:.88em;font-weight:600">✓ Copiado!</span>
-				</div>
-			</div>
+		<div style="margin-bottom:24px">
+			<button type="button" id="kt-open-create-user-btn" class="kt-btn kt-btn-primary">+ Adicionar novo colaborador</button>
 		</div>
 
 		<!-- Lista de usuários KT -->
@@ -513,6 +442,91 @@ $current_url = get_permalink();
 				<button type="button" id="kt-loc-modal-close2" class="kt-btn kt-btn-outline">Cancelar</button>
 			</div>
 			<p id="kt-loc-modal-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
+		</div>
+	</div>
+</div>
+
+<!-- ── Modal de criação de usuário ──────────────────────── -->
+<div id="kt-create-user-modal-overlay" class="kt-modal-overlay" style="display:none" aria-modal="true" role="dialog">
+	<div class="kt-modal" style="max-width:600px">
+		<div class="kt-modal-header">
+			<h3>Adicionar Novo Colaborador</h3>
+			<button type="button" class="kt-modal-close" id="kt-create-user-modal-close" aria-label="Fechar">×</button>
+		</div>
+		<div class="kt-modal-body">
+
+			<!-- Nome e Sobrenome -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px">
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome <span style="color:#ef4444">*</span></label>
+					<input type="text" id="kt-u-first" placeholder="Ex: PEDRO" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
+					<input type="text" id="kt-u-last" placeholder="Ex: SANTOS DA SILVA" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+			</div>
+			<p style="font-size:.82em;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;margin:0 0 14px">
+				⚠ Escreva o nome completo em CAPS LOCK. Ex: <strong>PEDRO SANTOS DA SILVA</strong>
+			</p>
+
+			<!-- E-mail, Função, Datas -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail <span style="color:#ef4444">*</span></label>
+					<input type="email" id="kt-u-email" placeholder="email@exemplo.com" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função <span style="color:#ef4444">*</span></label>
+					<select id="kt-u-role" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+						<option value="">— Selecione —</option>
+						<option value="kt_admin">Administrador</option>
+						<option value="kt_location_manager">Gerente de Unidade</option>
+						<option value="kt_staff">Colaborador</option>
+					</select>
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
+					<input type="date" id="kt-u-hire-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
+					<input type="date" id="kt-u-birth-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+			</div>
+
+			<!-- Unidade -->
+			<div id="kt-u-location-wrap" style="display:none;margin-bottom:14px">
+				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-u-location-label">Unidade</label>
+				<select id="kt-u-location" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px">
+					<option value="">— Selecione a unidade —</option>
+					<?php foreach ( $locations as $loc ): ?>
+					<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+
+			<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:4px">
+				<label style="display:flex;align-items:center;gap:8px;font-size:.9em;cursor:pointer">
+					<input type="checkbox" id="kt-u-send-email" checked>
+					Enviar e-mail com as credenciais de acesso
+				</label>
+				<button type="button" id="kt-create-user-btn" class="kt-btn kt-btn-primary">Criar usuário</button>
+			</div>
+			<p id="kt-user-msg" style="margin:8px 0 0;font-size:.88em;min-height:1.2em"></p>
+
+			<!-- Mensagem de acesso copiável -->
+			<div id="kt-access-msg-wrap" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0">
+				<label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9em">
+					📋 Mensagem de acesso — copie e envie ao colaborador:
+				</label>
+				<textarea id="kt-access-msg-text" readonly style="width:100%;height:160px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:.84em;line-height:1.55;resize:vertical;box-sizing:border-box;color:#1e293b;background:#f8fafc;font-family:inherit"></textarea>
+				<div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+					<button type="button" id="kt-copy-access-msg" class="kt-btn kt-btn-outline">📋 Copiar mensagem</button>
+					<span id="kt-copy-confirm" style="display:none;color:#15803d;font-size:.88em;font-weight:600">✓ Copiado!</span>
+				</div>
+			</div>
+
 		</div>
 	</div>
 </div>
@@ -731,7 +745,23 @@ $('#kt-add-loc-btn').on('click',function(){
 	}).fail(function(){ msg('#kt-loc-msg','Erro de conexão.',false); $b.prop('disabled',false).text('Adicionar'); });
 });
 
-/* ══════════════ TAB: USUÁRIOS ══════════════ */
+/* ══════════════ TAB: USUÁRIOS — modal de criação ══════════════ */
+
+function openCreateUserModal(){
+	$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
+	$('#kt-u-role').val('').trigger('change');
+	$('#kt-u-hire-date,#kt-u-birth-date').val('');
+	$('#kt-u-send-email').prop('checked',true);
+	$('#kt-user-msg').text('');
+	$('#kt-access-msg-wrap').hide();
+	$('#kt-create-user-modal-overlay').fadeIn(180);
+	$('body').addClass('kt-modal-open');
+}
+function closeCreateUserModal(){ $('#kt-create-user-modal-overlay').fadeOut(150); $('body').removeClass('kt-modal-open'); }
+
+$('#kt-open-create-user-btn').on('click', openCreateUserModal);
+$('#kt-create-user-modal-close').on('click', closeCreateUserModal);
+$('#kt-create-user-modal-overlay').on('click',function(e){ if($(e.target).is('#kt-create-user-modal-overlay')) closeCreateUserModal(); });
 
 $('#kt-u-role').on('change',function(){
 	var r=$(this).val();
@@ -754,14 +784,12 @@ $('#kt-create-user-btn').on('click',function(){
 	.done(function(r){
 		if(r.success){
 			msg('#kt-user-msg','✓ Usuário "'+r.data.name+'" criado! Login: '+r.data.username,true);
-			$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
-			$('#kt-u-role').val('').trigger('change');
-			$('#kt-u-hire-date,#kt-u-birth-date').val('');
 			$('#kt-access-msg-wrap').show();
 			$('#kt-access-msg-text').val(r.data.access_msg||'');
 			$('#kt-copy-confirm').hide();
-			// Reload the users list after a pause
-			setTimeout(function(){location.reload();},4000);
+			// Recarrega lista após 8s para dar tempo de copiar a mensagem
+			$('#kt-create-user-modal-overlay').data('needsReload',true);
+			setTimeout(function(){ if($('#kt-create-user-modal-overlay').data('needsReload')) location.reload(); },8000);
 		} else {
 			msg('#kt-user-msg',(r.data&&r.data.message?r.data.message:'Erro.'),false);
 		}
@@ -904,7 +932,7 @@ function openModal(memberId,memberName,enrollments){
 function closeModal(){ $('#kt-member-modal-overlay').fadeOut(150); $('body').removeClass('kt-modal-open'); }
 $('#kt-modal-close').on('click',closeModal);
 $('#kt-member-modal-overlay').on('click',function(e){ if($(e.target).is('#kt-member-modal-overlay')) closeModal(); });
-$(document).on('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeLocModal(); closeUserModal(); } });
+$(document).on('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeLocModal(); closeUserModal(); closeCreateUserModal(); } });
 
 $(document).on('click','.kt-edit-member-btn',function(){
 	var $b=$(this); var enrollments;
