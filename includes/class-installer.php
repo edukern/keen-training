@@ -286,6 +286,15 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
+		// Migrações introduzidas na v2.3.9
+		// -----------------------------------------------------------------
+		if ( version_compare( $installed, '2.3.9', '<' ) ) {
+			// Registra o novo role kt_admin em instalações existentes
+			// add_role() é idempotente: não faz nada se o role já existir
+			KT_Roles::register();
+		}
+
+		// -----------------------------------------------------------------
 		// Adicione blocos futuros aqui, ex:
 		// if ( version_compare( $installed, '2.4.0', '<' ) ) { ... }
 		// -----------------------------------------------------------------

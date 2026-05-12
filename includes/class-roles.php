@@ -16,6 +16,26 @@ class KT_Roles {
 			'kt_manage_restrictions' => true,
 		] );
 
+		// Administrador do plugin: tudo do super admin + gestão de usuários WP
+		// (o WP exibe o menu Usuários automaticamente com essas caps)
+		add_role( 'kt_admin', 'Keen Training — Administrador', [
+			'read'                   => true,
+			// Capacidades Keen Training
+			'kt_manage_locations'    => true,
+			'kt_manage_members'      => true,
+			'kt_manage_courses'      => true,
+			'kt_manage_quizzes'      => true,
+			'kt_manage_enrollments'  => true,
+			'kt_view_all_progress'   => true,
+			'kt_manage_certificates' => true,
+			'kt_manage_restrictions' => true,
+			// Gestão de usuários WordPress
+			'list_users'             => true,
+			'create_users'           => true,
+			'edit_users'             => true,
+			'promote_users'          => true,
+		] );
+
 		add_role( 'kt_location_manager', 'Keen Training — Gerente de Unidade', [
 			'read'                   => true,
 			'kt_manage_members'      => true,
@@ -31,6 +51,7 @@ class KT_Roles {
 
 	public static function remove() {
 		remove_role( 'kt_super_admin' );
+		remove_role( 'kt_admin' );
 		remove_role( 'kt_location_manager' );
 		remove_role( 'kt_staff' );
 	}
@@ -50,9 +71,22 @@ class KT_Roles {
 		return (int) get_user_meta( get_current_user_id(), 'kt_location_id', true );
 	}
 
+	/**
+	 * Super admin = acesso total ao Keen Training (sem gestão de usuários WP).
+	 * Inclui também: kt_admin, administrator WP.
+	 */
 	public static function is_super_admin() {
 		$user = wp_get_current_user();
-		return in_array( 'kt_super_admin', $user->roles, true ) || current_user_can( 'administrator' );
+		return in_array( 'kt_super_admin', $user->roles, true )
+			|| in_array( 'kt_admin', $user->roles, true )
+			|| current_user_can( 'administrator' );
+	}
+
+	/** Administrador do plugin: super admin + pode criar/editar usuários WP */
+	public static function is_kt_admin() {
+		$user = wp_get_current_user();
+		return in_array( 'kt_admin', $user->roles, true )
+			|| current_user_can( 'administrator' );
 	}
 
 	public static function is_location_manager() {
@@ -67,6 +101,7 @@ class KT_Roles {
 	public static function role_label( $role ) {
 		$labels = [
 			'kt_super_admin'       => 'Super Admin',
+			'kt_admin'             => 'Administrador',
 			'kt_location_manager'  => 'Gerente de Unidade',
 			'kt_staff'             => 'Colaborador',
 			'administrator'        => 'Administrador WordPress',
