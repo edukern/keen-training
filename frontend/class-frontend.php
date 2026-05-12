@@ -761,22 +761,28 @@ class KT_Frontend {
 		$courses    = KT_Course::get_all();
 
 		// Dados para tab Painel (mesma lógica do kt_gerente)
-		$location_id = absint( $_GET['kt_location'] ?? 0 );
+		// kt_location=0 significa "aba Todas"; ausência do param = nenhuma seleção
+		$location_id = isset( $_GET['kt_location'] ) ? absint( $_GET['kt_location'] ) : -1;
+		if ( $location_id < 0 ) $location_id = 0; // normaliza para uso no PHP
 		$location    = $location_id ? KT_Location::get( $location_id ) : null;
-		$tab_members = $location_id ? KT_Member::get_all( $location_id ) : [];
+		// tab_members: só carrega se uma unidade específica foi escolhida
+		$tab_members = ( $location_id > 0 ) ? KT_Member::get_all( $location_id ) : [];
 
 		$member_progress = [];
 		foreach ( $tab_members as $m ) {
 			$member_progress[ $m->id ] = KT_Progress::get_enrollments_for_member( $m->id );
 		}
 
-		// Stats globais
+		// Stats globais + progresso de todos os membros (reutilizado na aba TODAS)
 		$all_members       = KT_Member::get_all();
 		$total_units       = count( $locations );
 		$total_members_all = count( $all_members );
 		$total_enr = 0; $total_done = 0;
+		$all_member_progress = [];
 		foreach ( $all_members as $m ) {
-			foreach ( KT_Progress::get_enrollments_for_member( $m->id ) as $e ) {
+			$_enrs = KT_Progress::get_enrollments_for_member( $m->id );
+			$all_member_progress[ $m->id ] = $_enrs;
+			foreach ( $_enrs as $e ) {
 				$total_enr++;
 				if ( $e->status === 'concluido' ) $total_done++;
 			}
@@ -786,12 +792,21 @@ class KT_Frontend {
 		// Lista de usuários com roles KT (para selects de gerente)
 		$kt_users = get_users( [ 'role__in' => [ 'kt_admin', 'kt_super_admin', 'kt_location_manager', 'administrator' ], 'number' => 200 ] );
 
-		// Auto-detecta URL do painel do gerente se não estiver salva
-		if ( ! get_option( 'kt_manager_page_url' ) ) {
-			global $wpdb;
-			$mgr_page = $wpdb->get_row( "SELECT ID FROM {$wpdb->posts} WHERE post_status='publish' AND post_type='page' AND post_content LIKE '%[kt_gerente%' LIMIT 1" );
-			if ( $mgr_page ) {
-				update_option( 'kt_manager_page_url', get_permalink( $mgr_page->ID ) );
+		// Detecta URL do painel do gerente (sempre re-busca para evitar auto-referência)
+		$current_page_url = get_permalink();
+		global $wpdb;
+		$mgr_page = $wpdb->get_row(
+			"SELECT ID FROM {$wpdb->posts}
+			 WHERE post_status='publish' AND post_type='page'
+			   AND post_content LIKE '%[kt_gerente%'
+			   AND ID <> " . get_the_ID() . "
+			 LIMIT 1"
+		);
+		if ( $mgr_page ) {
+			$detected_mgr_url = get_permalink( $mgr_page->ID );
+			// Só salva se diferente da página atual (evita auto-referência)
+			if ( $detected_mgr_url !== $current_page_url ) {
+				update_option( 'kt_manager_page_url', $detected_mgr_url );
 			}
 		}
 

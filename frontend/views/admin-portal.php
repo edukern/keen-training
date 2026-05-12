@@ -20,7 +20,14 @@ $current_url = get_permalink();
 			<?php $cu = wp_get_current_user(); $cu_name = trim( $cu->first_name ) ?: $cu->display_name; ?>
 			<p class="kt-welcome">Olá, <strong><?php echo esc_html( $cu_name ); ?></strong>!</p>
 		</div>
-		<?php $portal_url = get_option( 'kt_portal_page_url' ); $manager_url = get_option( 'kt_manager_page_url' ); ?>
+		<?php
+		$portal_url  = get_option( 'kt_portal_page_url' );
+		$manager_url = get_option( 'kt_manager_page_url' );
+		// Não exibir o botão se a URL aponta para a própria página (auto-referência)
+		if ( $manager_url && rtrim( $manager_url, '/' ) === rtrim( $current_url, '/' ) ) {
+			$manager_url = '';
+		}
+		?>
 		<div style="display:flex;gap:10px;flex-wrap:wrap">
 			<?php if ( $manager_url ): ?>
 			<a href="<?php echo esc_url( $manager_url ); ?>" class="kt-btn kt-btn-outline">📊 Painel do Gerente</a>
@@ -81,6 +88,10 @@ $current_url = get_permalink();
 
 		<!-- Abas de unidade -->
 		<div class="kt-unit-tabs">
+			<a href="<?php echo esc_url( add_query_arg( ['kt_tab'=>'painel','kt_location'=>'0'], $current_url ) ); ?>"
+			   class="kt-unit-tab <?php echo $location_id === 0 && isset($_GET['kt_location']) ? 'active' : ''; ?>">
+				🌐 Todas
+			</a>
 			<?php foreach ( $locations as $loc ): ?>
 			<a href="<?php echo esc_url( add_query_arg( ['kt_tab'=>'painel','kt_location'=>$loc->id], $current_url ) ); ?>"
 			   class="kt-unit-tab <?php echo (int)$location_id === (int)$loc->id ? 'active' : ''; ?>">
@@ -89,8 +100,65 @@ $current_url = get_permalink();
 			<?php endforeach; ?>
 		</div>
 
-		<?php if ( ! $location_id ): ?>
+		<?php if ( ! $location_id && ! isset($_GET['kt_location']) ): ?>
 		<div class="kt-empty-state"><p>Selecione uma unidade acima para ver colaboradores e matrículas.</p></div>
+
+		<?php elseif ( isset($_GET['kt_location']) && $location_id === 0 ):
+		// ── Aba TODAS: todos os colaboradores de todas as unidades ──────── ?>
+		<table class="kt-members-table">
+			<thead><tr>
+				<th>Colaborador</th>
+				<th>Unidade</th>
+				<th>Cargo</th>
+				<th>Treinamentos</th>
+			</tr></thead>
+			<tbody>
+			<?php foreach ( $all_members as $m ):
+				$enrs      = $all_member_progress[$m->id] ?? [];
+				$_name     = $m->full_name ?: $m->display_name ?: $m->user_login;
+				$pcts = []; $has_overdue = false; $enrs_json = [];
+				foreach ( $enrs as $e ) {
+					$pct     = KT_Progress::course_progress_pct($m->id, $e->course_id);
+					$overdue = $e->due_date && strtotime($e->due_date) < time() && $e->status !== 'concluido';
+					if ($overdue) $has_overdue = true;
+					$pcts[] = $pct;
+					$enrs_json[] = ['course_id'=>(int)$e->course_id,'course_title'=>$e->course_title,'status'=>$e->status,'overdue'=>$overdue,'due_date'=>$e->due_date?:'','pct'=>$pct];
+				}
+				$avg_pct = $pcts ? round(array_sum($pcts)/count($pcts)) : 0;
+			?>
+			<tr>
+				<td><div class="kt-member-name"><?php echo esc_html($_name); ?></div></td>
+				<td style="color:#64748b;font-size:.9em"><?php echo esc_html($m->location_name ?? '—'); ?></td>
+				<td><?php if ($m->position_name): ?><span class="kt-manager-position"><?php echo esc_html($m->position_name); ?></span><?php else: ?><span style="color:#94a3b8">—</span><?php endif; ?></td>
+				<td>
+					<?php if ($enrs): ?>
+					<div class="kt-chips-summary" data-target="kt-chips-all-<?php echo absint($m->id); ?>">
+						<span class="kt-chips-avg"><?php echo $avg_pct; ?>% <span class="kt-chips-count">(<?php echo count($enrs); ?> curso<?php echo count($enrs)!==1?'s':''; ?>)</span></span>
+						<?php if ($has_overdue): ?><span class="kt-chips-overdue-flag">atrasado</span><?php endif; ?>
+						<span class="kt-chips-toggle-icon">▾</span>
+					</div>
+					<div class="kt-chips-drawer" id="kt-chips-all-<?php echo absint($m->id); ?>" style="display:none">
+						<?php foreach ($enrs as $e):
+							$pct = KT_Progress::course_progress_pct($m->id,$e->course_id);
+							$overdue = $e->due_date && strtotime($e->due_date)<time() && $e->status!=='concluido';
+						?>
+						<div class="kt-drawer-row">
+							<span class="kt-enroll-chip kt-enroll-chip-<?php echo $overdue?'overdue':esc_attr($e->status); ?>" style="flex-shrink:0"><?php echo $pct; ?>%</span>
+							<span class="kt-drawer-course-title"><?php echo esc_html($e->course_title); ?></span>
+						</div>
+						<?php endforeach; ?>
+					</div>
+					<?php else: ?>
+					<span class="kt-no-enroll">Sem treinamentos</span>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+			<?php if (!$all_members): ?>
+			<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">Nenhum colaborador cadastrado.</td></tr>
+			<?php endif; ?>
+			</tbody>
+		</table>
 
 		<?php else:
 		$unit_mgr = $location->manager_id ? get_user_by( 'ID', $location->manager_id ) : null;
