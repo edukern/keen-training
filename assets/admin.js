@@ -15,6 +15,37 @@
 		$('#kt-location-row').toggle(val === 'location');
 	});
 
+	/* Bulk remove de matrículas */
+	function ktUpdateBulkBar() {
+		var count = $('.kt-enroll-cb:checked').length;
+		$('#kt-bulk-count').text(count);
+		$('#kt-bulk-bar').toggle(count > 0);
+	}
+
+	$(document).on('change', '#kt-check-all', function () {
+		$('.kt-enroll-cb').prop('checked', $(this).prop('checked'));
+		ktUpdateBulkBar();
+	});
+
+	$(document).on('change', '.kt-enroll-cb', function () {
+		var total = $('.kt-enroll-cb').length;
+		var checked = $('.kt-enroll-cb:checked').length;
+		$('#kt-check-all').prop('indeterminate', checked > 0 && checked < total);
+		$('#kt-check-all').prop('checked', checked === total);
+		ktUpdateBulkBar();
+	});
+
+	window.ktBulkClear = function () {
+		$('.kt-enroll-cb, #kt-check-all').prop('checked', false);
+		$('#kt-check-all').prop('indeterminate', false);
+		ktUpdateBulkBar();
+	};
+
+	window.ktConfirmBulkDelete = function () {
+		var count = $('.kt-enroll-cb:checked').length;
+		return count > 0 && confirm('Remover ' + count + ' matrícula(s) selecionada(s)? Esta ação não pode ser desfeita.');
+	};
+
 	/* -----------------------------------------------------------------------
 	 * Editor de perguntas da avaliação
 	 * -------------------------------------------------------------------- */

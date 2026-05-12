@@ -18,7 +18,7 @@ class KT_Admin {
 			'kt_save_course',   'kt_delete_course',
 			'kt_save_module',   'kt_delete_module',
 			'kt_save_quiz',     'kt_save_quiz_questions', 'kt_delete_quiz',
-			'kt_save_enrollment', 'kt_delete_enrollment',
+			'kt_save_enrollment', 'kt_delete_enrollment', 'kt_bulk_delete_enrollments',
 			'kt_export_progress', 'kt_dismiss_setup',
 			'kt_import_members', 'kt_import_quiz_questions',
 			'kt_reset_quiz_attempts',
@@ -493,6 +493,23 @@ class KT_Admin {
 		if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) wp_die( 'Acesso negado.' );
 		KT_Progress::unenroll( $mid, absint( $_POST['course_id'] ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-enrollments&deleted=1' ) ); exit;
+	}
+
+	public function handle_kt_bulk_delete_enrollments() {
+		$this->verify( 'kt_bulk_delete_enrollments' );
+		$pairs = (array) ( $_POST['enrollment_pairs'] ?? [] );
+		$count = 0;
+		foreach ( $pairs as $pair ) {
+			$parts     = explode( ':', $pair );
+			if ( count( $parts ) !== 2 ) continue;
+			$mid       = absint( $parts[0] );
+			$course_id = absint( $parts[1] );
+			$m         = KT_Member::get( $mid );
+			if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) continue;
+			KT_Progress::unenroll( $mid, $course_id );
+			$count++;
+		}
+		wp_redirect( admin_url( 'admin.php?page=kt-enrollments&deleted=' . $count ) ); exit;
 	}
 
 	public function handle_kt_import_members() {

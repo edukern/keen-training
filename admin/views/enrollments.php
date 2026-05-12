@@ -107,45 +107,61 @@
 			</select>
 		</label>
 	</div>
-	<table class="wp-list-table widefat fixed striped">
-		<thead>
-			<tr>
-				<th>Colaborador</th>
-				<th>Unidade</th>
-				<th>Curso</th>
-				<th>Status</th>
-				<th>Prazo</th>
-				<th>Ações</th>
-			</tr>
-		</thead>
-		<tbody>
-		<?php if ( ! $enrollments ): ?>
-			<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Nenhuma matrícula encontrada.</td></tr>
-		<?php else: ?>
-		<?php foreach ( $enrollments as $en ):
-			$overdue = $en->due_date && strtotime( $en->due_date ) < time() && $en->status !== 'concluido';
-		?>
-			<tr class="<?php echo $overdue ? 'kt-overdue' : ''; ?>">
-				<td><?php echo esc_html( $en->display_name ); ?></td>
-				<td><?php echo esc_html( $en->location_name ?? '—' ); ?></td>
-				<td><?php echo esc_html( $en->course_title ); ?></td>
-				<td>
-					<span class="kt-status kt-status-<?php echo esc_attr( $en->status ); ?>"><?php echo esc_html( KT_Progress::status_label( $en->status ) ); ?></span>
-					<?php if ( $overdue ): ?><span class="kt-badge kt-badge-overdue">Atrasado</span><?php endif; ?>
-				</td>
-				<td><?php echo $en->due_date ? esc_html( date_i18n( 'd/m/Y', strtotime( $en->due_date ) ) ) : '—'; ?></td>
-				<td>
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" onsubmit="return confirm('Remover esta matrícula?')">
-						<?php wp_nonce_field( 'kt_delete_enrollment' ); ?>
-						<input type="hidden" name="action" value="kt_delete_enrollment">
-						<input type="hidden" name="member_id" value="<?php echo absint( $en->member_id ); ?>">
-						<input type="hidden" name="course_id" value="<?php echo absint( $en->course_id ); ?>">
-						<button type="submit" class="button-link kt-delete-link">Remover</button>
-					</form>
-				</td>
-			</tr>
-		<?php endforeach; ?>
-		<?php endif; ?>
-		</tbody>
-	</table>
+
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kt-bulk-enrollments-form" onsubmit="return ktConfirmBulkDelete()">
+		<?php wp_nonce_field( 'kt_bulk_delete_enrollments' ); ?>
+		<input type="hidden" name="action" value="kt_bulk_delete_enrollments">
+
+		<div class="kt-bulk-bar" id="kt-bulk-bar" style="display:none;margin-bottom:8px">
+			<button type="submit" class="button button-secondary" style="color:#b32d2e;border-color:#b32d2e">
+				🗑 Remover selecionadas (<span id="kt-bulk-count">0</span>)
+			</button>
+			<button type="button" class="button" onclick="ktBulkClear()" style="margin-left:6px">Limpar seleção</button>
+		</div>
+
+		<table class="wp-list-table widefat fixed striped">
+			<thead>
+				<tr>
+					<th style="width:32px"><input type="checkbox" id="kt-check-all" title="Selecionar todos"></th>
+					<th>Colaborador</th>
+					<th>Unidade</th>
+					<th>Curso</th>
+					<th>Status</th>
+					<th>Prazo</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php if ( ! $enrollments ): ?>
+				<tr><td colspan="7" style="text-align:center;padding:20px;color:#888">Nenhuma matrícula encontrada.</td></tr>
+			<?php else: ?>
+			<?php foreach ( $enrollments as $en ):
+				$overdue = $en->due_date && strtotime( $en->due_date ) < time() && $en->status !== 'concluido';
+				$pair    = esc_attr( $en->member_id . ':' . $en->course_id );
+			?>
+				<tr class="<?php echo $overdue ? 'kt-overdue' : ''; ?>">
+					<td><input type="checkbox" name="enrollment_pairs[]" value="<?php echo $pair; ?>" class="kt-enroll-cb"></td>
+					<td><?php echo esc_html( $en->display_name ); ?></td>
+					<td><?php echo esc_html( $en->location_name ?? '—' ); ?></td>
+					<td><?php echo esc_html( $en->course_title ); ?></td>
+					<td>
+						<span class="kt-status kt-status-<?php echo esc_attr( $en->status ); ?>"><?php echo esc_html( KT_Progress::status_label( $en->status ) ); ?></span>
+						<?php if ( $overdue ): ?><span class="kt-badge kt-badge-overdue">Atrasado</span><?php endif; ?>
+					</td>
+					<td><?php echo $en->due_date ? esc_html( date_i18n( 'd/m/Y', strtotime( $en->due_date ) ) ) : '—'; ?></td>
+					<td>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" onsubmit="return confirm('Remover esta matrícula?')">
+							<?php wp_nonce_field( 'kt_delete_enrollment' ); ?>
+							<input type="hidden" name="action" value="kt_delete_enrollment">
+							<input type="hidden" name="member_id" value="<?php echo absint( $en->member_id ); ?>">
+							<input type="hidden" name="course_id" value="<?php echo absint( $en->course_id ); ?>">
+							<button type="submit" class="button-link kt-delete-link">Remover</button>
+						</form>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+			<?php endif; ?>
+			</tbody>
+		</table>
+	</form>
 </div>
