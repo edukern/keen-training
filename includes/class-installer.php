@@ -295,9 +295,20 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
-		// Migrações introduzidas na v2.4.1
-		// (sem mudanças de schema — bump de versão para rastreamento)
+		// Migrações introduzidas na v2.4.2
+		// Unifica kt_super_admin → kt_admin
 		// -----------------------------------------------------------------
+		if ( version_compare( $installed, '2.4.2', '<' ) ) {
+			// Converte usuários com kt_super_admin para kt_admin
+			$super_admins = get_users( [ 'role' => 'kt_super_admin', 'fields' => 'ID' ] );
+			foreach ( $super_admins as $uid ) {
+				$u = new WP_User( $uid );
+				$u->add_role( 'kt_admin' );
+				$u->remove_role( 'kt_super_admin' );
+			}
+			// Remove o papel do sistema (idempotente se já não existir)
+			remove_role( 'kt_super_admin' );
+		}
 
 		// -----------------------------------------------------------------
 		// Adicione blocos futuros aqui, ex:

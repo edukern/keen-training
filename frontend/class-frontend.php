@@ -17,6 +17,7 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_unenroll_member',    [ $this, 'ajax_unenroll_member' ] );
 		add_action( 'wp_ajax_kt_update_due_date',    [ $this, 'ajax_update_due_date' ] );
 		add_action( 'wp_ajax_kt_admin_create_user',    [ $this, 'ajax_admin_create_user' ] );
+		add_action( 'wp_ajax_kt_admin_update_user',    [ $this, 'ajax_admin_update_user' ] );
 		add_action( 'wp_ajax_kt_admin_add_location',   [ $this, 'ajax_admin_add_location' ] );
 		add_action( 'wp_ajax_kt_admin_update_location',[ $this, 'ajax_admin_update_location' ] );
 		add_action( 'wp_ajax_kt_admin_add_position',   [ $this, 'ajax_admin_add_position' ] );
@@ -968,6 +969,100 @@ class KT_Frontend {
 		if ( is_wp_error( $id ) ) wp_send_json_error( [ 'message' => $id->get_error_message() ] );
 
 		wp_send_json_success( [ 'message' => 'Função criada!', 'id' => $id, 'name' => $name ] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Editar usuário
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_update_user() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$user_id     = absint( $_POST['user_id']    ?? 0 );
+		$first_name  = sanitize_text_field( $_POST['first_name']  ?? '' );
+		$last_name   = sanitize_text_field( $_POST['last_name']   ?? '' );
+		$email       = sanitize_email( $_POST['email']            ?? '' );
+		$role        = sanitize_key( $_POST['role']               ?? '' );
+		$location_id = absint( $_POST['location_id']              ?? 0 );
+		$hire_date   = sanitize_text_field( $_POST['hire_date']   ?? '' ) ?: null;
+		$birth_date  = sanitize_text_field( $_POST['birth_date']  ?? '' ) ?: null;
+
+		if ( ! $user_id || ! $first_name || ! $email ) {
+			wp_send_json_error( [ 'message' => 'Nome e e-mail são obrigatórios.' ] );
+		}
+		if ( ! is_email( $email ) ) {
+			wp_send_json_error( [ 'message' => 'E-mail inválido.' ] );
+		}
+		$existing_id = email_exists( $email );
+		if ( $existing_id && (int) $existing_id !== $user_id ) {
+			wp_send_json_error( [ 'message' => 'Este e-mail já está em uso por outro usuário.' ] );
+		}
+
+		$allowed = [ 'kt_admin', 'kt_location_manager', 'kt_staff' ];
+		if ( ! in_array( $role, $allowed, true ) ) {
+			wp_send_json_error( [ 'message' => 'Função inválida.' ] );
+		}
+
+		$result = wp_update_user( [
+			'ID'           => $user_id,
+			'first_name'   => $first_name,
+			'last_name'    => $last_name,
+			'display_name' => trim( $first_name . ' ' . $last_name ),
+			'user_email'   => $email,
+			'role'         => $role,
+		] );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+		}
+
+		global $wpdb;
+
+		if ( $role === 'kt_location_manager' ) {
+			if ( $location_id ) {
+				update_user_meta( $user_id, 'kt_location_id', $location_id );
+				$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $user_id ], [ 'id' => $location_id ] );
+			}
+		} elseif ( $role === 'kt_staff' ) {
+			if ( $location_id ) {
+				update_user_meta( $user_id, 'kt_location_id', $location_id );
+			}
+			$member = $wpdb->get_row( $wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d", $user_id
+			) );
+			if ( $member ) {
+				$wpdb->update(
+					$wpdb->prefix . 'kt_members',
+					[ 'location_id' => $location_id ?: 0, 'hire_date' => $hire_date, 'birth_date' => $birth_date ],
+					[ 'user_id' => $user_id ]
+				);
+			} else {
+				KT_Member::create( [
+					'user_id'     => $user_id,
+					'location_id' => $location_id,
+					'hire_date'   => $hire_date,
+					'birth_date'  => $birth_date,
+				] );
+			}
+		} else {
+			// kt_admin: sem vinculação de unidade
+			delete_user_meta( $user_id, 'kt_location_id' );
+		}
+
+		// Busca nome da unidade para retornar ao JS
+		$loc_name = '';
+		if ( $location_id ) {
+			$loc_obj = KT_Location::get( $location_id );
+			if ( $loc_obj ) $loc_name = $loc_obj->name;
+		}
+
+		wp_send_json_success( [
+			'message'      => 'Usuário atualizado com sucesso.',
+			'display_name' => trim( $first_name . ' ' . $last_name ),
+			'role_label'   => KT_Roles::role_label( $role ),
+			'loc_name'     => $loc_name,
+		] );
 	}
 
 	/* -----------------------------------------------------------------------

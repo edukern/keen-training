@@ -4,19 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class KT_Roles {
 
 	public static function register() {
-		add_role( 'kt_super_admin', 'Keen Training — Super Admin', [
-			'read'                   => true,
-			'kt_manage_locations'    => true,
-			'kt_manage_members'      => true,
-			'kt_manage_courses'      => true,
-			'kt_manage_quizzes'      => true,
-			'kt_manage_enrollments'  => true,
-			'kt_view_all_progress'   => true,
-			'kt_manage_certificates' => true,
-			'kt_manage_restrictions' => true,
-		] );
+		// kt_super_admin foi unificado com kt_admin na v2.4.2.
+		// O bloco add_role foi removido; a migração converte usuários existentes.
 
-		// Administrador do plugin: tudo do super admin + gestão de usuários WP
+		// Administrador do plugin: acesso total ao KT + gestão de usuários WP
 		// (o WP exibe o menu Usuários automaticamente com essas caps)
 		add_role( 'kt_admin', 'Keen Training — Administrador', [
 			'read'                   => true,
@@ -50,7 +41,7 @@ class KT_Roles {
 	}
 
 	public static function remove() {
-		remove_role( 'kt_super_admin' );
+		remove_role( 'kt_super_admin' ); // legado — pode não existir
 		remove_role( 'kt_admin' );
 		remove_role( 'kt_location_manager' );
 		remove_role( 'kt_staff' );
@@ -72,13 +63,13 @@ class KT_Roles {
 	}
 
 	/**
-	 * Super admin = acesso total ao Keen Training (sem gestão de usuários WP).
-	 * Inclui também: kt_admin, administrator WP.
+	 * Acesso total ao Keen Training.
+	 * Inclui: kt_admin, kt_super_admin (legado), administrator WP.
 	 */
 	public static function is_super_admin() {
 		$user = wp_get_current_user();
-		return in_array( 'kt_super_admin', $user->roles, true )
-			|| in_array( 'kt_admin', $user->roles, true )
+		return in_array( 'kt_admin', $user->roles, true )
+			|| in_array( 'kt_super_admin', $user->roles, true ) // legado
 			|| current_user_can( 'administrator' );
 	}
 
@@ -100,8 +91,8 @@ class KT_Roles {
 	/** Retorna o nome amigável de um cargo/papel */
 	public static function role_label( $role ) {
 		$labels = [
-			'kt_super_admin'       => 'Super Admin',
 			'kt_admin'             => 'Administrador',
+			'kt_super_admin'       => 'Administrador (legado)', // migrado para kt_admin
 			'kt_location_manager'  => 'Gerente de Unidade',
 			'kt_staff'             => 'Colaborador',
 			'administrator'        => 'Administrador WordPress',

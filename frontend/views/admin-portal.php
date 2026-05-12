@@ -381,6 +381,11 @@ $current_url = get_permalink();
 		<h3 style="margin:32px 0 12px">Usuários do sistema</h3>
 		<?php
 		$kt_all_users = get_users(['role__in'=>['kt_admin','kt_super_admin','kt_location_manager','kt_staff','administrator'],'number'=>200,'orderby'=>'display_name','order'=>'ASC']);
+		// Carrega datas de colaboradores para exibir no modal de edição
+		global $wpdb;
+		$_mem_rows = $wpdb->get_results("SELECT user_id, hire_date, birth_date FROM {$wpdb->prefix}kt_members");
+		$_mem_map  = [];
+		foreach ( $_mem_rows as $_mr ) $_mem_map[ (int)$_mr->user_id ] = $_mr;
 		?>
 		<table class="kt-members-table">
 			<thead><tr>
@@ -388,6 +393,7 @@ $current_url = get_permalink();
 				<th>E-mail</th>
 				<th>Função</th>
 				<th>Unidade</th>
+				<th style="width:80px"></th>
 			</tr></thead>
 			<tbody>
 			<?php foreach ($kt_all_users as $u):
@@ -395,16 +401,30 @@ $current_url = get_permalink();
 				$u_role    = $u_roles[0] ?? '';
 				$u_loc_id  = (int)get_user_meta($u->ID,'kt_location_id',true);
 				$u_loc     = $u_loc_id ? KT_Location::get($u_loc_id) : null;
+				$_md       = $_mem_map[$u->ID] ?? null;
+				$u_hire    = $_md ? ($_md->hire_date  ?: '') : '';
+				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
 			?>
-			<tr>
-				<td><?php echo esc_html($u->display_name); ?></td>
-				<td style="color:#64748b;font-size:.9em"><?php echo esc_html($u->user_email); ?></td>
-				<td><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
-				<td style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
+			<tr id="kt-user-row-<?php echo absint($u->ID); ?>">
+				<td class="kt-u-name"><?php echo esc_html($u->display_name); ?></td>
+				<td class="kt-u-email" style="color:#64748b;font-size:.9em"><?php echo esc_html($u->user_email); ?></td>
+				<td class="kt-u-role"><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
+				<td class="kt-u-loc" style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
+				<td>
+					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn"
+					        data-id="<?php echo absint($u->ID); ?>"
+					        data-first="<?php echo esc_attr($u->first_name); ?>"
+					        data-last="<?php echo esc_attr($u->last_name); ?>"
+					        data-email="<?php echo esc_attr($u->user_email); ?>"
+					        data-role="<?php echo esc_attr($u_role); ?>"
+					        data-location="<?php echo absint($u_loc_id); ?>"
+					        data-hire="<?php echo esc_attr($u_hire); ?>"
+					        data-birth="<?php echo esc_attr($u_birth); ?>">Editar</button>
+				</td>
 			</tr>
 			<?php endforeach; ?>
 			<?php if (!$kt_all_users): ?>
-			<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">Nenhum usuário encontrado.</td></tr>
+			<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Nenhum usuário encontrado.</td></tr>
 			<?php endif; ?>
 			</tbody>
 		</table>
@@ -489,6 +509,69 @@ $current_url = get_permalink();
 				<button type="button" id="kt-loc-modal-close2" class="kt-btn kt-btn-outline">Cancelar</button>
 			</div>
 			<p id="kt-loc-modal-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
+		</div>
+	</div>
+</div>
+
+<!-- ── Modal de edição de usuário ───────────────────────── -->
+<div id="kt-user-modal-overlay" class="kt-modal-overlay" style="display:none" aria-modal="true" role="dialog">
+	<div class="kt-modal">
+		<div class="kt-modal-header">
+			<h3>Editar Usuário</h3>
+			<button type="button" class="kt-modal-close" id="kt-user-modal-close" aria-label="Fechar">×</button>
+		</div>
+		<div class="kt-modal-body">
+			<input type="hidden" id="kt-edit-user-id">
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome</label>
+					<input type="text" id="kt-edit-u-first" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
+					<input type="text" id="kt-edit-u-last" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail</label>
+					<input type="email" id="kt-edit-u-email" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função</label>
+					<select id="kt-edit-u-role" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+						<option value="kt_admin">Administrador</option>
+						<option value="kt_location_manager">Gerente de Unidade</option>
+						<option value="kt_staff">Colaborador</option>
+					</select>
+				</div>
+			</div>
+			<!-- Unidade (Gerente ou Colaborador) -->
+			<div id="kt-edit-u-location-wrap" style="display:none;margin-bottom:14px">
+				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-edit-u-location-label">Unidade</label>
+				<select id="kt-edit-u-location" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px">
+					<option value="">— Selecione a unidade —</option>
+					<?php foreach ( $locations as $loc ): ?>
+					<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<!-- Datas (Colaborador) -->
+			<div id="kt-edit-u-dates-wrap" style="display:none;margin-bottom:14px">
+				<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+					<div>
+						<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
+						<input type="date" id="kt-edit-u-hire" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+					</div>
+					<div>
+						<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
+						<input type="date" id="kt-edit-u-birth" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+					</div>
+				</div>
+			</div>
+			<div style="display:flex;gap:10px;margin-top:4px">
+				<button type="button" id="kt-save-user-btn" class="kt-btn kt-btn-primary">Salvar</button>
+				<button type="button" id="kt-user-modal-close2" class="kt-btn kt-btn-outline">Cancelar</button>
+			</div>
+			<p id="kt-user-modal-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
 		</div>
 	</div>
 </div>
@@ -692,6 +775,65 @@ $('#kt-copy-access-msg').on('click',function(){
 	}
 });
 
+/* ══════════════ MODAL: EDITAR USUÁRIO ══════════════ */
+
+function updateEditUserLocationLabel(){
+	var r=$('#kt-edit-u-role').val();
+	$('#kt-edit-u-location-wrap').toggle(r==='kt_location_manager'||r==='kt_staff');
+	$('#kt-edit-u-location-label').text(r==='kt_location_manager'?'Unidade (gerente da unidade)':'Unidade do colaborador');
+	$('#kt-edit-u-dates-wrap').toggle(r==='kt_staff');
+}
+
+$('#kt-edit-u-role').on('change', updateEditUserLocationLabel);
+
+$(document).on('click','.kt-edit-user-btn',function(){
+	var $b=$(this);
+	$('#kt-edit-user-id').val($b.data('id'));
+	$('#kt-edit-u-first').val($b.data('first'));
+	$('#kt-edit-u-last').val($b.data('last'));
+	$('#kt-edit-u-email').val($b.data('email'));
+	$('#kt-edit-u-role').val($b.data('role')||'kt_staff').trigger('change');
+	$('#kt-edit-u-location').val($b.data('location')||'');
+	$('#kt-edit-u-hire').val($b.data('hire')||'');
+	$('#kt-edit-u-birth').val($b.data('birth')||'');
+	$('#kt-user-modal-msg').text('');
+	$('#kt-user-modal-overlay').fadeIn(180);
+	$('body').addClass('kt-modal-open');
+});
+
+function closeUserModal(){ $('#kt-user-modal-overlay').fadeOut(150); $('body').removeClass('kt-modal-open'); }
+$('#kt-user-modal-close,#kt-user-modal-close2').on('click', closeUserModal);
+$('#kt-user-modal-overlay').on('click',function(e){ if($(e.target).is('#kt-user-modal-overlay')) closeUserModal(); });
+
+$('#kt-save-user-btn').on('click',function(){
+	var $b=$(this);
+	var uid=$('#kt-edit-user-id').val();
+	var first=$('#kt-edit-u-first').val().trim(), last=$('#kt-edit-u-last').val().trim();
+	var email=$('#kt-edit-u-email').val().trim(), role=$('#kt-edit-u-role').val();
+	var loc=$('#kt-edit-u-location').val();
+	var hire=$('#kt-edit-u-hire').val(), birth=$('#kt-edit-u-birth').val();
+	if(!first||!email||!role){msg('#kt-user-modal-msg','Nome e e-mail são obrigatórios.',false);return;}
+	$b.prop('disabled',true).text('Salvando…');
+	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_update_user',nonce:ktFrontend.nonce,
+		user_id:uid,first_name:first,last_name:last,email:email,role:role,location_id:loc,hire_date:hire,birth_date:birth})
+	.done(function(r){
+		msg('#kt-user-modal-msg',r.success?r.data.message:(r.data&&r.data.message?r.data.message:'Erro.'),r.success);
+		if(r.success){
+			var $row=$('#kt-user-row-'+uid);
+			$row.find('.kt-u-name').text(r.data.display_name);
+			$row.find('.kt-u-email').text(email);
+			$row.find('.kt-u-role span').text(r.data.role_label);
+			$row.find('.kt-u-loc').text(r.data.loc_name||'—');
+			$row.find('.kt-edit-user-btn')
+				.data('first',first).data('last',last).data('email',email)
+				.data('role',role).data('location',parseInt(loc)||0)
+				.data('hire',hire).data('birth',birth);
+			setTimeout(closeUserModal, 800);
+		}
+		$b.prop('disabled',false).text('Salvar');
+	}).fail(function(){ msg('#kt-user-modal-msg','Erro de conexão.',false); $b.prop('disabled',false).text('Salvar'); });
+});
+
 /* ══════════════ TAB: FUNÇÕES ══════════════ */
 
 $('#kt-add-pos-btn').on('click',function(){
@@ -756,7 +898,7 @@ function openModal(memberId,memberName,enrollments){
 function closeModal(){ $('#kt-member-modal-overlay').fadeOut(150); $('body').removeClass('kt-modal-open'); }
 $('#kt-modal-close').on('click',closeModal);
 $('#kt-member-modal-overlay').on('click',function(e){ if($(e.target).is('#kt-member-modal-overlay')) closeModal(); });
-$(document).on('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeLocModal(); } });
+$(document).on('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeLocModal(); closeUserModal(); } });
 
 $(document).on('click','.kt-edit-member-btn',function(){
 	var $b=$(this); var enrollments;
