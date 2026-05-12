@@ -481,10 +481,9 @@ $current_url = get_permalink();
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nível de Acesso <span style="color:#ef4444">*</span></label>
 					<select id="kt-u-role" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
-						<option value="">— Selecione —</option>
 						<option value="kt_admin">Administrador</option>
 						<option value="kt_location_manager">Gerente de Unidade</option>
-						<option value="kt_staff">Colaborador</option>
+						<option value="kt_staff" selected>Colaborador</option>
 					</select>
 				</div>
 				<div>
@@ -788,7 +787,7 @@ $('#kt-add-loc-btn').on('click',function(){
 
 function openCreateUserModal(){
 	$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
-	$('#kt-u-role').val('').trigger('change');
+	$('#kt-u-role').val('kt_staff').trigger('change');
 	$('#kt-u-position').val('');
 	$('#kt-u-hire-date,#kt-u-birth-date').val('');
 	$('#kt-u-send-email').prop('checked',true);
@@ -816,7 +815,7 @@ $('#kt-create-user-btn').on('click',function(){
 	var hireDate=$('#kt-u-hire-date').val(), birthDate=$('#kt-u-birth-date').val();
 	var positionId=$('#kt-u-position').val()||'';
 
-	if(!first||!email||!role){msg('#kt-user-msg','Preencha nome, e-mail e nível de acesso.',false);return;}
+	if(!first||!email){msg('#kt-user-msg','Preencha nome e e-mail.',false);return;}
 
 	$b.prop('disabled',true).text('Criando…');
 	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate,position_id:positionId})
