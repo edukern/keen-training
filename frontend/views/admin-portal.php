@@ -127,7 +127,15 @@ $current_url = get_permalink();
 			<tr>
 				<td><div class="kt-member-name"><?php echo esc_html($_name); ?></div></td>
 				<td style="color:#64748b;font-size:.9em"><?php echo esc_html($m->location_name ?? '—'); ?></td>
-				<td><?php if ($m->position_name): ?><span class="kt-manager-position"><?php echo esc_html($m->position_name); ?></span><?php else: ?><span style="color:#94a3b8">—</span><?php endif; ?></td>
+				<td>
+					<select class="kt-inline-pos-select" data-member-id="<?php echo absint($m->id); ?>">
+						<option value="">— Sem cargo —</option>
+						<?php foreach ( $positions as $pos ): ?>
+						<option value="<?php echo absint($pos->id); ?>" <?php selected( (int)($m->position_id??0), (int)$pos->id ); ?>><?php echo esc_html($pos->name); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<span class="kt-pos-flash" style="display:none;font-size:.75em;color:#15803d;margin-left:4px">✓</span>
+				</td>
 				<td>
 					<?php if ($enrs): ?>
 					<div class="kt-chips-summary" data-target="kt-chips-all-<?php echo absint($m->id); ?>">
@@ -259,7 +267,15 @@ $current_url = get_permalink();
 			?>
 			<tr>
 				<td><div class="kt-member-name"><?php echo esc_html($_name); ?></div></td>
-				<td><?php if ($m->position_name): ?><span class="kt-manager-position"><?php echo esc_html($m->position_name); ?></span><?php else: ?><span style="color:#94a3b8">—</span><?php endif; ?></td>
+				<td>
+					<select class="kt-inline-pos-select" data-member-id="<?php echo absint($m->id); ?>">
+						<option value="">— Sem cargo —</option>
+						<?php foreach ( $positions as $pos ): ?>
+						<option value="<?php echo absint($pos->id); ?>" <?php selected( (int)($m->position_id??0), (int)$pos->id ); ?>><?php echo esc_html($pos->name); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<span class="kt-pos-flash" style="display:none;font-size:.75em;color:#15803d;margin-left:4px">✓</span>
+				</td>
 				<td>
 					<?php if ($enrs): ?>
 					<div class="kt-chips-summary" data-target="kt-chips-<?php echo absint($m->id); ?>">
@@ -439,7 +455,7 @@ $current_url = get_permalink();
 				$u_hire    = $_md ? ($_md->hire_date  ?: '') : '';
 				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
 				$u_pos_id  = $_md ? (int)($_md->position_id ?? 0) : 0;
-			?>
+			?>
 	<?php endif; ?>
 
 </div><!-- /kt-admin-portal -->
@@ -630,7 +646,7 @@ $current_url = get_permalink();
 				</div>
 			</div>
 			<!-- Unidade (Gerente ou Colaborador) -->
-			<div id="kt-edit-u-location-wrap" style="display:none;margin-bottom:14px">
+			<div id="kt-edit-u-location-wrap" style="margin-bottom:14px">
 				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-edit-u-location-label">Unidade</label>
 				<select id="kt-edit-u-location" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px">
 					<option value="">— Selecione a unidade —</option>
@@ -681,6 +697,9 @@ $current_url = get_permalink();
 .kt-unit-stat{display:flex;flex-direction:column;align-items:center;gap:1px}
 .kt-unit-stat strong{font-size:1.3em;font-weight:700;color:#1e293b;line-height:1.1}
 .kt-unit-stat span{font-size:.78em;color:#64748b}
+/* Dropdown inline de cargo */
+.kt-inline-pos-select{border:1px solid transparent;background:transparent;font-size:.85em;color:#475569;cursor:pointer;padding:3px 6px;border-radius:6px;max-width:150px;transition:border-color .15s,background .15s}
+.kt-inline-pos-select:hover,.kt-inline-pos-select:focus{border-color:#cbd5e1;background:#f8fafc;outline:none}
 </style>
 
 <script>
@@ -881,7 +900,7 @@ $('#kt-copy-access-msg').on('click',function(){
 
 function updateEditUserRole(){
 	var r=$('#kt-edit-u-role').val();
-	$('#kt-edit-u-location-wrap').toggle(r==='kt_location_manager'||r==='kt_staff');
+	$('#kt-edit-u-location-wrap').show();
 	$('#kt-edit-u-location-label').text(r==='kt_location_manager'?'Unidade (gerente da unidade)':'Unidade do colaborador');
 }
 
@@ -987,6 +1006,21 @@ $(document).on('click','.kt-pos-delete-btn',function(){
 		if(r.success) $('#kt-pos-row-'+id).fadeOut(200,function(){$(this).remove();});
 		else{ msg('#kt-pos-msg',r.data&&r.data.message?r.data.message:'Erro.',false); $b.prop('disabled',false); }
 	}).fail(function(){ msg('#kt-pos-msg','Erro de conexão.',false); $b.prop('disabled',false); });
+});
+
+/* ══════════════ Dropdown inline de cargo (tabelas do Painel) ══════════════ */
+
+$(document).on('change','.kt-inline-pos-select',function(){
+	var $sel=$(this), memberId=$sel.data('member-id'), positionId=$sel.val();
+	$sel.prop('disabled',true);
+	$.post(ktFrontend.ajaxUrl,{action:'kt_update_member_position',nonce:ktFrontend.nonce,member_id:memberId,position_id:positionId})
+	.done(function(r){
+		$sel.prop('disabled',false);
+		if(r.success){
+			var $flash=$sel.next('.kt-pos-flash');
+			$flash.stop(true,true).show().delay(1400).fadeOut(300);
+		}
+	}).fail(function(){ $sel.prop('disabled',false); });
 });
 
 /* ══════════════ Modal de matrícula (igual ao gerente) ══════════════ */

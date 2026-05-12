@@ -390,24 +390,26 @@
 
 /* --- Botões --- */
 .kt-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 	gap: 6px;
-	padding: 8px 20px;
-	border-radius: 8px;
-	font-size: .9em;
-	font-weight: 600;
-	text-decoration: none;
-	border: 1px solid #e2e8f0;
-	background: #f8fafc;
-	color: #374151;
-	cursor: pointer;
-	transition: background .15s, transform .1s;
-	line-height: 1.4;
+	padding: 8px 20px !important;
+	border-radius: 8px !important;
+	font-size: .9em !important;
+	font-weight: 600 !important;
+	text-decoration: none !important;
+	border: 1px solid #e2e8f0 !important;
+	background: #f8fafc !important;
+	color: #374151 !important;
+	cursor: pointer !important;
+	transition: background .15s, transform .1s !important;
+	line-height: 1.4 !important;
+	box-shadow: none !important;
+	text-shadow: none !important;
 }
-.kt-btn:hover { background: #e2e8f0; text-decoration: none; color: #1d2327; }
-.kt-btn:active { transform: scale(.98); }
+.kt-btn:hover { background: #e2e8f0 !important; text-decoration: none !important; color: #1d2327 !important; }
+.kt-btn:active { transform: scale(.98) !important; }
 
 .kt-btn-primary { background: var(--kt-btn-bg) !important; border-color: var(--kt-btn-hover-bg) !important; color: var(--kt-btn-text) !important; }
 .kt-btn-primary:hover { background: var(--kt-btn-hover-bg) !important; color: var(--kt-btn-hover-text) !important; }
@@ -425,8 +427,8 @@
 .kt-btn-outline { background: transparent !important; border-color: #94a3b8 !important; color: #64748b !important; }
 .kt-btn-outline:hover { background: #f1f5f9 !important; border-color: #64748b !important; color: #1e293b !important; }
 
-.kt-btn-lg { padding: 12px 28px; font-size: 1em; }
-.kt-btn-sm { padding: 5px 12px; font-size: .8em; }
+.kt-btn-lg { padding: 12px 28px !important; font-size: 1em !important; }
+.kt-btn-sm { padding: 5px 12px !important; font-size: .8em !important; }
 
 /* --- Dashboard do gerente ([kt_gerente]) --- */
 .kt-manager-stats {
