@@ -79,26 +79,21 @@ $current_url = get_permalink();
 	<?php if ( $active_tab === 'painel' ): ?>
 	<div class="kt-admin-tab-content">
 
-		<form method="get" style="margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-			<?php foreach ( $_GET as $k => $v ): if ( $k === 'kt_location' ) continue; ?>
-				<input type="hidden" name="<?php echo esc_attr($k); ?>" value="<?php echo esc_attr($v); ?>">
+		<!-- Abas de unidade -->
+		<div class="kt-unit-tabs">
+			<?php foreach ( $locations as $loc ): ?>
+			<a href="<?php echo esc_url( add_query_arg( ['kt_tab'=>'painel','kt_location'=>$loc->id], $current_url ) ); ?>"
+			   class="kt-unit-tab <?php echo (int)$location_id === (int)$loc->id ? 'active' : ''; ?>">
+				<?php echo esc_html($loc->name); ?>
+			</a>
 			<?php endforeach; ?>
-			<label style="font-weight:600">Unidade:</label>
-			<select name="kt_location" onchange="this.form.submit()" style="min-width:220px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px">
-				<option value="">— Selecione —</option>
-				<?php foreach ( $locations as $loc ): ?>
-					<option value="<?php echo absint($loc->id); ?>" <?php selected($location_id, $loc->id); ?>><?php echo esc_html($loc->name); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</form>
+		</div>
 
 		<?php if ( ! $location_id ): ?>
-		<div class="kt-empty-state"><p>Selecione uma unidade para ver colaboradores e matrículas.</p></div>
+		<div class="kt-empty-state"><p>Selecione uma unidade acima para ver colaboradores e matrículas.</p></div>
 
-		<?php else: ?>
-
-		<!-- Stats da unidade -->
-		<?php
+		<?php else:
+		$unit_mgr = $location->manager_id ? get_user_by( 'ID', $location->manager_id ) : null;
 		$u_enr = 0; $u_done = 0;
 		foreach ( $member_progress as $enrs ) {
 			foreach ( $enrs as $e ) {
@@ -108,24 +103,23 @@ $current_url = get_permalink();
 		}
 		$u_rate = $u_enr > 0 ? round( $u_done / $u_enr * 100 ) : 0;
 		?>
-		<div class="kt-manager-stats" style="margin-bottom:20px">
-			<div class="kt-manager-stat">
-				<div class="kt-manager-stat-value"><?php echo count($tab_members); ?></div>
-				<div class="kt-manager-stat-label">Colaboradores</div>
+
+		<!-- Cabeçalho da unidade: gerente + stats -->
+		<div class="kt-unit-header">
+			<div class="kt-unit-header-mgr">
+				<span class="kt-unit-header-label">Gerente</span>
+				<span class="kt-unit-header-value"><?php echo $unit_mgr ? esc_html( $unit_mgr->user_login ) : '—'; ?></span>
 			</div>
-			<div class="kt-manager-stat">
-				<div class="kt-manager-stat-value"><?php echo $u_enr; ?></div>
-				<div class="kt-manager-stat-label">Matrículas</div>
-			</div>
-			<div class="kt-manager-stat">
-				<div class="kt-manager-stat-value"><?php echo $u_rate; ?>%</div>
-				<div class="kt-manager-stat-label">Conclusão</div>
+			<div class="kt-unit-header-stats">
+				<div class="kt-unit-stat"><strong><?php echo count($tab_members); ?></strong><span>colaboradores</span></div>
+				<div class="kt-unit-stat"><strong><?php echo $u_enr; ?></strong><span>matrículas</span></div>
+				<div class="kt-unit-stat"><strong><?php echo $u_rate; ?>%</strong><span>conclusão</span></div>
 			</div>
 		</div>
 
 		<!-- Atribuir treinamento -->
 		<?php if ( $courses && $tab_members ): ?>
-		<div class="kt-manager-enroll-box">
+		<div class="kt-manager-enroll-box" style="margin-bottom:24px">
 			<h3>Atribuir Treinamento</h3>
 			<div class="kt-assign-top-row">
 				<div class="kt-assign-field kt-assign-field-course">
@@ -177,62 +171,59 @@ $current_url = get_permalink();
 		<?php if ( ! $tab_members ): ?>
 		<div class="kt-empty-state"><p>Nenhum colaborador nesta unidade.</p></div>
 		<?php else: ?>
-		<div class="kt-manager-members">
-			<h3>Colaboradores — <?php echo esc_html($location->name); ?></h3>
-			<table class="kt-members-table">
-				<thead><tr>
-					<th>Colaborador</th>
-					<th>Função</th>
-					<th>Treinamentos</th>
-				</tr></thead>
-				<tbody>
-				<?php foreach ( $tab_members as $m ):
-					$enrs        = $member_progress[$m->id] ?? [];
-					$_name       = $m->full_name ?: $m->display_name ?: $m->user_login;
-					$pcts = []; $has_overdue = false; $enrs_json = [];
-					foreach ( $enrs as $e ) {
-						$pct     = KT_Progress::course_progress_pct($m->id, $e->course_id);
-						$overdue = $e->due_date && strtotime($e->due_date) < time() && $e->status !== 'concluido';
-						if ($overdue) $has_overdue = true;
-						$pcts[] = $pct;
-						$enrs_json[] = ['course_id'=>(int)$e->course_id,'course_title'=>$e->course_title,'status'=>$e->status,'overdue'=>$overdue,'due_date'=>$e->due_date?:'','pct'=>$pct];
-					}
-					$avg_pct = $pcts ? round(array_sum($pcts)/count($pcts)) : 0;
-				?>
-				<tr>
-					<td><div class="kt-member-name"><?php echo esc_html($_name); ?></div></td>
-					<td><?php if ($m->position_name): ?><span class="kt-manager-position"><?php echo esc_html($m->position_name); ?></span><?php else: ?><span style="color:#94a3b8">—</span><?php endif; ?></td>
-					<td>
-						<?php if ($enrs): ?>
-						<div class="kt-chips-summary" data-target="kt-chips-<?php echo absint($m->id); ?>">
-							<span class="kt-chips-avg"><?php echo $avg_pct; ?>% <span class="kt-chips-count">(<?php echo count($enrs); ?> curso<?php echo count($enrs)!==1?'s':''; ?>)</span></span>
-							<?php if ($has_overdue): ?><span class="kt-chips-overdue-flag">atrasado</span><?php endif; ?>
-							<span class="kt-chips-toggle-icon">▾</span>
+		<table class="kt-members-table">
+			<thead><tr>
+				<th>Colaborador</th>
+				<th>Função</th>
+				<th>Treinamentos</th>
+			</tr></thead>
+			<tbody>
+			<?php foreach ( $tab_members as $m ):
+				$enrs        = $member_progress[$m->id] ?? [];
+				$_name       = $m->full_name ?: $m->display_name ?: $m->user_login;
+				$pcts = []; $has_overdue = false; $enrs_json = [];
+				foreach ( $enrs as $e ) {
+					$pct     = KT_Progress::course_progress_pct($m->id, $e->course_id);
+					$overdue = $e->due_date && strtotime($e->due_date) < time() && $e->status !== 'concluido';
+					if ($overdue) $has_overdue = true;
+					$pcts[] = $pct;
+					$enrs_json[] = ['course_id'=>(int)$e->course_id,'course_title'=>$e->course_title,'status'=>$e->status,'overdue'=>$overdue,'due_date'=>$e->due_date?:'','pct'=>$pct];
+				}
+				$avg_pct = $pcts ? round(array_sum($pcts)/count($pcts)) : 0;
+			?>
+			<tr>
+				<td><div class="kt-member-name"><?php echo esc_html($_name); ?></div></td>
+				<td><?php if ($m->position_name): ?><span class="kt-manager-position"><?php echo esc_html($m->position_name); ?></span><?php else: ?><span style="color:#94a3b8">—</span><?php endif; ?></td>
+				<td>
+					<?php if ($enrs): ?>
+					<div class="kt-chips-summary" data-target="kt-chips-<?php echo absint($m->id); ?>">
+						<span class="kt-chips-avg"><?php echo $avg_pct; ?>% <span class="kt-chips-count">(<?php echo count($enrs); ?> curso<?php echo count($enrs)!==1?'s':''; ?>)</span></span>
+						<?php if ($has_overdue): ?><span class="kt-chips-overdue-flag">atrasado</span><?php endif; ?>
+						<span class="kt-chips-toggle-icon">▾</span>
+					</div>
+					<div class="kt-chips-drawer" id="kt-chips-<?php echo absint($m->id); ?>" style="display:none">
+						<?php foreach ($enrs as $e):
+							$pct = KT_Progress::course_progress_pct($m->id,$e->course_id);
+							$overdue = $e->due_date && strtotime($e->due_date)<time() && $e->status!=='concluido';
+						?>
+						<div class="kt-drawer-row">
+							<span class="kt-enroll-chip kt-enroll-chip-<?php echo $overdue?'overdue':esc_attr($e->status); ?>" style="flex-shrink:0"><?php echo $pct; ?>%</span>
+							<span class="kt-drawer-course-title"><?php echo esc_html($e->course_title); ?></span>
+							<a href="#" class="kt-edit-link kt-edit-member-btn"
+							   data-member-id="<?php echo absint($m->id); ?>"
+							   data-member-name="<?php echo esc_attr($_name); ?>"
+							   data-enrollments="<?php echo esc_attr(wp_json_encode($enrs_json)); ?>">Editar →</a>
 						</div>
-						<div class="kt-chips-drawer" id="kt-chips-<?php echo absint($m->id); ?>" style="display:none">
-							<?php foreach ($enrs as $e):
-								$pct=$KT_Progress::course_progress_pct($m->id,$e->course_id);
-								$overdue=$e->due_date&&strtotime($e->due_date)<time()&&$e->status!=='concluido';
-							?>
-							<div class="kt-drawer-row">
-								<span class="kt-enroll-chip kt-enroll-chip-<?php echo $overdue?'overdue':esc_attr($e->status); ?>" style="flex-shrink:0"><?php echo KT_Progress::course_progress_pct($m->id,$e->course_id); ?>%</span>
-								<span class="kt-drawer-course-title"><?php echo esc_html($e->course_title); ?></span>
-								<a href="#" class="kt-edit-link kt-edit-member-btn"
-								   data-member-id="<?php echo absint($m->id); ?>"
-								   data-member-name="<?php echo esc_attr($_name); ?>"
-								   data-enrollments="<?php echo esc_attr(wp_json_encode($enrs_json)); ?>">Editar →</a>
-							</div>
-							<?php endforeach; ?>
-						</div>
-						<?php else: ?>
-						<span class="kt-no-enroll">Sem treinamentos</span>
-						<?php endif; ?>
-					</td>
-				</tr>
-				<?php endforeach; ?>
-				</tbody>
-			</table>
-		</div>
+						<?php endforeach; ?>
+					</div>
+					<?php else: ?>
+					<span class="kt-no-enroll">Sem treinamentos</span>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+			</tbody>
+		</table>
 		<?php endif; // tab_members ?>
 		<?php endif; // location_id ?>
 	</div><!-- /tab painel -->
@@ -613,6 +604,20 @@ $current_url = get_permalink();
 .kt-admin-tab-content{padding:4px 0 0}
 .kt-loc-edit-btn,.kt-edit-user-btn{color:#64748b!important;border-color:#cbd5e1!important;background:#fff!important}
 .kt-loc-edit-btn:hover,.kt-edit-user-btn:hover{color:#1e293b!important;border-color:#94a3b8!important}
+/* Abas de unidade no Painel */
+.kt-unit-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.kt-unit-tab{padding:7px 18px;border-radius:20px;text-decoration:none;font-size:.9em;font-weight:500;color:#64748b;border:1.5px solid #e2e8f0;background:#fff;transition:all .15s;white-space:nowrap}
+.kt-unit-tab:hover{color:#1e293b;border-color:#94a3b8}
+.kt-unit-tab.active{color:#fff;background:#1e293b;border-color:#1e293b;font-weight:600}
+/* Cabeçalho da unidade selecionada */
+.kt-unit-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:14px 20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:24px}
+.kt-unit-header-mgr{display:flex;flex-direction:column;gap:2px}
+.kt-unit-header-label{font-size:.78em;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em}
+.kt-unit-header-value{font-weight:600;color:#1e293b;font-size:1em}
+.kt-unit-header-stats{display:flex;gap:28px}
+.kt-unit-stat{display:flex;flex-direction:column;align-items:center;gap:1px}
+.kt-unit-stat strong{font-size:1.3em;font-weight:700;color:#1e293b;line-height:1.1}
+.kt-unit-stat span{font-size:.78em;color:#64748b}
 </style>
 
 <script>
