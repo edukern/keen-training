@@ -22,6 +22,7 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_admin_update_location',[ $this, 'ajax_admin_update_location' ] );
 		add_action( 'wp_ajax_kt_admin_add_position',   [ $this, 'ajax_admin_add_position' ] );
 		add_action( 'wp_ajax_kt_admin_delete_position',[ $this, 'ajax_admin_delete_position' ] );
+		add_action( 'wp_ajax_kt_admin_delete_user',    [ $this, 'ajax_admin_delete_user' ] );
 		add_action( 'template_redirect',           [ $this, 'maybe_render_certificate' ] );
 		add_action( 'template_redirect',           [ $this, 'enforce_module_page_access' ] );
 		add_filter( 'login_redirect',              [ $this, 'login_redirect' ], 10, 3 );
@@ -1082,6 +1083,57 @@ class KT_Frontend {
 
 		KT_Position::delete( $id );
 		wp_send_json_success( [ 'message' => 'Função removida.' ] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Excluir usuário
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_delete_user() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$user_id = absint( $_POST['user_id'] ?? 0 );
+		if ( ! $user_id ) wp_send_json_error( [ 'message' => 'ID inválido.' ] );
+
+		// Não pode excluir a si mesmo
+		if ( $user_id === get_current_user_id() ) {
+			wp_send_json_error( [ 'message' => 'Você não pode excluir sua própria conta.' ] );
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) wp_send_json_error( [ 'message' => 'Usuário não encontrado.' ] );
+
+		// Não pode excluir administradores WordPress nativos
+		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
+			wp_send_json_error( [ 'message' => 'Não é possível excluir um administrador.' ] );
+		}
+
+		// Remove meta de gerente de unidade, se houver
+		$loc_id = get_user_meta( $user_id, 'kt_location_id', true );
+		if ( $loc_id ) {
+			global $wpdb;
+			// Limpa manager_id na unidade somente se ainda for este usuário
+			$wpdb->query( $wpdb->prepare(
+				"UPDATE {$wpdb->prefix}kt_locations SET manager_id = 0 WHERE id = %d AND manager_id = %d",
+				$loc_id, $user_id
+			) );
+		}
+
+		// Remove registro de membro (kt_members)
+		global $wpdb;
+		$wpdb->delete( $wpdb->prefix . 'kt_members', [ 'user_id' => $user_id ] );
+
+		// Remove matrículas e progresso
+		$wpdb->delete( $wpdb->prefix . 'kt_enrollments', [ 'member_id' => $user_id ] );
+
+		// Exclui o usuário do WordPress (sem reatribuir posts)
+		if ( ! function_exists( 'wp_delete_user' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+		}
+		wp_delete_user( $user_id );
+
+		wp_send_json_success( [ 'message' => 'Usuário excluído com sucesso.' ] );
 	}
 
 	/* -----------------------------------------------------------------------

@@ -910,16 +910,19 @@ body.kt-modal-open { overflow: hidden; }
 }
 .kt-modal-header h3 { margin: 0; font-size: 1.05em; font-weight: 700; }
 .kt-modal-close {
-	background: none;
-	border: none;
+	background: none !important;
+	border: none !important;
+	box-shadow: none !important;
+	outline: none !important;
 	font-size: 1.4em;
 	line-height: 1;
 	cursor: pointer;
-	color: #94a3b8;
+	color: #94a3b8 !important;
 	padding: 0 4px;
 	transition: color .15s;
+	border-radius: 0 !important;
 }
-.kt-modal-close:hover { color: #1e293b; }
+.kt-modal-close:hover { color: #1e293b !important; background: none !important; }
 
 .kt-modal-body {
 	padding: 20px 24px;

@@ -333,7 +333,7 @@ $current_url = get_permalink();
 				<td class="kt-u-email" style="color:#64748b;font-size:.9em"><?php echo esc_html($u->user_email); ?></td>
 				<td class="kt-u-role"><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
 				<td class="kt-u-loc" style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
-				<td>
+				<td style="white-space:nowrap">
 					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn"
 					        data-id="<?php echo absint($u->ID); ?>"
 					        data-login="<?php echo esc_attr($u->user_login); ?>"
@@ -344,6 +344,12 @@ $current_url = get_permalink();
 					        data-location="<?php echo absint($u_loc_id); ?>"
 					        data-hire="<?php echo esc_attr($u_hire); ?>"
 					        data-birth="<?php echo esc_attr($u_birth); ?>">Editar</button>
+					<?php if ( $u->ID !== get_current_user_id() && ! in_array('administrator', $u->roles, true) ): ?>
+					<button type="button" class="kt-btn kt-btn-sm kt-delete-user-btn"
+					        style="color:#b91c1c;border-color:#fca5a5;margin-left:4px"
+					        data-id="<?php echo absint($u->ID); ?>"
+					        data-login="<?php echo esc_attr($u->user_login); ?>">Excluir</button>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<?php endforeach; ?>
@@ -870,6 +876,23 @@ $('#kt-save-user-btn').on('click',function(){
 		}
 		$b.prop('disabled',false).text('Salvar');
 	}).fail(function(){ msg('#kt-user-modal-msg','Erro de conexão.',false); $b.prop('disabled',false).text('Salvar'); });
+});
+
+/* ══════════════ TAB: USUÁRIOS — excluir ══════════════ */
+
+$(document).on('click','.kt-delete-user-btn',function(){
+	var $b=$(this), id=$b.data('id'), login=$b.data('login');
+	if(!confirm('Excluir o usuário "'+login+'"?\n\nEsta ação é irreversível: o usuário, seus registros de membro, matrículas e progresso serão removidos permanentemente.')) return;
+	$b.prop('disabled',true).text('Excluindo…');
+	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_delete_user',nonce:ktFrontend.nonce,user_id:id})
+	.done(function(r){
+		if(r.success){
+			$('#kt-user-row-'+id).fadeOut(250,function(){$(this).remove();});
+		} else {
+			alert(r.data&&r.data.message?r.data.message:'Erro ao excluir.');
+			$b.prop('disabled',false).text('Excluir');
+		}
+	}).fail(function(){ alert('Erro de conexão.'); $b.prop('disabled',false).text('Excluir'); });
 });
 
 /* ══════════════ TAB: FUNÇÕES ══════════════ */
