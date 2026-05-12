@@ -22,7 +22,8 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_admin_update_location',[ $this, 'ajax_admin_update_location' ] );
 		add_action( 'wp_ajax_kt_admin_add_position',   [ $this, 'ajax_admin_add_position' ] );
 		add_action( 'wp_ajax_kt_admin_delete_position',[ $this, 'ajax_admin_delete_position' ] );
-		add_action( 'wp_ajax_kt_admin_delete_user',    [ $this, 'ajax_admin_delete_user' ] );
+		add_action( 'wp_ajax_kt_admin_delete_user',       [ $this, 'ajax_admin_delete_user' ] );
+		add_action( 'wp_ajax_kt_update_member_position',  [ $this, 'ajax_update_member_position' ] );
 		add_action( 'template_redirect',           [ $this, 'maybe_render_certificate' ] );
 		add_action( 'template_redirect',           [ $this, 'enforce_module_page_access' ] );
 		add_filter( 'login_redirect',              [ $this, 'login_redirect' ], 10, 3 );
@@ -145,6 +146,7 @@ class KT_Frontend {
 		$locations = KT_Roles::is_super_admin() ? KT_Location::get_all() : [];
 		$members   = $location_id ? KT_Member::get_all( $location_id ) : [];
 		$courses   = KT_Course::get_all();
+		$positions = KT_Position::get_all();
 
 		$quote = $this->get_daily_quote( 'manager' );
 
@@ -784,6 +786,15 @@ class KT_Frontend {
 		// Lista de usuários com roles KT (para selects de gerente)
 		$kt_users = get_users( [ 'role__in' => [ 'kt_admin', 'kt_super_admin', 'kt_location_manager', 'administrator' ], 'number' => 200 ] );
 
+		// Auto-detecta URL do painel do gerente se não estiver salva
+		if ( ! get_option( 'kt_manager_page_url' ) ) {
+			global $wpdb;
+			$mgr_page = $wpdb->get_row( "SELECT ID FROM {$wpdb->posts} WHERE post_status='publish' AND post_type='page' AND post_content LIKE '%[kt_gerente%' LIMIT 1" );
+			if ( $mgr_page ) {
+				update_option( 'kt_manager_page_url', get_permalink( $mgr_page->ID ) );
+			}
+		}
+
 		$active_tab = sanitize_key( $_GET['kt_tab'] ?? 'painel' );
 		$quote      = $this->get_daily_quote( 'manager' );
 
@@ -1134,6 +1145,43 @@ class KT_Frontend {
 		wp_delete_user( $user_id );
 
 		wp_send_json_success( [ 'message' => 'Usuário excluído com sucesso.' ] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Atualizar cargo de um colaborador (gerente ou admin)
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_update_member_position() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
+			wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+		}
+
+		$member_id   = absint( $_POST['member_id']   ?? 0 );
+		$position_id = absint( $_POST['position_id'] ?? 0 ) ?: null;
+
+		if ( ! $member_id ) wp_send_json_error( [ 'message' => 'Membro inválido.' ] );
+
+		$member = KT_Member::get( $member_id );
+		if ( ! $member || ! KT_Roles::can_manage_location( $member->location_id ) ) {
+			wp_send_json_error( [ 'message' => 'Sem permissão para este colaborador.' ] );
+		}
+
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->prefix . 'kt_members',
+			[ 'position_id' => $position_id ],
+			[ 'id' => $member_id ]
+		);
+
+		// Retorna o nome do novo cargo
+		$pos_name = '';
+		if ( $position_id ) {
+			$pos = $wpdb->get_row( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kt_positions WHERE id = %d", $position_id ) );
+			if ( $pos ) $pos_name = $pos->name;
+		}
+
+		wp_send_json_success( [ 'message' => 'Cargo atualizado.', 'position_name' => $pos_name ] );
 	}
 
 	/* -----------------------------------------------------------------------

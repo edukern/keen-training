@@ -141,7 +141,7 @@
 			<thead>
 				<tr>
 					<th style="width:200px">Colaborador</th>
-					<th style="width:120px">Função</th>
+					<th style="width:120px">Cargo</th>
 					<th>Treinamentos</th>
 				</tr>
 			</thead>
@@ -213,6 +213,7 @@
 								class="kt-edit-link kt-edit-member-btn"
 								data-member-id="<?php echo absint( $m->id ); ?>"
 								data-member-name="<?php echo esc_attr( $_name ); ?>"
+								data-position-id="<?php echo absint( $m->position_id ?? 0 ); ?>"
 								data-enrollments="<?php echo esc_attr( wp_json_encode( $enrs_for_json ) ); ?>">
 								Editar →
 							</a>
@@ -245,6 +246,11 @@
 	</div>
 </div>
 
+<script>
+var ktPositions = <?php echo wp_json_encode(
+	array_map( fn($p) => [ 'id' => (int)$p->id, 'name' => $p->name ], $positions )
+); ?>;
+</script>
 <script>
 (function($){
 
@@ -384,7 +390,7 @@
 		return '<span class="kt-enroll-chip kt-enroll-chip-' + cls + '" style="font-size:.78em">' + label + '</span>';
 	}
 
-	function openModal( memberId, memberName, enrollments ) {
+	function openModal( memberId, memberName, enrollments, positionId ) {
 		$('#kt-modal-title').text( memberName );
 
 		/* ── Cursos disponíveis para o select de atribuição ── */
@@ -392,6 +398,21 @@
 
 		/* ── Monta corpo do modal ── */
 		var html = '';
+
+		// Seção: cargo
+		html += '<div class="kt-modal-section" style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f1f5f9">';
+		html += '<p class="kt-modal-section-title">Cargo</p>';
+		html += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">';
+		html += '<select id="kt-modal-position-select" style="flex:1;min-width:160px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:.92em">';
+		html += '<option value="">— Sem cargo —</option>';
+		$.each(ktPositions, function(i, p){
+			html += '<option value="'+p.id+'"'+(p.id===parseInt(positionId||0)?' selected':'')+'>'+$('<div>').text(p.name).html()+'</option>';
+		});
+		html += '</select>';
+		html += '<button type="button" id="kt-modal-save-position" class="kt-btn kt-btn-primary" data-member-id="'+memberId+'">Salvar cargo</button>';
+		html += '</div>';
+		html += '<p id="kt-modal-position-msg" style="margin:6px 0 0;font-size:.85em;min-height:1em"></p>';
+		html += '</div>';
 
 		// Seção: matrículas existentes
 		if ( enrollments.length ) {
@@ -454,13 +475,14 @@
 		var $btn       = $(this);
 		var memberId   = $btn.data('member-id');
 		var memberName = $btn.data('member-name');
+		var positionId = $btn.data('position-id') || 0;
 		var enrollments;
 		try {
 			enrollments = JSON.parse( $btn.attr('data-enrollments') || '[]' );
 		} catch(e) {
 			enrollments = [];
 		}
-		openModal( memberId, memberName, enrollments );
+		openModal( memberId, memberName, enrollments, positionId );
 	});
 
 	/* Fechar modal */
@@ -567,6 +589,38 @@
 		}).fail(function(){
 			$('#kt-modal-assign-msg').text('Erro de conexão.').css('color','#b91c1c');
 			$btn.prop('disabled', false).text('Atribuir');
+		});
+	});
+
+	/* ── Salvar cargo ── */
+	$(document).on('click', '#kt-modal-save-position', function(){
+		var $btn     = $(this);
+		var memberId = $btn.data('member-id');
+		var posId    = $('#kt-modal-position-select').val();
+		$btn.prop('disabled', true).text('Salvando…');
+		$.post( ktFrontend.ajaxUrl, {
+			action:      'kt_update_member_position',
+			nonce:       ktFrontend.nonce,
+			member_id:   memberId,
+			position_id: posId,
+		}).done(function(r){
+			var ok = r.success;
+			$('#kt-modal-position-msg').text( ok ? '✓ '+r.data.message : (r.data&&r.data.message?r.data.message:'Erro.') ).css('color', ok?'#15803d':'#b91c1c');
+			if ( ok ) {
+				// Atualiza o badge de cargo na linha da tabela
+				var posName = r.data.position_name || '';
+				var $row = $('[data-member-id="'+memberId+'"]').closest('tr');
+				$row.find('.kt-manager-position').text( posName );
+				if ( ! posName ) $row.find('td:nth-child(2)').html('<span style="color:#94a3b8">—</span>');
+				$btn.data('position-id', parseInt(posId)||0);
+				// Atualiza data-position-id no link para reabertura correta
+				$('[data-member-id="'+memberId+'"].kt-edit-member-btn').attr('data-position-id', parseInt(posId)||0);
+				setTimeout(function(){ $('#kt-modal-position-msg').text(''); }, 2500);
+			}
+			$btn.prop('disabled', false).text('Salvar cargo');
+		}).fail(function(){
+			$('#kt-modal-position-msg').text('Erro de conexão.').css('color','#b91c1c');
+			$btn.prop('disabled', false).text('Salvar cargo');
 		});
 	});
 
