@@ -315,7 +315,7 @@ $current_url = get_permalink();
 					<input type="text" id="kt-u-last" placeholder="Ex: SANTOS DA SILVA" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
 			</div>
-			<p style="font-size:.82em;color:#b45309;background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:6px 10px;margin:0 0 16px">
+			<p style="font-size:.82em;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;margin:0 0 16px">
 				⚠ Escreva o nome completo em CAPS LOCK. Ex: <strong>PEDRO SANTOS DA SILVA</strong>
 			</p>
 
