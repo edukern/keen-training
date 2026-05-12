@@ -1,10 +1,13 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <?php
-// Mapeia gerente de cada unidade
+// Mapeia gerente de cada unidade a partir do manager_id na tabela kt_locations
+// (fonte da verdade — evita dessincronismo com user_meta)
 $manager_map = [];
-foreach ( $kt_users as $u ) {
-	$loc = (int) get_user_meta( $u->ID, 'kt_location_id', true );
-	if ( $loc ) $manager_map[ $loc ] = $u;
+foreach ( $locations as $loc ) {
+	if ( $loc->manager_id ) {
+		$_mgr = get_user_by( 'ID', $loc->manager_id );
+		if ( $_mgr ) $manager_map[ (int) $loc->id ] = $_mgr;
+	}
 }
 $current_url = get_permalink();
 ?>
@@ -250,7 +253,7 @@ $current_url = get_permalink();
 			<tbody>
 			<?php foreach ( $locations as $loc ):
 				$mgr_user  = isset($manager_map[$loc->id]) ? $manager_map[$loc->id] : null;
-				$mgr_name  = $mgr_user ? $mgr_user->display_name : '—';
+				$mgr_name  = $mgr_user ? $mgr_user->user_login : '—';
 				$mem_count = KT_Location::get_member_count($loc->id);
 			?>
 			<tr id="kt-loc-row-<?php echo absint($loc->id); ?>">

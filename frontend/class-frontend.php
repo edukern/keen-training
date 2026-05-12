@@ -945,7 +945,7 @@ class KT_Frontend {
 		$manager_name = '';
 		if ( $manager_id ) {
 			$u = get_user_by( 'ID', $manager_id );
-			$manager_name = $u ? $u->display_name : '';
+			$manager_name = $u ? $u->user_login : '';
 		}
 
 		wp_send_json_success( [

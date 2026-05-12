@@ -39,6 +39,12 @@ class KT_Location {
 		$id          = absint( $id );
 		$manager_id  = absint( $data['manager_id'] ?? 0 );
 
+		// Limpa o meta do gerente anterior antes de trocar
+		$old = self::get( $id );
+		if ( $old && $old->manager_id && (int) $old->manager_id !== $manager_id ) {
+			delete_user_meta( (int) $old->manager_id, 'kt_location_id' );
+		}
+
 		$wpdb->update(
 			$wpdb->prefix . 'kt_locations',
 			[
@@ -50,7 +56,7 @@ class KT_Location {
 		);
 
 		if ( $manager_id ) {
-			// Atualiza meta do gerente com a unidade
+			// Atualiza meta do novo gerente com a unidade
 			update_user_meta( $manager_id, 'kt_location_id', $id );
 			$user = new WP_User( $manager_id );
 			// Garante que tem o papel de gerente se não for admin
