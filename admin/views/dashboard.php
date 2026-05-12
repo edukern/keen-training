@@ -110,6 +110,7 @@
 	$all_pages        = get_pages( [ 'sort_column' => 'post_title', 'sort_order' => 'ASC' ] );
 	$saved_portal_url = get_option( 'kt_portal_page_url',  '' );
 	$saved_manager_url= get_option( 'kt_manager_page_url', '' );
+	$saved_admin_url  = get_option( 'kt_admin_page_url',   '' );
 	?>
 	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
 		<h2 style="margin-top:0">Páginas do Plugin</h2>
@@ -146,6 +147,20 @@
 							<?php endforeach; ?>
 						</select>
 						<p class="description">Página com o shortcode <code>[kt_gerente]</code>. Gerentes de unidade são redirecionados aqui após o login.</p>
+					</td>
+				</tr>
+				<tr>
+					<th style="padding:8px 0"><label for="kt_admin_page">Portal do Administrador</label></th>
+					<td style="padding:8px 0">
+						<select id="kt_admin_page" name="kt_admin_page_url" style="min-width:280px">
+							<option value="">— Selecione a página —</option>
+							<?php foreach ( $all_pages as $p ): ?>
+							<option value="<?php echo esc_attr( get_permalink( $p->ID ) ); ?>" <?php selected( $saved_admin_url, get_permalink( $p->ID ) ); ?>>
+								<?php echo esc_html( $p->post_title ); ?>
+							</option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">Página com o shortcode <code>[kt_admin]</code>. Administradores são redirecionados aqui após o login.</p>
 					</td>
 				</tr>
 			</table>

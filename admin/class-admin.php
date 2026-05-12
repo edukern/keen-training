@@ -640,6 +640,7 @@ class KT_Admin {
 		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
 		update_option( 'kt_portal_page_url',  esc_url_raw( $_POST['kt_portal_page_url']  ?? '' ) );
 		update_option( 'kt_manager_page_url', esc_url_raw( $_POST['kt_manager_page_url'] ?? '' ) );
+		update_option( 'kt_admin_page_url',   esc_url_raw( $_POST['kt_admin_page_url']   ?? '' ) );
 		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&pages_saved=1' ) );
 		exit;
 	}

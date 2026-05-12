@@ -1,4 +1,4 @@
-<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
+﻿<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <?php
 // Mapeia gerente de cada unidade a partir do manager_id na tabela kt_locations
 // (fonte da verdade — evita dessincronismo com user_meta)
@@ -71,13 +71,11 @@ $current_url = get_permalink();
 	<!-- ── Tabs ────────────────────────────────────────────── -->
 	<div class="kt-admin-tabs">
 		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'painel', $current_url ) ); ?>"
-		   class="kt-admin-tab <?php echo $active_tab === 'painel'   ? 'active' : ''; ?>">📊 Painel</a>
-		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'unidades', $current_url ) ); ?>"
-		   class="kt-admin-tab <?php echo $active_tab === 'unidades' ? 'active' : ''; ?>">🏢 Unidades</a>
+		   class="kt-admin-tab <?php echo $active_tab === 'painel'        ? 'active' : ''; ?>">📊 Painel</a>
 		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'usuarios', $current_url ) ); ?>"
-		   class="kt-admin-tab <?php echo $active_tab === 'usuarios' ? 'active' : ''; ?>">👤 Usuários</a>
-		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'cargos', $current_url ) ); ?>"
-		   class="kt-admin-tab <?php echo $active_tab === 'cargos'  ? 'active' : ''; ?>">🏷 Cargos</a>
+		   class="kt-admin-tab <?php echo $active_tab === 'usuarios'      ? 'active' : ''; ?>">👤 Usuários</a>
+		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'configuracoes', $current_url ) ); ?>"
+		   class="kt-admin-tab <?php echo $active_tab === 'configuracoes' ? 'active' : ''; ?>">⚙️ Configurações</a>
 	</div>
 
 	<!-- ══════════════════════════════════════════════════════
@@ -299,7 +297,7 @@ $current_url = get_permalink();
 	<!-- ══════════════════════════════════════════════════════
 	     TAB: UNIDADES
 	══════════════════════════════════════════════════════ -->
-	<?php elseif ( $active_tab === 'unidades' ): ?>
+	<?php elseif ( $active_tab === 'configuracoes' ): ?>
 	<div class="kt-admin-tab-content">
 		<h3 style="margin-bottom:16px">Unidades cadastradas</h3>
 		<table class="kt-members-table" id="kt-locations-table">
@@ -356,86 +354,10 @@ $current_url = get_permalink();
 			</div>
 			<p id="kt-loc-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
 		</div>
-	</div><!-- /tab unidades -->
+		<hr style="margin:40px 0;border:none;border-top:2px solid #e2e8f0">
 
-	<!-- ══════════════════════════════════════════════════════
-	     TAB: USUÁRIOS
-	══════════════════════════════════════════════════════ -->
-	<?php elseif ( $active_tab === 'usuarios' ): ?>
-	<div class="kt-admin-tab-content">
-
-		<div style="margin-bottom:24px">
-			<button type="button" id="kt-open-create-user-btn" class="kt-btn kt-btn-primary">+ Adicionar novo colaborador</button>
-		</div>
-
-		<!-- Lista de usuários KT -->
-		<h3 style="margin:32px 0 12px">Usuários do sistema</h3>
-		<?php
-		$kt_all_users = get_users(['role__in'=>['kt_admin','kt_super_admin','kt_location_manager','kt_staff','administrator'],'number'=>200,'orderby'=>'display_name','order'=>'ASC']);
-		// Carrega datas de colaboradores para exibir no modal de edição
-		global $wpdb;
-		$_mem_rows = $wpdb->get_results("SELECT user_id, hire_date, birth_date, position_id FROM {$wpdb->prefix}kt_members");
-		$_mem_map  = [];
-		foreach ( $_mem_rows as $_mr ) $_mem_map[ (int)$_mr->user_id ] = $_mr;
-		?>
-		<table class="kt-members-table">
-			<thead><tr>
-				<th>Nome</th>
-				<th>E-mail</th>
-				<th>Nível de Acesso</th>
-				<th>Unidade</th>
-				<th style="width:80px"></th>
-			</tr></thead>
-			<tbody>
-			<?php foreach ($kt_all_users as $u):
-				$u_roles   = $u->roles;
-				$u_role    = $u_roles[0] ?? '';
-				$u_loc_id  = (int)get_user_meta($u->ID,'kt_location_id',true);
-				$u_loc     = $u_loc_id ? KT_Location::get($u_loc_id) : null;
-				$_md       = $_mem_map[$u->ID] ?? null;
-				$u_hire    = $_md ? ($_md->hire_date  ?: '') : '';
-				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
-				$u_pos_id  = $_md ? (int)($_md->position_id ?? 0) : 0;
-			?>
-			<tr id="kt-user-row-<?php echo absint($u->ID); ?>">
-				<td class="kt-u-name"><?php echo esc_html($u->user_login); ?></td>
-				<td class="kt-u-email" style="color:#64748b;font-size:.9em"><?php echo esc_html($u->user_email); ?></td>
-				<td class="kt-u-role"><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
-				<td class="kt-u-loc" style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
-				<td style="white-space:nowrap">
-					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn"
-					        data-id="<?php echo absint($u->ID); ?>"
-					        data-login="<?php echo esc_attr($u->user_login); ?>"
-					        data-first="<?php echo esc_attr($u->first_name); ?>"
-					        data-last="<?php echo esc_attr($u->last_name); ?>"
-					        data-email="<?php echo esc_attr($u->user_email); ?>"
-					        data-role="<?php echo esc_attr($u_role); ?>"
-					        data-location="<?php echo absint($u_loc_id); ?>"
-					        data-hire="<?php echo esc_attr($u_hire); ?>"
-					        data-birth="<?php echo esc_attr($u_birth); ?>"
-					        data-position="<?php echo absint($u_pos_id); ?>">Editar</button>
-					<?php if ( $u->ID !== get_current_user_id() && ! in_array('administrator', $u->roles, true) ): ?>
-					<button type="button" class="kt-btn kt-btn-sm kt-delete-user-btn"
-					        style="color:#b91c1c;border-color:#fca5a5;margin-left:4px"
-					        data-id="<?php echo absint($u->ID); ?>"
-					        data-login="<?php echo esc_attr($u->user_login); ?>">Excluir</button>
-					<?php endif; ?>
-				</td>
-			</tr>
-			<?php endforeach; ?>
-			<?php if (!$kt_all_users): ?>
-			<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Nenhum usuário encontrado.</td></tr>
-			<?php endif; ?>
-			</tbody>
-		</table>
-	</div><!-- /tab usuarios -->
-
-	<!-- ══════════════════════════════════════════════════════
-	     TAB: FUNÇÕES
-	══════════════════════════════════════════════════════ -->
-	<?php elseif ( $active_tab === 'cargos' ): ?>
-	<div class="kt-admin-tab-content">
-		<h3 style="margin-bottom:16px">Cargos cadastrados</h3>
+		<!-- ── Seção: Cargos ── -->
+		<h3 style="margin-bottom:16px">🏷 Cargos cadastrados</h3>
 		<table class="kt-members-table" id="kt-positions-table">
 			<thead><tr>
 				<th>Nome</th>
@@ -477,7 +399,47 @@ $current_url = get_permalink();
 			</div>
 			<p id="kt-pos-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
 		</div>
-	</div><!-- /tab cargos -->
+	</div><!-- /tab configuracoes -->
+
+	<!-- ══════════════════════════════════════════════════════
+	     TAB: USUÁRIOS
+	══════════════════════════════════════════════════════ -->
+	<?php elseif ( $active_tab === 'usuarios' ): ?>
+	<div class="kt-admin-tab-content">
+
+		<div style="margin-bottom:24px">
+			<button type="button" id="kt-open-create-user-btn" class="kt-btn kt-btn-primary">+ Adicionar novo colaborador</button>
+		</div>
+
+		<!-- Lista de usuários KT -->
+		<h3 style="margin:32px 0 12px">Usuários do sistema</h3>
+		<?php
+		$kt_all_users = get_users(['role__in'=>['kt_admin','kt_super_admin','kt_location_manager','kt_staff','administrator'],'number'=>200,'orderby'=>'display_name','order'=>'ASC']);
+		// Carrega datas de colaboradores para exibir no modal de edição
+		global $wpdb;
+		$_mem_rows = $wpdb->get_results("SELECT user_id, hire_date, birth_date, position_id FROM {$wpdb->prefix}kt_members");
+		$_mem_map  = [];
+		foreach ( $_mem_rows as $_mr ) $_mem_map[ (int)$_mr->user_id ] = $_mr;
+		?>
+		<table class="kt-members-table">
+			<thead><tr>
+				<th>Nome</th>
+				<th>E-mail</th>
+				<th>Nível de Acesso</th>
+				<th>Unidade</th>
+				<th style="width:80px"></th>
+			</tr></thead>
+			<tbody>
+			<?php foreach ($kt_all_users as $u):
+				$u_roles   = $u->roles;
+				$u_role    = $u_roles[0] ?? '';
+				$u_loc_id  = (int)get_user_meta($u->ID,'kt_location_id',true);
+				$u_loc     = $u_loc_id ? KT_Location::get($u_loc_id) : null;
+				$_md       = $_mem_map[$u->ID] ?? null;
+				$u_hire    = $_md ? ($_md->hire_date  ?: '') : '';
+				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
+				$u_pos_id  = $_md ? (int)($_md->position_id ?? 0) : 0;
+			?>
 	<?php endif; ?>
 
 </div><!-- /kt-admin-portal -->
