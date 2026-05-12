@@ -8,6 +8,7 @@ class KT_Frontend {
 		add_shortcode( 'kt_modulo',   [ $this, 'shortcode_module_actions' ] );
 		add_shortcode( 'kt_quiz',     [ $this, 'shortcode_quiz_embed' ] );
 		add_shortcode( 'kt_gerente',  [ $this, 'shortcode_manager' ] );
+		add_shortcode( 'kt_admin',    [ $this, 'shortcode_kt_admin' ] );
 		add_action( 'wp_enqueue_scripts',          [ $this, 'enqueue_assets' ] );
 		add_action( 'wp_head',                     [ $this, 'inject_appearance_vars' ] );
 		add_action( 'wp_ajax_kt_complete_module',  [ $this, 'ajax_complete_module' ] );
@@ -15,6 +16,11 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_enroll_member',      [ $this, 'ajax_enroll_member' ] );
 		add_action( 'wp_ajax_kt_unenroll_member',    [ $this, 'ajax_unenroll_member' ] );
 		add_action( 'wp_ajax_kt_update_due_date',    [ $this, 'ajax_update_due_date' ] );
+		add_action( 'wp_ajax_kt_admin_create_user',    [ $this, 'ajax_admin_create_user' ] );
+		add_action( 'wp_ajax_kt_admin_add_location',   [ $this, 'ajax_admin_add_location' ] );
+		add_action( 'wp_ajax_kt_admin_update_location',[ $this, 'ajax_admin_update_location' ] );
+		add_action( 'wp_ajax_kt_admin_add_position',   [ $this, 'ajax_admin_add_position' ] );
+		add_action( 'wp_ajax_kt_admin_delete_position',[ $this, 'ajax_admin_delete_position' ] );
 		add_action( 'template_redirect',           [ $this, 'maybe_render_certificate' ] );
 		add_action( 'template_redirect',           [ $this, 'enforce_module_page_access' ] );
 		add_filter( 'login_redirect',              [ $this, 'login_redirect' ], 10, 3 );
@@ -28,6 +34,12 @@ class KT_Frontend {
 		if ( is_wp_error( $user ) ) return $redirect_to;
 
 		$roles = (array) $user->roles;
+
+		// Administrador do plugin → painel frontend do admin (se configurado), senão painel WP
+		if ( in_array( 'kt_admin', $roles, true ) ) {
+			$admin_url = get_option( 'kt_admin_page_url' );
+			return $admin_url ?: ( $redirect_to ?: admin_url() );
+		}
 
 		// Super admin / administrator → painel WP
 		if ( in_array( 'kt_super_admin', $roles, true ) || in_array( 'administrator', $roles, true ) ) {
@@ -721,6 +733,238 @@ class KT_Frontend {
 		];
 
 		return $type === 'manager' ? $manager : $staff;
+	}
+
+	/* -----------------------------------------------------------------------
+	 * Shortcode [kt_admin] — Painel frontend do administrador
+	 * -------------------------------------------------------------------- */
+
+	public function shortcode_kt_admin( $atts ) {
+		update_option( 'kt_admin_page_url', get_permalink(), false );
+
+		if ( ! is_user_logged_in() ) {
+			return '<div class="kt-portal kt-login-prompt"><p>' .
+				sprintf( 'Por favor, <a href="%s">faça login</a> para acessar o painel.', esc_url( wp_login_url( get_permalink() ) ) ) .
+			'</p></div>';
+		}
+
+		if ( ! KT_Roles::is_kt_admin() ) {
+			return '<div class="kt-portal"><p>Acesso restrito a administradores.</p></div>';
+		}
+
+		$locations  = KT_Location::get_all();
+		$positions  = KT_Position::get_all();
+		$courses    = KT_Course::get_all();
+
+		// Dados para tab Painel (mesma lógica do kt_gerente)
+		$location_id = absint( $_GET['kt_location'] ?? 0 );
+		$location    = $location_id ? KT_Location::get( $location_id ) : null;
+		$tab_members = $location_id ? KT_Member::get_all( $location_id ) : [];
+
+		$member_progress = [];
+		foreach ( $tab_members as $m ) {
+			$member_progress[ $m->id ] = KT_Progress::get_enrollments_for_member( $m->id );
+		}
+
+		// Stats globais
+		$all_members       = KT_Member::get_all();
+		$total_units       = count( $locations );
+		$total_members_all = count( $all_members );
+		$total_enr = 0; $total_done = 0;
+		foreach ( $all_members as $m ) {
+			foreach ( KT_Progress::get_enrollments_for_member( $m->id ) as $e ) {
+				$total_enr++;
+				if ( $e->status === 'concluido' ) $total_done++;
+			}
+		}
+		$completion_rate = $total_enr > 0 ? round( $total_done / $total_enr * 100 ) : 0;
+
+		// Lista de usuários com roles KT (para selects de gerente)
+		$kt_users = get_users( [ 'role__in' => [ 'kt_admin', 'kt_super_admin', 'kt_location_manager', 'administrator' ], 'number' => 200 ] );
+
+		$active_tab = sanitize_key( $_GET['kt_tab'] ?? 'painel' );
+		$quote      = $this->get_daily_quote( 'manager' );
+
+		ob_start();
+		include KT_PLUGIN_DIR . 'frontend/views/admin-portal.php';
+		return ob_get_clean();
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Criar usuário WP
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_create_user() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$first_name  = sanitize_text_field( $_POST['first_name']  ?? '' );
+		$last_name   = sanitize_text_field( $_POST['last_name']   ?? '' );
+		$email       = sanitize_email( $_POST['email']            ?? '' );
+		$role        = sanitize_key( $_POST['role']               ?? '' );
+		$location_id = absint( $_POST['location_id']              ?? 0 );
+		$send_email  = ! empty( $_POST['send_email'] );
+
+		if ( ! $first_name || ! $email ) {
+			wp_send_json_error( [ 'message' => 'Nome e e-mail são obrigatórios.' ] );
+		}
+		if ( ! is_email( $email ) ) {
+			wp_send_json_error( [ 'message' => 'E-mail inválido.' ] );
+		}
+		if ( email_exists( $email ) ) {
+			wp_send_json_error( [ 'message' => 'Este e-mail já está cadastrado.' ] );
+		}
+
+		$allowed = [ 'kt_admin', 'kt_location_manager', 'kt_staff' ];
+		if ( ! in_array( $role, $allowed, true ) ) {
+			wp_send_json_error( [ 'message' => 'Função inválida.' ] );
+		}
+
+		// Gera username a partir do e-mail
+		$base_user = sanitize_user( strstr( $email, '@', true ), true );
+		$username  = $base_user;
+		$suffix    = 1;
+		while ( username_exists( $username ) ) {
+			$username = $base_user . $suffix++;
+		}
+
+		$password = wp_generate_password( 12, false );
+		$user_id  = wp_create_user( $username, $password, $email );
+
+		if ( is_wp_error( $user_id ) ) {
+			wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
+		}
+
+		wp_update_user( [
+			'ID'           => $user_id,
+			'first_name'   => $first_name,
+			'last_name'    => $last_name,
+			'display_name' => trim( $first_name . ' ' . $last_name ),
+			'role'         => $role,
+		] );
+
+		// Gerente → vincular unidade
+		if ( $role === 'kt_location_manager' && $location_id ) {
+			update_user_meta( $user_id, 'kt_location_id', $location_id );
+			global $wpdb;
+			$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $user_id ], [ 'id' => $location_id ] );
+		}
+
+		// Colaborador → criar registro de membro
+		if ( $role === 'kt_staff' && $location_id ) {
+			KT_Member::create( [ 'user_id' => $user_id, 'location_id' => $location_id ] );
+		}
+
+		// E-mail de boas-vindas com link de definição de senha
+		if ( $send_email ) {
+			$user_obj = get_user_by( 'ID', $user_id );
+			$key      = get_password_reset_key( $user_obj );
+			if ( ! is_wp_error( $key ) ) {
+				$reset_url = network_site_url( 'wp-login.php?action=rp&key=' . $key . '&login=' . rawurlencode( $username ) );
+				$subject   = sprintf( 'Bem-vindo(a) ao %s', get_bloginfo( 'name' ) );
+				$message   = sprintf(
+					"Olá, %s!\n\nSua conta foi criada. Clique no link abaixo para definir sua senha de acesso:\n\n%s\n\nAté logo!",
+					$first_name, $reset_url
+				);
+				wp_mail( $email, $subject, $message );
+			}
+		}
+
+		wp_send_json_success( [
+			'message'  => 'Usuário criado com sucesso.',
+			'user_id'  => $user_id,
+			'name'     => trim( $first_name . ' ' . $last_name ),
+			'username' => $username,
+		] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Adicionar unidade
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_add_location() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$name       = sanitize_text_field( $_POST['name']       ?? '' );
+		$manager_id = absint( $_POST['manager_id']              ?? 0 );
+
+		if ( ! $name ) wp_send_json_error( [ 'message' => 'Nome da unidade é obrigatório.' ] );
+
+		$id = KT_Location::create( [ 'name' => $name, 'manager_id' => $manager_id ] );
+
+		$manager_name = '';
+		if ( $manager_id ) {
+			$u = get_user_by( 'ID', $manager_id );
+			$manager_name = $u ? $u->display_name : '';
+		}
+
+		wp_send_json_success( [
+			'message'      => 'Unidade criada!',
+			'id'           => $id,
+			'name'         => $name,
+			'manager_name' => $manager_name,
+		] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Atualizar unidade
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_update_location() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$id         = absint( $_POST['location_id'] ?? 0 );
+		$name       = sanitize_text_field( $_POST['name']       ?? '' );
+		$manager_id = absint( $_POST['manager_id']              ?? 0 );
+
+		if ( ! $id || ! $name ) wp_send_json_error( [ 'message' => 'Dados inválidos.' ] );
+
+		KT_Location::update( $id, [ 'name' => $name, 'manager_id' => $manager_id ] );
+
+		$manager_name = '';
+		if ( $manager_id ) {
+			$u = get_user_by( 'ID', $manager_id );
+			$manager_name = $u ? $u->display_name : '';
+		}
+
+		wp_send_json_success( [
+			'message'      => 'Unidade atualizada!',
+			'manager_name' => $manager_name,
+		] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Adicionar função
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_add_position() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$name = sanitize_text_field( $_POST['name'] ?? '' );
+		if ( ! $name ) wp_send_json_error( [ 'message' => 'Nome da função é obrigatório.' ] );
+
+		$id = KT_Position::create( [ 'name' => $name ] );
+		if ( is_wp_error( $id ) ) wp_send_json_error( [ 'message' => $id->get_error_message() ] );
+
+		wp_send_json_success( [ 'message' => 'Função criada!', 'id' => $id, 'name' => $name ] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Remover função
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_admin_delete_position() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+
+		$id = absint( $_POST['position_id'] ?? 0 );
+		if ( ! $id ) wp_send_json_error( [ 'message' => 'ID inválido.' ] );
+
+		KT_Position::delete( $id );
+		wp_send_json_success( [ 'message' => 'Função removida.' ] );
 	}
 
 	/* -----------------------------------------------------------------------
