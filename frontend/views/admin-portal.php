@@ -498,8 +498,8 @@ $current_url = get_permalink();
 				</div>
 			</div>
 
-			<!-- Unidade (condicional) -->
-			<div id="kt-u-location-wrap" style="display:none;margin-bottom:14px">
+			<!-- Unidade -->
+			<div id="kt-u-location-wrap" style="margin-bottom:14px">
 				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-u-location-label">Unidade</label>
 				<select id="kt-u-location" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
 					<option value="">— Selecione a unidade —</option>
@@ -805,9 +805,7 @@ $('#kt-create-user-modal-overlay').on('click',function(e){ if($(e.target).is('#k
 
 $('#kt-u-role').on('change',function(){
 	var r=$(this).val();
-	var show=r==='kt_location_manager'||r==='kt_staff';
-	$('#kt-u-location-wrap').toggle(show);
-	$('#kt-u-location-label').text(r==='kt_location_manager'?'Unidade (será atribuído como gerente)':'Unidade do colaborador');
+	$('#kt-u-location-label').text(r==='kt_location_manager'?'Unidade (será atribuído como gerente)':'Unidade');
 });
 
 $('#kt-create-user-btn').on('click',function(){
