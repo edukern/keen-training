@@ -805,6 +805,7 @@ class KT_Frontend {
 		$email       = sanitize_email( $_POST['email']            ?? '' );
 		$role        = sanitize_key( $_POST['role']               ?? '' );
 		$location_id = absint( $_POST['location_id']              ?? 0 );
+		$position_id = absint( $_POST['position_id']              ?? 0 ) ?: null;
 		$hire_date   = sanitize_text_field( $_POST['hire_date']   ?? '' ) ?: null;
 		$birth_date  = sanitize_text_field( $_POST['birth_date']  ?? '' ) ?: null;
 		$send_email  = ! empty( $_POST['send_email'] );
@@ -821,7 +822,7 @@ class KT_Frontend {
 
 		$allowed = [ 'kt_admin', 'kt_location_manager', 'kt_staff' ];
 		if ( ! in_array( $role, $allowed, true ) ) {
-			wp_send_json_error( [ 'message' => 'Função inválida.' ] );
+			wp_send_json_error( [ 'message' => 'Nível de acesso inválido.' ] );
 		}
 
 		// Gera username: primeiro nome + "." + último sobrenome (sem acentos, minúsculas)
@@ -865,6 +866,7 @@ class KT_Frontend {
 			KT_Member::create( [
 				'user_id'     => $user_id,
 				'location_id' => $location_id,
+				'position_id' => $position_id,
 				'hire_date'   => $hire_date,
 				'birth_date'  => $birth_date,
 			] );
@@ -986,6 +988,7 @@ class KT_Frontend {
 		$email       = sanitize_email( $_POST['email']            ?? '' );
 		$role        = sanitize_key( $_POST['role']               ?? '' );
 		$location_id = absint( $_POST['location_id']              ?? 0 );
+		$position_id = absint( $_POST['position_id']              ?? 0 ) ?: null;
 		$hire_date   = sanitize_text_field( $_POST['hire_date']   ?? '' ) ?: null;
 		$birth_date  = sanitize_text_field( $_POST['birth_date']  ?? '' ) ?: null;
 
@@ -1002,7 +1005,7 @@ class KT_Frontend {
 
 		$allowed = [ 'kt_admin', 'kt_location_manager', 'kt_staff' ];
 		if ( ! in_array( $role, $allowed, true ) ) {
-			wp_send_json_error( [ 'message' => 'Função inválida.' ] );
+			wp_send_json_error( [ 'message' => 'Nível de acesso inválido.' ] );
 		}
 
 		$result = wp_update_user( [
@@ -1030,7 +1033,7 @@ class KT_Frontend {
 			delete_user_meta( $user_id, 'kt_location_id' );
 		}
 
-		// Salva datas para colaboradores e gerentes (kt_members)
+		// Salva datas e cargo para colaboradores e gerentes (kt_members)
 		if ( in_array( $role, [ 'kt_staff', 'kt_location_manager' ], true ) ) {
 			$member = $wpdb->get_row( $wpdb->prepare(
 				"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d", $user_id
@@ -1038,13 +1041,14 @@ class KT_Frontend {
 			if ( $member ) {
 				$wpdb->update(
 					$wpdb->prefix . 'kt_members',
-					[ 'location_id' => $location_id ?: 0, 'hire_date' => $hire_date, 'birth_date' => $birth_date ],
+					[ 'location_id' => $location_id ?: 0, 'position_id' => $position_id, 'hire_date' => $hire_date, 'birth_date' => $birth_date ],
 					[ 'user_id' => $user_id ]
 				);
 			} else {
 				KT_Member::create( [
 					'user_id'     => $user_id,
 					'location_id' => $location_id,
+					'position_id' => $position_id,
 					'hire_date'   => $hire_date,
 					'birth_date'  => $birth_date,
 				] );

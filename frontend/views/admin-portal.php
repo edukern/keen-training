@@ -69,8 +69,8 @@ $current_url = get_permalink();
 		   class="kt-admin-tab <?php echo $active_tab === 'unidades' ? 'active' : ''; ?>">🏢 Unidades</a>
 		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'usuarios', $current_url ) ); ?>"
 		   class="kt-admin-tab <?php echo $active_tab === 'usuarios' ? 'active' : ''; ?>">👤 Usuários</a>
-		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'funcoes', $current_url ) ); ?>"
-		   class="kt-admin-tab <?php echo $active_tab === 'funcoes'  ? 'active' : ''; ?>">🏷 Funções</a>
+		<a href="<?php echo esc_url( add_query_arg( 'kt_tab', 'cargos', $current_url ) ); ?>"
+		   class="kt-admin-tab <?php echo $active_tab === 'cargos'  ? 'active' : ''; ?>">🏷 Cargos</a>
 	</div>
 
 	<!-- ══════════════════════════════════════════════════════
@@ -174,7 +174,7 @@ $current_url = get_permalink();
 		<table class="kt-members-table">
 			<thead><tr>
 				<th>Colaborador</th>
-				<th>Função</th>
+				<th>Cargo</th>
 				<th>Treinamentos</th>
 			</tr></thead>
 			<tbody>
@@ -306,7 +306,7 @@ $current_url = get_permalink();
 		$kt_all_users = get_users(['role__in'=>['kt_admin','kt_super_admin','kt_location_manager','kt_staff','administrator'],'number'=>200,'orderby'=>'display_name','order'=>'ASC']);
 		// Carrega datas de colaboradores para exibir no modal de edição
 		global $wpdb;
-		$_mem_rows = $wpdb->get_results("SELECT user_id, hire_date, birth_date FROM {$wpdb->prefix}kt_members");
+		$_mem_rows = $wpdb->get_results("SELECT user_id, hire_date, birth_date, position_id FROM {$wpdb->prefix}kt_members");
 		$_mem_map  = [];
 		foreach ( $_mem_rows as $_mr ) $_mem_map[ (int)$_mr->user_id ] = $_mr;
 		?>
@@ -314,7 +314,7 @@ $current_url = get_permalink();
 			<thead><tr>
 				<th>Nome</th>
 				<th>E-mail</th>
-				<th>Função</th>
+				<th>Nível de Acesso</th>
 				<th>Unidade</th>
 				<th style="width:80px"></th>
 			</tr></thead>
@@ -327,6 +327,7 @@ $current_url = get_permalink();
 				$_md       = $_mem_map[$u->ID] ?? null;
 				$u_hire    = $_md ? ($_md->hire_date  ?: '') : '';
 				$u_birth   = $_md ? ($_md->birth_date ?: '') : '';
+				$u_pos_id  = $_md ? (int)($_md->position_id ?? 0) : 0;
 			?>
 			<tr id="kt-user-row-<?php echo absint($u->ID); ?>">
 				<td class="kt-u-name"><?php echo esc_html($u->user_login); ?></td>
@@ -343,7 +344,8 @@ $current_url = get_permalink();
 					        data-role="<?php echo esc_attr($u_role); ?>"
 					        data-location="<?php echo absint($u_loc_id); ?>"
 					        data-hire="<?php echo esc_attr($u_hire); ?>"
-					        data-birth="<?php echo esc_attr($u_birth); ?>">Editar</button>
+					        data-birth="<?php echo esc_attr($u_birth); ?>"
+					        data-position="<?php echo absint($u_pos_id); ?>">Editar</button>
 					<?php if ( $u->ID !== get_current_user_id() && ! in_array('administrator', $u->roles, true) ): ?>
 					<button type="button" class="kt-btn kt-btn-sm kt-delete-user-btn"
 					        style="color:#b91c1c;border-color:#fca5a5;margin-left:4px"
@@ -363,9 +365,9 @@ $current_url = get_permalink();
 	<!-- ══════════════════════════════════════════════════════
 	     TAB: FUNÇÕES
 	══════════════════════════════════════════════════════ -->
-	<?php elseif ( $active_tab === 'funcoes' ): ?>
+	<?php elseif ( $active_tab === 'cargos' ): ?>
 	<div class="kt-admin-tab-content">
-		<h3 style="margin-bottom:16px">Funções cadastradas</h3>
+		<h3 style="margin-bottom:16px">Cargos cadastrados</h3>
 		<table class="kt-members-table" id="kt-positions-table">
 			<thead><tr>
 				<th>Nome</th>
@@ -390,24 +392,24 @@ $current_url = get_permalink();
 			</tr>
 			<?php endforeach; ?>
 			<?php if (!$positions): ?>
-			<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:20px">Nenhuma função cadastrada.</td></tr>
+			<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:20px">Nenhum cargo cadastrado.</td></tr>
 			<?php endif; ?>
 			</tbody>
 		</table>
 
-		<!-- Adicionar função -->
+		<!-- Adicionar cargo -->
 		<div class="kt-manager-enroll-box" style="margin-top:32px">
-			<h3>+ Adicionar Função</h3>
+			<h3>+ Adicionar Cargo</h3>
 			<div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
 				<div style="flex:1;min-width:200px">
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome da função</label>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome do cargo</label>
 					<input type="text" id="kt-new-pos-name" placeholder="Ex: Vendas" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
 				<button type="button" id="kt-add-pos-btn" class="kt-btn kt-btn-primary">Adicionar</button>
 			</div>
 			<p id="kt-pos-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
 		</div>
-	</div><!-- /tab funcoes -->
+	</div><!-- /tab cargos -->
 	<?php endif; ?>
 
 </div><!-- /kt-admin-portal -->
@@ -474,15 +476,26 @@ $current_url = get_permalink();
 				       style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
 			</div>
 
-			<!-- Função -->
-			<div style="margin-bottom:14px">
-				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função <span style="color:#ef4444">*</span></label>
-				<select id="kt-u-role" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
-					<option value="">— Selecione —</option>
-					<option value="kt_admin">Administrador</option>
-					<option value="kt_location_manager">Gerente de Unidade</option>
-					<option value="kt_staff">Colaborador</option>
-				</select>
+			<!-- Nível de Acesso + Cargo -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nível de Acesso <span style="color:#ef4444">*</span></label>
+					<select id="kt-u-role" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+						<option value="">— Selecione —</option>
+						<option value="kt_admin">Administrador</option>
+						<option value="kt_location_manager">Gerente de Unidade</option>
+						<option value="kt_staff">Colaborador</option>
+					</select>
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Cargo</label>
+					<select id="kt-u-position" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+						<option value="">— Sem cargo —</option>
+						<?php foreach ( $positions as $pos ): ?>
+						<option value="<?php echo absint($pos->id); ?>"><?php echo esc_html($pos->name); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
 			</div>
 
 			<!-- Unidade (condicional) -->
@@ -562,11 +575,20 @@ $current_url = get_permalink();
 					<input type="email" id="kt-edit-u-email" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
 				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função</label>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nível de Acesso</label>
 					<select id="kt-edit-u-role" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 						<option value="kt_admin">Administrador</option>
 						<option value="kt_location_manager">Gerente de Unidade</option>
 						<option value="kt_staff">Colaborador</option>
+					</select>
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Cargo</label>
+					<select id="kt-edit-u-position" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+						<option value="">— Sem cargo —</option>
+						<?php foreach ( $positions as $pos ): ?>
+						<option value="<?php echo absint($pos->id); ?>"><?php echo esc_html($pos->name); ?></option>
+						<?php endforeach; ?>
 					</select>
 				</div>
 				<div>
@@ -767,6 +789,7 @@ $('#kt-add-loc-btn').on('click',function(){
 function openCreateUserModal(){
 	$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
 	$('#kt-u-role').val('').trigger('change');
+	$('#kt-u-position').val('');
 	$('#kt-u-hire-date,#kt-u-birth-date').val('');
 	$('#kt-u-send-email').prop('checked',true);
 	$('#kt-user-msg').text('');
@@ -793,11 +816,12 @@ $('#kt-create-user-btn').on('click',function(){
 	var email=$('#kt-u-email').val().trim(), role=$('#kt-u-role').val();
 	var loc=$('#kt-u-location').val(), sendEmail=$('#kt-u-send-email').prop('checked')?1:0;
 	var hireDate=$('#kt-u-hire-date').val(), birthDate=$('#kt-u-birth-date').val();
+	var positionId=$('#kt-u-position').val()||'';
 
-	if(!first||!email||!role){msg('#kt-user-msg','Preencha nome, e-mail e função.',false);return;}
+	if(!first||!email||!role){msg('#kt-user-msg','Preencha nome, e-mail e nível de acesso.',false);return;}
 
 	$b.prop('disabled',true).text('Criando…');
-	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate})
+	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate,position_id:positionId})
 	.done(function(r){
 		if(r.success){
 			msg('#kt-user-msg','✓ Usuário "'+r.data.name+'" criado! Login: '+r.data.username,true);
@@ -844,6 +868,7 @@ $(document).on('click','.kt-edit-user-btn',function(){
 	$('#kt-edit-u-last').val($b.data('last'));
 	$('#kt-edit-u-email').val($b.data('email'));
 	$('#kt-edit-u-role').val($b.data('role')||'kt_staff').trigger('change');
+	$('#kt-edit-u-position').val($b.data('position')||'');
 	$('#kt-edit-u-location').val($b.data('location')||'');
 	$('#kt-edit-u-hire').val($b.data('hire')||'');
 	$('#kt-edit-u-birth').val($b.data('birth')||'');
@@ -863,10 +888,11 @@ $('#kt-save-user-btn').on('click',function(){
 	var email=$('#kt-edit-u-email').val().trim(), role=$('#kt-edit-u-role').val();
 	var loc=$('#kt-edit-u-location').val();
 	var hire=$('#kt-edit-u-hire').val(), birth=$('#kt-edit-u-birth').val();
+	var posId=$('#kt-edit-u-position').val()||'';
 	if(!first||!email||!role){msg('#kt-user-modal-msg','Nome e e-mail são obrigatórios.',false);return;}
 	$b.prop('disabled',true).text('Salvando…');
 	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_update_user',nonce:ktFrontend.nonce,
-		user_id:uid,first_name:first,last_name:last,email:email,role:role,location_id:loc,hire_date:hire,birth_date:birth})
+		user_id:uid,first_name:first,last_name:last,email:email,role:role,location_id:loc,hire_date:hire,birth_date:birth,position_id:posId})
 	.done(function(r){
 		msg('#kt-user-modal-msg',r.success?r.data.message:(r.data&&r.data.message?r.data.message:'Erro.'),r.success);
 		if(r.success){
@@ -902,7 +928,7 @@ $(document).on('click','.kt-delete-user-btn',function(){
 	}).fail(function(){ alert('Erro de conexão.'); $b.prop('disabled',false).text('Excluir'); });
 });
 
-/* ══════════════ TAB: FUNÇÕES ══════════════ */
+/* ══════════════ TAB: CARGOS ══════════════ */
 
 $('#kt-add-pos-btn').on('click',function(){
 	var $b=$(this), name=$('#kt-new-pos-name').val().trim();
@@ -927,7 +953,7 @@ $('#kt-add-pos-btn').on('click',function(){
 
 $(document).on('click','.kt-pos-delete-btn',function(){
 	var $b=$(this), id=$b.data('id'), name=$b.data('name');
-	if(!confirm('Remover a função "'+name+'"? Colaboradores vinculados ficarão sem função.')) return;
+	if(!confirm('Remover o cargo "'+name+'"? Colaboradores vinculados ficarão sem cargo.')) return;
 	$b.prop('disabled',true);
 	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_delete_position',nonce:ktFrontend.nonce,position_id:id})
 	.done(function(r){
