@@ -799,14 +799,18 @@ class KT_Frontend {
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
 
-		$first_name  = sanitize_text_field( $_POST['first_name']  ?? '' );
-		$last_name   = sanitize_text_field( $_POST['last_name']   ?? '' );
-		$email       = sanitize_email( $_POST['email']            ?? '' );
-		$role        = sanitize_key( $_POST['role']               ?? '' );
-		$location_id = absint( $_POST['location_id']              ?? 0 );
-		$hire_date   = sanitize_text_field( $_POST['hire_date']   ?? '' ) ?: null;
-		$birth_date  = sanitize_text_field( $_POST['birth_date']  ?? '' ) ?: null;
+		$full_name   = sanitize_text_field( $_POST['full_name']   ?? '' );
+		$email       = sanitize_email( $_POST['email']           ?? '' );
+		$role        = sanitize_key( $_POST['role']              ?? '' );
+		$location_id = absint( $_POST['location_id']             ?? 0 );
+		$hire_date   = sanitize_text_field( $_POST['hire_date']  ?? '' ) ?: null;
+		$birth_date  = sanitize_text_field( $_POST['birth_date'] ?? '' ) ?: null;
 		$send_email  = ! empty( $_POST['send_email'] );
+
+		// Divide nome completo em primeiro nome e sobrenome(s)
+		$name_parts = array_filter( explode( ' ', $full_name ) );
+		$first_name = ucfirst( strtolower( array_shift( $name_parts ) ?? '' ) );
+		$last_name  = implode( ' ', array_map( fn($w) => ucfirst( strtolower( $w ) ), $name_parts ) );
 
 		if ( ! $first_name || ! $email ) {
 			wp_send_json_error( [ 'message' => 'Nome e e-mail são obrigatórios.' ] );

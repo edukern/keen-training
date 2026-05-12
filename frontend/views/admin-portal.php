@@ -446,50 +446,36 @@ $current_url = get_permalink();
 		</div>
 		<div class="kt-modal-body">
 
-			<!-- Nome e Sobrenome -->
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px">
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome <span style="color:#ef4444">*</span></label>
-					<input type="text" id="kt-u-first" placeholder="Ex: PEDRO" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
-					<input type="text" id="kt-u-last" placeholder="Ex: SANTOS DA SILVA" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-			</div>
-			<p style="font-size:.82em;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;margin:0 0 14px">
-				⚠ Escreva o nome completo em CAPS LOCK. Ex: <strong>PEDRO SANTOS DA SILVA</strong>
-			</p>
-
-			<!-- E-mail, Função, Datas -->
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail <span style="color:#ef4444">*</span></label>
-					<input type="email" id="kt-u-email" placeholder="email@exemplo.com" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função <span style="color:#ef4444">*</span></label>
-					<select id="kt-u-role" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-						<option value="">— Selecione —</option>
-						<option value="kt_admin">Administrador</option>
-						<option value="kt_location_manager">Gerente de Unidade</option>
-						<option value="kt_staff">Colaborador</option>
-					</select>
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
-					<input type="date" id="kt-u-hire-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
-				<div>
-					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Aniversário</label>
-					<input type="date" id="kt-u-birth-date" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
-				</div>
+			<!-- Nome completo -->
+			<div style="margin-bottom:6px">
+				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome completo <span style="color:#ef4444">*</span></label>
+				<input type="text" id="kt-u-fullname" placeholder="Ex: PEDRO SANTOS DA SILVA"
+				       style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+				<p style="margin:5px 0 0;font-size:.8em;color:#94a3b8">Escreva em CAPS LOCK — o login será gerado automaticamente (ex: pedro.silva)</p>
 			</div>
 
-			<!-- Unidade -->
+			<!-- E-mail -->
+			<div style="margin:14px 0">
+				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail <span style="color:#ef4444">*</span></label>
+				<input type="email" id="kt-u-email" placeholder="email@exemplo.com"
+				       style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+			</div>
+
+			<!-- Função -->
+			<div style="margin-bottom:14px">
+				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Função <span style="color:#ef4444">*</span></label>
+				<select id="kt-u-role" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+					<option value="">— Selecione —</option>
+					<option value="kt_admin">Administrador</option>
+					<option value="kt_location_manager">Gerente de Unidade</option>
+					<option value="kt_staff">Colaborador</option>
+				</select>
+			</div>
+
+			<!-- Unidade (condicional) -->
 			<div id="kt-u-location-wrap" style="display:none;margin-bottom:14px">
 				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-u-location-label">Unidade</label>
-				<select id="kt-u-location" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px">
+				<select id="kt-u-location" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
 					<option value="">— Selecione a unidade —</option>
 					<?php foreach ( $locations as $loc ): ?>
 					<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
@@ -497,12 +483,25 @@ $current_url = get_permalink();
 				</select>
 			</div>
 
-			<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:4px">
-				<label style="display:flex;align-items:center;gap:8px;font-size:.9em;cursor:pointer">
+			<!-- Datas (secundárias) -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;padding-top:4px;border-top:1px solid #f1f5f9">
+				<div style="padding-top:12px">
+					<label style="display:block;margin-bottom:4px;font-weight:500;font-size:.82em;color:#64748b;text-transform:uppercase;letter-spacing:.04em">Data de Admissão</label>
+					<input type="date" id="kt-u-hire-date" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:.9em;color:#475569">
+				</div>
+				<div style="padding-top:12px">
+					<label style="display:block;margin-bottom:4px;font-weight:500;font-size:.82em;color:#64748b;text-transform:uppercase;letter-spacing:.04em">Data de Aniversário</label>
+					<input type="date" id="kt-u-birth-date" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:.9em;color:#475569">
+				</div>
+			</div>
+
+			<!-- Rodapé: checkbox + botão -->
+			<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+				<label style="display:flex;align-items:center;gap:8px;font-size:.88em;color:#64748b;cursor:pointer">
 					<input type="checkbox" id="kt-u-send-email" checked>
 					Enviar e-mail com as credenciais de acesso
 				</label>
-				<button type="button" id="kt-create-user-btn" class="kt-btn kt-btn-primary">Criar usuário</button>
+				<button type="button" id="kt-create-user-btn" class="kt-btn kt-btn-primary">Criar usuário →</button>
 			</div>
 			<p id="kt-user-msg" style="margin:8px 0 0;font-size:.88em;min-height:1.2em"></p>
 
@@ -753,7 +752,7 @@ $('#kt-add-loc-btn').on('click',function(){
 /* ══════════════ TAB: USUÁRIOS — modal de criação ══════════════ */
 
 function openCreateUserModal(){
-	$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
+	$('#kt-u-fullname,#kt-u-email').val('');
 	$('#kt-u-role').val('').trigger('change');
 	$('#kt-u-hire-date,#kt-u-birth-date').val('');
 	$('#kt-u-send-email').prop('checked',true);
@@ -777,15 +776,15 @@ $('#kt-u-role').on('change',function(){
 
 $('#kt-create-user-btn').on('click',function(){
 	var $b=$(this);
-	var first=$('#kt-u-first').val().trim(), last=$('#kt-u-last').val().trim();
+	var fullname=$('#kt-u-fullname').val().trim();
 	var email=$('#kt-u-email').val().trim(), role=$('#kt-u-role').val();
 	var loc=$('#kt-u-location').val(), sendEmail=$('#kt-u-send-email').prop('checked')?1:0;
 	var hireDate=$('#kt-u-hire-date').val(), birthDate=$('#kt-u-birth-date').val();
 
-	if(!first||!email||!role){msg('#kt-user-msg','Preencha nome, e-mail e função.',false);return;}
+	if(!fullname||!email||!role){msg('#kt-user-msg','Preencha nome completo, e-mail e função.',false);return;}
 
 	$b.prop('disabled',true).text('Criando…');
-	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate})
+	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,full_name:fullname,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate})
 	.done(function(r){
 		if(r.success){
 			msg('#kt-user-msg','✓ Usuário "'+r.data.name+'" criado! Login: '+r.data.username,true);
