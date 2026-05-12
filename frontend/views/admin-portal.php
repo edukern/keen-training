@@ -411,7 +411,7 @@ $current_url = get_permalink();
 				<td class="kt-u-role"><span style="font-size:.82em;background:#f1f5f9;padding:2px 8px;border-radius:12px"><?php echo esc_html(KT_Roles::role_label($u_role)); ?></span></td>
 				<td class="kt-u-loc" style="color:#64748b;font-size:.9em"><?php echo $u_loc ? esc_html($u_loc->name) : '—'; ?></td>
 				<td>
-					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn" style="color:#64748b;border-color:#cbd5e1;background:#fff"
+					<button type="button" class="kt-btn kt-btn-sm kt-edit-user-btn"
 					        data-id="<?php echo absint($u->ID); ?>"
 					        data-login="<?php echo esc_attr($u->user_login); ?>"
 					        data-first="<?php echo esc_attr($u->first_name); ?>"
@@ -594,6 +594,8 @@ $current_url = get_permalink();
 .kt-admin-tab:hover{color:#1e293b;background:#f8fafc}
 .kt-admin-tab.active{color:#1e293b;background:#fff;border-color:#e2e8f0;border-bottom-color:#fff;font-weight:700}
 .kt-admin-tab-content{padding:4px 0 0}
+.kt-loc-edit-btn,.kt-edit-user-btn{color:#64748b!important;border-color:#cbd5e1!important;background:#fff!important}
+.kt-loc-edit-btn:hover,.kt-edit-user-btn:hover{color:#1e293b!important;border-color:#94a3b8!important}
 </style>
 
 <script>
