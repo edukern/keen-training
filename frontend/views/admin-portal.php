@@ -452,13 +452,20 @@ $current_url = get_permalink();
 		</div>
 		<div class="kt-modal-body">
 
-			<!-- Nome completo -->
-			<div style="margin-bottom:6px">
-				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome completo <span style="color:#ef4444">*</span></label>
-				<input type="text" id="kt-u-fullname" placeholder="Ex: PEDRO SANTOS DA SILVA"
-				       style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
-				<p style="margin:5px 0 0;font-size:.8em;color:#94a3b8">Escreva em CAPS LOCK — o login será gerado automaticamente (ex: pedro.silva)</p>
+			<!-- Nome + Sobrenome -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome <span style="color:#ef4444">*</span></label>
+					<input type="text" id="kt-u-first" placeholder="Ex: Pedro"
+					       style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+				</div>
+				<div>
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
+					<input type="text" id="kt-u-last" placeholder="Ex: Santos da Silva"
+					       style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;font-size:1em">
+				</div>
 			</div>
+			<p style="margin:-8px 0 14px;font-size:.8em;color:#94a3b8">O login será gerado automaticamente (ex: pedro.silva)</p>
 
 			<!-- E-mail -->
 			<div style="margin:14px 0">
@@ -603,17 +610,17 @@ $current_url = get_permalink();
 
 <style>
 .kt-admin-tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid #e2e8f0;flex-wrap:wrap}
-.kt-admin-tab{padding:10px 18px;text-decoration:none;color:#64748b;border-radius:8px 8px 0 0;font-size:.92em;font-weight:500;transition:background .15s,color .15s;border:2px solid transparent;border-bottom:none;margin-bottom:-2px}
-.kt-admin-tab:hover{color:#1e293b;background:#f8fafc}
-.kt-admin-tab.active{color:#1e293b;background:#fff;border-color:#e2e8f0;border-bottom-color:#fff;font-weight:700}
+.kt-admin-tab{padding:10px 18px;text-decoration:none!important;color:#64748b!important;border-radius:8px 8px 0 0;font-size:.92em;font-weight:500;transition:background .15s,color .15s;border:2px solid transparent;border-bottom:none;margin-bottom:-2px}
+.kt-admin-tab:hover{color:#1e293b!important;background:#f8fafc}
+.kt-admin-tab.active{color:#1e293b!important;background:#fff;border-color:#e2e8f0;border-bottom-color:#fff;font-weight:700}
 .kt-admin-tab-content{padding:4px 0 0}
 .kt-loc-edit-btn,.kt-edit-user-btn{color:#64748b!important;border-color:#cbd5e1!important;background:#fff!important}
 .kt-loc-edit-btn:hover,.kt-edit-user-btn:hover{color:#1e293b!important;border-color:#94a3b8!important}
 /* Abas de unidade no Painel */
 .kt-unit-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
-.kt-unit-tab{padding:7px 18px;border-radius:20px;text-decoration:none;font-size:.9em;font-weight:500;color:#64748b;border:1.5px solid #e2e8f0;background:#fff;transition:all .15s;white-space:nowrap}
-.kt-unit-tab:hover{color:#1e293b;border-color:#94a3b8}
-.kt-unit-tab.active{color:#fff;background:#1e293b;border-color:#1e293b;font-weight:600}
+.kt-unit-tab{padding:7px 18px;border-radius:20px;text-decoration:none!important;font-size:.9em;font-weight:500;color:#64748b!important;border:1.5px solid #e2e8f0;background:#fff;transition:all .15s;white-space:nowrap}
+.kt-unit-tab:hover{color:#1e293b!important;border-color:#94a3b8}
+.kt-unit-tab.active{color:#fff!important;background:#1e293b;border-color:#1e293b;font-weight:600}
 /* Cabeçalho da unidade selecionada */
 .kt-unit-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:14px 20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:24px}
 .kt-unit-header-mgr{display:flex;flex-direction:column;gap:2px}
@@ -758,7 +765,7 @@ $('#kt-add-loc-btn').on('click',function(){
 /* ══════════════ TAB: USUÁRIOS — modal de criação ══════════════ */
 
 function openCreateUserModal(){
-	$('#kt-u-fullname,#kt-u-email').val('');
+	$('#kt-u-first,#kt-u-last,#kt-u-email').val('');
 	$('#kt-u-role').val('').trigger('change');
 	$('#kt-u-hire-date,#kt-u-birth-date').val('');
 	$('#kt-u-send-email').prop('checked',true);
@@ -782,15 +789,15 @@ $('#kt-u-role').on('change',function(){
 
 $('#kt-create-user-btn').on('click',function(){
 	var $b=$(this);
-	var fullname=$('#kt-u-fullname').val().trim();
+	var first=$('#kt-u-first').val().trim(), last=$('#kt-u-last').val().trim();
 	var email=$('#kt-u-email').val().trim(), role=$('#kt-u-role').val();
 	var loc=$('#kt-u-location').val(), sendEmail=$('#kt-u-send-email').prop('checked')?1:0;
 	var hireDate=$('#kt-u-hire-date').val(), birthDate=$('#kt-u-birth-date').val();
 
-	if(!fullname||!email||!role){msg('#kt-user-msg','Preencha nome completo, e-mail e função.',false);return;}
+	if(!first||!email||!role){msg('#kt-user-msg','Preencha nome, e-mail e função.',false);return;}
 
 	$b.prop('disabled',true).text('Criando…');
-	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,full_name:fullname,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate})
+	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_create_user',nonce:ktFrontend.nonce,first_name:first,last_name:last,email:email,role:role,location_id:loc,send_email:sendEmail,hire_date:hireDate,birth_date:birthDate})
 	.done(function(r){
 		if(r.success){
 			msg('#kt-user-msg','✓ Usuário "'+r.data.name+'" criado! Login: '+r.data.username,true);
