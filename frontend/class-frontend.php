@@ -1116,13 +1116,13 @@ class KT_Frontend {
 	 * -------------------------------------------------------------------- */
 
 	public function ajax_admin_delete_user() {
+		global $wpdb;
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
 
 		$user_id = absint( $_POST['user_id'] ?? 0 );
 		if ( ! $user_id ) wp_send_json_error( [ 'message' => 'ID inválido.' ] );
 
-		// Não pode excluir a si mesmo
 		if ( $user_id === get_current_user_id() ) {
 			wp_send_json_error( [ 'message' => 'Você não pode excluir sua própria conta.' ] );
 		}
@@ -1130,30 +1130,30 @@ class KT_Frontend {
 		$user = get_userdata( $user_id );
 		if ( ! $user ) wp_send_json_error( [ 'message' => 'Usuário não encontrado.' ] );
 
-		// Não pode excluir administradores WordPress nativos
 		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
 			wp_send_json_error( [ 'message' => 'Não é possível excluir um administrador.' ] );
 		}
 
-		// Remove meta de gerente de unidade, se houver
-		$loc_id = get_user_meta( $user_id, 'kt_location_id', true );
+		// Limpa manager_id na unidade se este usuário for gerente
+		$loc_id = absint( get_user_meta( $user_id, 'kt_location_id', true ) );
 		if ( $loc_id ) {
-			global $wpdb;
-			// Limpa manager_id na unidade somente se ainda for este usuário
 			$wpdb->query( $wpdb->prepare(
 				"UPDATE {$wpdb->prefix}kt_locations SET manager_id = 0 WHERE id = %d AND manager_id = %d",
 				$loc_id, $user_id
 			) );
 		}
 
-		// Remove registro de membro (kt_members)
-		global $wpdb;
-		$wpdb->delete( $wpdb->prefix . 'kt_members', [ 'user_id' => $user_id ] );
+		// Busca o member_id correto para remover matrículas e progresso
+		$member_id = (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d LIMIT 1",
+			$user_id
+		) );
+		if ( $member_id ) {
+			$wpdb->delete( $wpdb->prefix . 'kt_enrollments', [ 'member_id' => $member_id ] );
+			$wpdb->delete( $wpdb->prefix . 'kt_progress',    [ 'member_id' => $member_id ] );
+			$wpdb->delete( $wpdb->prefix . 'kt_members',     [ 'id'        => $member_id ] );
+		}
 
-		// Remove matrículas e progresso
-		$wpdb->delete( $wpdb->prefix . 'kt_enrollments', [ 'member_id' => $user_id ] );
-
-		// Exclui o usuário do WordPress (sem reatribuir posts)
 		if ( ! function_exists( 'wp_delete_user' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/user.php';
 		}

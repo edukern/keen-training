@@ -166,11 +166,11 @@ $current_url = get_permalink();
 			</tbody>
 		</table>
 
-		<?php else:
-		$unit_mgr = $location->manager_id ? get_user_by( 'ID', $location->manager_id ) : null;
+		<?php elseif ( $location ):
+		$unit_mgr = ( $location->manager_id ) ? get_user_by( 'ID', $location->manager_id ) : null;
 		$u_enr = 0; $u_done = 0;
-		foreach ( $member_progress as $enrs ) {
-			foreach ( $enrs as $e ) {
+		foreach ( (array) $member_progress as $enrs ) {
+			foreach ( (array) $enrs as $e ) {
 				$u_enr++;
 				if ( $e->status === 'concluido' ) $u_done++;
 			}
