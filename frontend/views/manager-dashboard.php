@@ -176,11 +176,17 @@
 					<div class="kt-member-name"><?php echo esc_html( $_name ); ?></div>
 				</td>
 				<td>
-					<?php if ( $m->position_name ): ?>
-						<span class="kt-manager-position"><?php echo esc_html( $m->position_name ); ?></span>
-					<?php else: ?>
-						<span style="color:#94a3b8">—</span>
-					<?php endif; ?>
+					<select class="kt-inline-position-select"
+							data-member-id="<?php echo absint( $m->id ); ?>"
+							style="padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84em;color:#334155;max-width:140px;width:100%">
+						<option value="">— Sem cargo —</option>
+						<?php foreach ( $positions as $pos ): ?>
+							<option value="<?php echo absint( $pos->id ); ?>" <?php selected( $m->position_id, $pos->id ); ?>>
+								<?php echo esc_html( $pos->name ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<span class="kt-inline-pos-status" style="font-size:.75em;display:block;min-height:1em;margin-top:2px"></span>
 				</td>
 				<td>
 					<?php if ( $enrs ): ?>
@@ -621,6 +627,37 @@ var ktPositions = <?php echo wp_json_encode(
 		}).fail(function(){
 			$('#kt-modal-position-msg').text('Erro de conexão.').css('color','#b91c1c');
 			$btn.prop('disabled', false).text('Salvar cargo');
+		});
+	});
+
+	/* ── Dropdown inline de cargo (tabela de colaboradores) ── */
+	$(document).on('change', '.kt-inline-position-select', function(){
+		var $sel     = $(this);
+		var memberId = $sel.data('member-id');
+		var posId    = $sel.val();
+		var $status  = $sel.siblings('.kt-inline-pos-status');
+
+		$status.text('Salvando…').css('color','#94a3b8');
+		$sel.prop('disabled', true);
+
+		$.post( ktFrontend.ajaxUrl, {
+			action:      'kt_update_member_position',
+			nonce:       ktFrontend.nonce,
+			member_id:   memberId,
+			position_id: posId,
+		}).done(function(r){
+			if ( r.success ) {
+				$status.text('✓ Salvo').css('color','#15803d');
+				// Mantém data-position-id atualizado no botão Editar do modal
+				$('[data-member-id="'+memberId+'"].kt-edit-member-btn').attr('data-position-id', parseInt(posId)||0);
+				setTimeout(function(){ $status.text(''); }, 2200);
+			} else {
+				$status.text( r.data && r.data.message ? r.data.message : 'Erro.' ).css('color','#b91c1c');
+			}
+			$sel.prop('disabled', false);
+		}).fail(function(){
+			$status.text('Erro de conexão.').css('color','#b91c1c');
+			$sel.prop('disabled', false);
 		});
 	});
 
