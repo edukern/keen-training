@@ -1050,12 +1050,13 @@ class KT_Frontend {
 		global $wpdb;
 
 		// Vinculação de unidade
-		if ( $role === 'kt_location_manager' && $location_id ) {
+		if ( $location_id ) {
 			update_user_meta( $user_id, 'kt_location_id', $location_id );
-			$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $user_id ], [ 'id' => $location_id ] );
-		} elseif ( in_array( $role, [ 'kt_staff', 'kt_location_manager' ], true ) && $location_id ) {
-			update_user_meta( $user_id, 'kt_location_id', $location_id );
-		} elseif ( $role === 'kt_admin' ) {
+			// Gerente: vincula também na tabela de unidades
+			if ( $role === 'kt_location_manager' ) {
+				$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $user_id ], [ 'id' => $location_id ] );
+			}
+		} else {
 			delete_user_meta( $user_id, 'kt_location_id' );
 		}
 
