@@ -15,7 +15,9 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_submit_quiz',      [ $this, 'ajax_submit_quiz' ] );
 		add_action( 'wp_ajax_kt_enroll_member',      [ $this, 'ajax_enroll_member' ] );
 		add_action( 'wp_ajax_kt_unenroll_member',    [ $this, 'ajax_unenroll_member' ] );
-		add_action( 'wp_ajax_kt_update_due_date',    [ $this, 'ajax_update_due_date' ] );
+		add_action( 'wp_ajax_kt_update_due_date',          [ $this, 'ajax_update_due_date' ] );
+		add_action( 'wp_ajax_kt_bulk_update_due_date',      [ $this, 'ajax_bulk_update_due_date' ] );
+		add_action( 'wp_ajax_kt_get_member_progress_detail', [ $this, 'ajax_get_member_progress_detail' ] );
 		add_action( 'wp_ajax_kt_admin_create_user',    [ $this, 'ajax_admin_create_user' ] );
 		add_action( 'wp_ajax_kt_admin_update_user',    [ $this, 'ajax_admin_update_user' ] );
 		add_action( 'wp_ajax_kt_admin_add_location',   [ $this, 'ajax_admin_add_location' ] );
@@ -1197,6 +1199,128 @@ class KT_Frontend {
 		}
 
 		wp_send_json_success( [ 'message' => 'Cargo atualizado.', 'position_name' => $pos_name ] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Alterar prazo em massa
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_bulk_update_due_date() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
+			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
+		}
+
+		$course_id  = absint( $_POST['course_id'] ?? 0 );
+		$due_date   = sanitize_text_field( $_POST['due_date'] ?? '' ) ?: null;
+		$member_ids = array_map( 'absint', (array) ( $_POST['member_ids'] ?? [] ) );
+
+		if ( ! $course_id || empty( $member_ids ) ) {
+			wp_send_json_error( [ 'message' => 'Selecione um curso e ao menos um colaborador.' ] );
+		}
+
+		global $wpdb;
+		$updated = 0;
+		foreach ( $member_ids as $member_id ) {
+			$member = KT_Member::get( $member_id );
+			if ( ! $member || ! KT_Roles::can_manage_location( $member->location_id ) ) continue;
+			$rows = $wpdb->update(
+				$wpdb->prefix . 'kt_enrollments',
+				[ 'due_date' => $due_date ],
+				[ 'member_id' => $member_id, 'course_id' => $course_id ]
+			);
+			if ( false !== $rows ) $updated++;
+		}
+
+		wp_send_json_success( [ 'message' => $updated . ' prazo(s) atualizado(s).', 'updated' => $updated ] );
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Detalhe de progresso por colaborador
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_get_member_progress_detail() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
+			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
+		}
+
+		$member_id = absint( $_POST['member_id'] ?? 0 );
+		if ( ! $member_id ) wp_send_json_error( [ 'message' => 'ID invalido.' ] );
+
+		$member = KT_Member::get( $member_id );
+		if ( ! $member || ! KT_Roles::can_manage_location( $member->location_id ) ) {
+			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
+		}
+
+		global $wpdb;
+
+		$enrollments = $wpdb->get_results( $wpdb->prepare(
+			"SELECT e.course_id, e.status, e.due_date, e.completed_at, c.title AS course_title
+			 FROM {$wpdb->prefix}kt_enrollments e
+			 JOIN {$wpdb->prefix}kt_courses c ON c.id = e.course_id
+			 WHERE e.member_id = %d
+			 ORDER BY c.title ASC",
+			$member_id
+		) );
+
+		$data = [];
+		foreach ( $enrollments as $enr ) {
+			$modules = $wpdb->get_results( $wpdb->prepare(
+				"SELECT m.id, m.title, m.sort_order, p.completed_at
+				 FROM {$wpdb->prefix}kt_modules m
+				 LEFT JOIN {$wpdb->prefix}kt_progress p ON p.module_id = m.id AND p.member_id = %d
+				 WHERE m.course_id = %d
+				 ORDER BY m.sort_order ASC",
+				$member_id, $enr->course_id
+			) );
+
+			$mods = [];
+			foreach ( $modules as $mod ) {
+				$quiz = $wpdb->get_row( $wpdb->prepare(
+					"SELECT id, pass_threshold FROM {$wpdb->prefix}kt_quizzes WHERE module_id = %d LIMIT 1",
+					$mod->id
+				) );
+
+				$attempt = null;
+				if ( $quiz ) {
+					$row = $wpdb->get_row( $wpdb->prepare(
+						"SELECT score, passed, attempt_date, answers_snapshot
+						 FROM {$wpdb->prefix}kt_quiz_results
+						 WHERE member_id = %d AND quiz_id = %d
+						 ORDER BY attempt_date ASC LIMIT 1",
+						$member_id, $quiz->id
+					) );
+					if ( $row ) {
+						$attempt = [
+							'score'            => (int) $row->score,
+							'passed'           => (bool) $row->passed,
+							'attempt_date'     => $row->attempt_date,
+							'pass_threshold'   => (int) $quiz->pass_threshold,
+							'answers_snapshot' => $row->answers_snapshot ? json_decode( $row->answers_snapshot, true ) : null,
+						];
+					}
+				}
+
+				$mods[] = [
+					'id'           => (int) $mod->id,
+					'title'        => $mod->title,
+					'completed_at' => $mod->completed_at,
+					'has_quiz'     => ! is_null( $quiz ),
+					'first_attempt'=> $attempt,
+				];
+			}
+
+			$data[] = [
+				'course_id'    => (int) $enr->course_id,
+				'course_title' => $enr->course_title,
+				'status'       => $enr->status,
+				'due_date'     => $enr->due_date,
+				'modules'      => $mods,
+			];
+		}
+
+		wp_send_json_success( [ 'courses' => $data ] );
 	}
 
 	/* -----------------------------------------------------------------------

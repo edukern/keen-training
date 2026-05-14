@@ -131,6 +131,60 @@
 	</div>
 	<?php endif; ?>
 
+	<!-- Alterar Prazo em Massa -->
+	<?php
+	$kt_deadline_data = [];
+	foreach ( $members as $m ) {
+		$_mname = $m->full_name ?: $m->display_name ?: $m->user_login;
+		$_enrs  = $member_progress[ $m->id ] ?? [];
+		foreach ( $_enrs as $_e ) {
+			$_cid = (int) $_e->course_id;
+			if ( ! isset( $kt_deadline_data[ $_cid ] ) ) {
+				$kt_deadline_data[ $_cid ] = [ 'title' => $_e->course_title, 'members' => [] ];
+			}
+			$kt_deadline_data[ $_cid ]['members'][] = [
+				'id'       => (int) $m->id,
+				'name'     => $_mname,
+				'due_date' => $_e->due_date ?: '',
+			];
+		}
+	}
+	?>
+	<?php if ( $kt_deadline_data ): ?>
+	<div class="kt-manager-enroll-box" style="margin-top:20px">
+		<h3>Alterar Prazo em Massa</h3>
+		<div class="kt-assign-top-row">
+			<div class="kt-assign-field kt-assign-field-course">
+				<label>Curso</label>
+				<select id="kt-deadline-course">
+					<option value="">— Selecione o curso —</option>
+					<?php foreach ( $kt_deadline_data as $_cid => $_cd ): ?>
+						<option value="<?php echo absint( $_cid ); ?>"><?php echo esc_html( $_cd['title'] ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<div class="kt-assign-field kt-assign-field-date">
+				<label>Novo prazo</label>
+				<input type="date" id="kt-deadline-date">
+			</div>
+		</div>
+		<div id="kt-deadline-picker" style="display:none;margin-top:12px">
+			<label style="font-weight:600;font-size:.88em;color:#374151;display:block;margin-bottom:8px">Colaboradores matriculados</label>
+			<div class="kt-member-picker-box">
+				<div class="kt-member-select-all-row">
+					<label><input type="checkbox" id="kt-deadline-select-all"> <span id="kt-deadline-all-label">Selecionar todos</span></label>
+				</div>
+				<div class="kt-member-list" id="kt-deadline-member-list"></div>
+			</div>
+			<div class="kt-assign-footer" style="margin-top:10px">
+				<span class="kt-assign-counter"><strong id="kt-deadline-count">0</strong> selecionado(s)</span>
+				<button type="button" id="kt-deadline-btn" class="kt-btn kt-btn-primary" disabled>Aplicar prazo →</button>
+			</div>
+		</div>
+		<p id="kt-deadline-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
+	</div>
+	<?php endif; ?>
+
 	<!-- Tabela compacta de colaboradores -->
 	<?php if ( ! $members ): ?>
 	<div class="kt-empty-state"><p>Nenhum colaborador cadastrado nesta unidade.</p></div>
@@ -174,6 +228,9 @@
 			<tr>
 				<td>
 					<div class="kt-member-name"><?php echo esc_html( $_name ); ?></div>
+					<a href="#" class="kt-progress-link"
+					   data-member-id="<?php echo absint( $m->id ); ?>"
+					   data-member-name="<?php echo esc_attr( $_name ); ?>">Acompanhar →</a>
 				</td>
 				<td>
 					<select class="kt-inline-position-select"
@@ -249,6 +306,17 @@
 		<div class="kt-modal-body" id="kt-modal-body">
 			<!-- conteúdo injetado via JS -->
 		</div>
+	</div>
+</div>
+
+<!-- Modal de progresso do colaborador -->
+<div id="kt-progress-modal-overlay" class="kt-modal-overlay" style="display:none" aria-modal="true" role="dialog">
+	<div class="kt-modal" style="max-width:700px;width:95vw">
+		<div class="kt-modal-header">
+			<h3 id="kt-progress-modal-title">Progresso</h3>
+			<button type="button" class="kt-modal-close" id="kt-progress-modal-close" aria-label="Fechar">×</button>
+		</div>
+		<div class="kt-modal-body" id="kt-progress-modal-body" style="max-height:70vh;overflow-y:auto"></div>
 	</div>
 </div>
 
@@ -667,6 +735,173 @@ var ktPositions = <?php echo wp_json_encode(
 		if ( $('#kt-member-modal-overlay').data('needsReload') ) {
 			location.reload();
 		}
+	});
+
+
+	/* ── Bulk deadline ── */
+	var ktDeadlineData = <?php echo wp_json_encode( $kt_deadline_data ?? [] ); ?>;
+
+	$('#kt-bulk-course-select').on('change', function(){
+		var cid = $(this).val();
+		$('.kt-bulk-member-row').hide();
+		if ( cid && ktDeadlineData[cid] ) {
+			$.each(ktDeadlineData[cid].members, function(i, m){
+				$('.kt-bulk-member-row[data-member-id="'+m.id+'"]').show();
+				var dd = m.due_date ? m.due_date.substring(0,10) : '';
+				$('.kt-bulk-member-row[data-member-id="'+m.id+'"] .kt-bulk-member-cb').prop('checked', false);
+				if ( dd ) {
+					$('#kt-bulk-due-date').val(dd);
+				}
+			});
+		}
+	});
+
+	$('#kt-bulk-select-all').on('change', function(){
+		var checked = $(this).is(':checked');
+		$('.kt-bulk-member-cb:visible').prop('checked', checked);
+	});
+
+	$('#kt-bulk-apply-btn').on('click', function(){
+		var cid  = $('#kt-bulk-course-select').val();
+		var date = $('#kt-bulk-due-date').val();
+		if ( !cid ) { alert('Selecione um treinamento.'); return; }
+		if ( !date ) { alert('Informe a data de prazo.'); return; }
+		var ids = [];
+		$('.kt-bulk-member-cb:checked').each(function(){ ids.push( $(this).val() ); });
+		if ( !ids.length ) { alert('Selecione ao menos um colaborador.'); return; }
+		var $btn = $(this);
+		$btn.prop('disabled', true).text('Salvando…');
+		$.post(ktAjax.url, {
+			action:     'kt_bulk_update_due_date',
+			nonce:      ktAjax.nonce,
+			course_id:  cid,
+			member_ids: ids,
+			due_date:   date
+		}, function(res){
+			$btn.prop('disabled', false).text('Aplicar prazo');
+			if ( res.success ) {
+				alert(res.data.message);
+			} else {
+				alert(res.data || 'Erro ao salvar.');
+			}
+		}).fail(function(){ $btn.prop('disabled', false).text('Aplicar prazo'); alert('Erro de comunicação.'); });
+	});
+
+	/* ── Progress modal ── */
+	function closeProgressModal(){
+		$('#kt-progress-modal-overlay').fadeOut(200);
+	}
+
+	function renderProgress(memberName, courses){
+		var html = '';
+		if ( !courses || !courses.length ) {
+			html = '<p style="color:#64748b;padding:16px 0">Nenhum treinamento encontrado.</p>';
+		} else {
+			$.each(courses, function(ci, course){
+				var statusLabel = course.status === 'completed' ? '<span style="color:#16a34a;font-weight:600">Concluído</span>'
+					: course.status === 'in_progress' ? '<span style="color:#d97706;font-weight:600">Em andamento</span>'
+					: '<span style="color:#94a3b8;font-weight:600">Pendente</span>';
+				html += '<div style="margin-bottom:20px">';
+				html += '<div style="font-weight:700;font-size:.95em;color:#0f172a;margin-bottom:8px">'
+					+ $('<span>').text(course.course_title).html()
+					+ ' <span style="font-weight:400;font-size:.82em">'+statusLabel+'</span></div>';
+				if ( course.modules && course.modules.length ) {
+					html += '<table style="width:100%;border-collapse:collapse;font-size:.85em">';
+					html += '<thead><tr style="background:#f8fafc">'
+						+ '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-weight:600">Módulo</th>'
+						+ '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-weight:600;width:130px">Concluído em</th>'
+						+ '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-weight:600;width:90px">Nota</th>'
+						+ '<th style="padding:6px 8px;border-bottom:1px solid #e2e8f0;width:30px"></th>'
+						+ '</tr></thead><tbody>';
+					$.each(course.modules, function(mi, mod){
+						var completed = mod.completed_at
+							? new Date(mod.completed_at).toLocaleDateString('pt-BR')
+							: '<span style="color:#94a3b8">—</span>';
+						var scoreCell = '—';
+						var detailId  = 'kt-snap-'+ci+'-'+mi;
+						var detailHtml = '';
+						if ( mod.first_attempt ) {
+							var pct = Math.round(mod.first_attempt.score * 100);
+							var passed = mod.first_attempt.passed;
+							scoreCell = '<span style="color:'+(passed?'#16a34a':'#dc2626')+';font-weight:600">'+pct+'%</span>';
+							if ( mod.first_attempt.answers_snapshot && mod.first_attempt.answers_snapshot.length ) {
+								var snap = mod.first_attempt.answers_snapshot;
+								detailHtml = '<tr id="'+detailId+'" style="display:none"><td colspan="4" style="padding:8px 8px 12px 24px;background:#f8fafc">';
+								detailHtml += '<table style="width:100%;border-collapse:collapse;font-size:.82em">';
+								$.each(snap, function(qi, q){
+									var qCorrect = q.is_correct;
+									detailHtml += '<tr style="vertical-align:top">';
+									detailHtml += '<td style="padding:4px 6px;color:'+(qCorrect?'#16a34a':'#dc2626')+';font-size:1.1em;width:20px">'+(qCorrect?'✓':'✗')+'</td>';
+									detailHtml += '<td style="padding:4px 6px;color:#1e293b">'+$('<span>').text(q.question_text).html()+'</td>';
+									detailHtml += '<td style="padding:4px 6px;width:160px">';
+									if ( q.answers && q.answers.length ) {
+										$.each(q.answers, function(ai, ans){
+											var sel = q.selected_answer_ids && q.selected_answer_ids.indexOf(ans.id) !== -1;
+											var color = ans.is_correct ? '#16a34a' : (sel && !ans.is_correct ? '#dc2626' : '#64748b');
+											detailHtml += '<div style="color:'+color+';'+(sel?'font-weight:600':'')+'">'
+												+ (sel ? '▶ ' : '') + $('<span>').text(ans.text).html() + '</div>';
+										});
+									}
+									detailHtml += '</td></tr>';
+								});
+								detailHtml += '</table></td></tr>';
+							}
+						}
+						var toggleBtn = detailHtml
+							? '<button class="kt-snap-toggle" data-target="'+detailId+'" style="background:none;border:none;cursor:pointer;color:#6366f1;font-size:.8em;padding:2px 4px" title="Ver respostas">▼</button>'
+							: '';
+						html += '<tr style="border-bottom:1px solid #f1f5f9">'
+							+ '<td style="padding:7px 8px;color:#1e293b">'+$('<span>').text(mod.module_title).html()+'</td>'
+							+ '<td style="padding:7px 8px;color:#64748b">'+completed+'</td>'
+							+ '<td style="padding:7px 8px">'+scoreCell+'</td>'
+							+ '<td style="padding:7px 8px">'+toggleBtn+'</td>'
+							+ '</tr>'
+							+ detailHtml;
+					});
+					html += '</tbody></table>';
+				} else {
+					html += '<p style="color:#94a3b8;font-size:.85em;padding:4px 0">Sem módulos.</p>';
+				}
+				html += '</div>';
+			});
+		}
+		$('#kt-progress-modal-title').text('Progresso — ' + memberName);
+		$('#kt-progress-modal-body').html(html);
+		$('#kt-progress-modal-overlay').fadeIn(200);
+	}
+
+	$(document).on('click', '.kt-progress-link', function(e){
+		e.preventDefault();
+		var mid  = $(this).data('member-id');
+		var name = $(this).data('member-name');
+		$('#kt-progress-modal-body').html('<p style="color:#64748b;padding:16px 0">Carregando…</p>');
+		$('#kt-progress-modal-title').text('Progresso — ' + name);
+		$('#kt-progress-modal-overlay').fadeIn(200);
+		$.post(ktAjax.url, {
+			action:    'kt_get_member_progress_detail',
+			nonce:     ktAjax.nonce,
+			member_id: mid
+		}, function(res){
+			if ( res.success ) {
+				renderProgress(name, res.data.courses);
+			} else {
+				$('#kt-progress-modal-body').html('<p style="color:#dc2626">' + (res.data || 'Erro ao carregar.') + '</p>');
+			}
+		}).fail(function(){
+			$('#kt-progress-modal-body').html('<p style="color:#dc2626">Erro de comunicação.</p>');
+		});
+	});
+
+	$(document).on('click', '#kt-progress-modal-close, #kt-progress-modal-overlay', function(e){
+		if ( e.target.id === 'kt-progress-modal-overlay' || e.target.id === 'kt-progress-modal-close' ) {
+			closeProgressModal();
+		}
+	});
+
+	$(document).on('click', '.kt-snap-toggle', function(){
+		var tid = $(this).data('target');
+		$('#'+tid).toggle();
+		$(this).text( $('#'+tid).is(':visible') ? '▲' : '▼' );
 	});
 
 })(jQuery);
