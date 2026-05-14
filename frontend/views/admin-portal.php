@@ -227,6 +227,7 @@ $current_url = get_permalink();
 							<input type="checkbox" class="kt-member-cb" value="<?php echo absint($m->id); ?>">
 							<span class="kt-member-check-name"><?php echo esc_html($_d); ?></span>
 							<?php if ($m->position_name): ?><span class="kt-member-check-pos"><?php echo esc_html($m->position_name); ?></span><?php endif; ?>
+						<?php if ( ! $location_id && $m->location_name ): ?><span class="kt-member-check-pos" style="color:#94a3b8"><?php echo esc_html($m->location_name); ?></span><?php endif; ?>
 						</label>
 						<?php endforeach; ?>
 						<div class="kt-member-no-results" id="kt-no-results">Nenhum colaborador encontrado.</div>

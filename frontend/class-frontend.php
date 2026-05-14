@@ -780,16 +780,16 @@ class KT_Frontend {
 		$location_id = isset( $_GET['kt_location'] ) ? absint( $_GET['kt_location'] ) : -1;
 		if ( $location_id < 0 ) $location_id = 0; // normaliza para uso no PHP
 		$location    = $location_id ? KT_Location::get( $location_id ) : null;
-		// tab_members: só carrega se uma unidade específica foi escolhida
-		$tab_members = ( $location_id > 0 ) ? KT_Member::get_all( $location_id ) : [];
+		// Stats globais + progresso de todos os membros (reutilizado na aba TODAS)
+		$all_members       = KT_Member::get_all();
+
+		// tab_members: unidade específica ou todos quando "Todas" está selecionado
+		$tab_members = ( $location_id > 0 ) ? KT_Member::get_all( $location_id ) : $all_members;
 
 		$member_progress = [];
 		foreach ( $tab_members as $m ) {
 			$member_progress[ $m->id ] = KT_Progress::get_enrollments_for_member( $m->id );
 		}
-
-		// Stats globais + progresso de todos os membros (reutilizado na aba TODAS)
-		$all_members       = KT_Member::get_all();
 		$total_units       = count( $locations );
 		$total_members_all = count( $all_members );
 		$total_enr = 0; $total_done = 0;
