@@ -430,7 +430,7 @@ $current_url = get_permalink();
 		<!-- Lista de usuários KT -->
 		<h3 style="margin:32px 0 12px">Usuários do sistema</h3>
 		<?php
-		$kt_all_users = get_users(['role__in'=>['kt_admin','kt_super_admin','kt_location_manager','kt_staff','administrator'],'number'=>200,'orderby'=>'display_name','order'=>'ASC']);
+		$kt_all_users = get_users(['role__in'=>['kt_admin','kt_location_manager','kt_staff'],'number'=>200,'orderby'=>'display_name','order'=>'ASC']);
 		// Carrega datas de colaboradores para exibir no modal de edição
 		global $wpdb;
 		$_mem_rows = $wpdb->get_results("SELECT user_id, hire_date, birth_date, position_id FROM {$wpdb->prefix}kt_members");
