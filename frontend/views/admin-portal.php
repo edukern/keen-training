@@ -103,6 +103,58 @@ $current_url = get_permalink();
 
 		<?php elseif ( isset($_GET['kt_location']) && $location_id === 0 ):
 		// ── Aba TODAS: todos os colaboradores de todas as unidades ──────── ?>
+
+		<!-- Atribuir treinamento (todas as unidades) -->
+		<?php if ( $courses && $tab_members ): ?>
+		<div class="kt-manager-enroll-box" style="margin-bottom:24px">
+			<h3>Atribuir Treinamento</h3>
+			<div class="kt-assign-top-row">
+				<div class="kt-assign-field kt-assign-field-course">
+					<label>Curso</label>
+					<select id="kt-assign-course">
+						<option value="">— Selecione o curso —</option>
+						<?php foreach ( $courses as $c ): ?>
+							<option value="<?php echo absint($c->id); ?>"><?php echo esc_html($c->title); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="kt-assign-field kt-assign-field-date">
+					<label>Prazo (opcional)</label>
+					<input type="date" id="kt-assign-due">
+				</div>
+			</div>
+			<div class="kt-member-picker" id="kt-member-picker" style="display:none">
+				<label>Colaboradores</label>
+				<div class="kt-member-picker-box">
+					<div class="kt-member-search-wrap">
+						<input type="text" id="kt-member-search" placeholder="🔍 Buscar por nome…" autocomplete="off">
+					</div>
+					<div class="kt-member-select-all-row">
+						<label><input type="checkbox" id="kt-select-all"> <span id="kt-select-all-label">Selecionar todos</span></label>
+					</div>
+					<div class="kt-member-list" id="kt-member-list">
+						<?php foreach ( $tab_members as $m ):
+							$_d = $m->full_name ?: $m->display_name ?: $m->user_login;
+						?>
+						<label class="kt-member-check-item" data-name="<?php echo esc_attr(mb_strtolower($_d,'UTF-8')); ?>">
+							<input type="checkbox" class="kt-member-cb" value="<?php echo absint($m->id); ?>">
+							<span class="kt-member-check-name"><?php echo esc_html($_d); ?></span>
+							<?php if ($m->position_name): ?><span class="kt-member-check-pos"><?php echo esc_html($m->position_name); ?></span><?php endif; ?>
+							<?php if ($m->location_name): ?><span class="kt-member-check-pos" style="color:#94a3b8"><?php echo esc_html($m->location_name); ?></span><?php endif; ?>
+						</label>
+						<?php endforeach; ?>
+						<div class="kt-member-no-results" id="kt-no-results">Nenhum colaborador encontrado.</div>
+					</div>
+				</div>
+				<div class="kt-assign-footer">
+					<span class="kt-assign-counter"><strong id="kt-selected-count">0</strong> selecionado(s)</span>
+					<button type="button" id="kt-assign-btn" class="kt-btn kt-btn-primary" disabled>Atribuir →</button>
+				</div>
+			</div>
+			<p id="kt-enroll-msg" style="margin:12px 0 0;font-size:.88em;min-height:1.2em"></p>
+		</div>
+		<?php endif; ?>
+
 		<table class="kt-members-table">
 			<thead><tr>
 				<th>Colaborador</th>
