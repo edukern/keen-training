@@ -1250,62 +1250,59 @@ class KT_Frontend {
 	 * AJAX: Detalhe de progresso por colaborador
 	 * -------------------------------------------------------------------- */
 
-	public	public function ajax_reset_member_progress() {
+	public function ajax_reset_member_progress() {
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
 			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
 		}
 
-		 = absint( ['member_id'] ?? 0 );
-		 = absint( ['course_id'] ?? 0 );
-		if ( !  || !  ) wp_send_json_error( [ 'message' => 'Parametros invalidos.' ] );
+		$member_id = absint( $_POST['member_id'] ?? 0 );
+		$course_id = absint( $_POST['course_id'] ?? 0 );
+		if ( ! $member_id || ! $course_id ) wp_send_json_error( [ 'message' => 'Parametros invalidos.' ] );
 
-		 = KT_Member::get(  );
-		if ( !  || ! KT_Roles::can_manage_location( ->location_id ) ) {
+		$member = KT_Member::get( $member_id );
+		if ( ! $member || ! KT_Roles::can_manage_location( $member->location_id ) ) {
 			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
 		}
 
-		global ;
+		global $wpdb;
 
-		// Get module IDs for this course
-		 = ->get_col( ->prepare(
-			"SELECT id FROM {->prefix}kt_modules WHERE course_id = %d",
-			\r
+		$module_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT id FROM {$wpdb->prefix}kt_modules WHERE course_id = %d",
+			$course_id
 		) );
 
-		if (  ) {
-			// Delete module progress
-			 = implode( ',', array_fill( 0, count(  ), '%d' ) );
-			->query( ->prepare(
-				"DELETE FROM {->prefix}kt_progress WHERE member_id = %d AND module_id IN (  )",
-				array_merge( [  ],  )
+		if ( $module_ids ) {
+			$placeholders = implode( ',', array_fill( 0, count( $module_ids ), '%d' ) );
+
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}kt_progress WHERE member_id = %d AND module_id IN ( $placeholders )",
+				array_merge( [ $member_id ], $module_ids )
 			) );
 
-			// Delete quiz results
-			 = ->get_col(
-				->prepare(
-					"SELECT id FROM {->prefix}kt_quizzes WHERE module_id IN (  )",
-					\r
-				)
-			);
-			if (  ) {
-				 = implode( ',', array_fill( 0, count(  ), '%d' ) );
-				->query( ->prepare(
-					"DELETE FROM {->prefix}kt_quiz_results WHERE member_id = %d AND quiz_id IN (  )",
-					array_merge( [  ],  )
+			$quiz_ids = $wpdb->get_col( $wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}kt_quizzes WHERE module_id IN ( $placeholders )",
+				$module_ids
+			) );
+
+			if ( $quiz_ids ) {
+				$qph = implode( ',', array_fill( 0, count( $quiz_ids ), '%d' ) );
+				$wpdb->query( $wpdb->prepare(
+					"DELETE FROM {$wpdb->prefix}kt_quiz_results WHERE member_id = %d AND quiz_id IN ( $qph )",
+					array_merge( [ $member_id ], $quiz_ids )
 				) );
 			}
 		}
 
-		// Reset enrollment status
-		->update(
-			->prefix . 'kt_enrollments',
+		$wpdb->update(
+			$wpdb->prefix . 'kt_enrollments',
 			[ 'status' => 'nao_iniciado', 'completed_at' => null ],
-			[ 'member_id' => , 'course_id' =>  ]
+			[ 'member_id' => $member_id, 'course_id' => $course_id ]
 		);
 
 		wp_send_json_success( [ 'message' => 'Progresso zerado com sucesso.' ] );
 	}
+
 
 	 function ajax_get_member_progress_detail() {
 		check_ajax_referer( 'kt_frontend', 'nonce' );
