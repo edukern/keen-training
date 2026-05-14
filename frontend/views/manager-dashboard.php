@@ -761,12 +761,28 @@ var ktPositions = <?php echo wp_json_encode(
 									detailHtml += '<td style="padding:4px 6px;color:#1e293b">'+$('<span>').text(q.question_text).html()+'</td>';
 									detailHtml += '<td style="padding:4px 6px;width:160px">';
 									if ( q.answers && q.answers.length ) {
+										var _selAns = null, _corAns = null;
 										$.each(q.answers, function(ai, ans){
-											var sel = q.selected_answer_ids && q.selected_answer_ids.indexOf(ans.id) !== -1;
-											var color = ans.is_correct ? '#16a34a' : (sel && !ans.is_correct ? '#dc2626' : '#64748b');
-											detailHtml += '<div style="color:'+color+';'+(sel?'font-weight:600':'')+'">'
-												+ (sel ? '▶ ' : '') + $('<span>').text(ans.text).html() + '</div>';
+											if ( q.selected_answer_ids && q.selected_answer_ids.indexOf(ans.id) !== -1 ) _selAns = ans;
+											if ( ans.is_correct ) _corAns = ans;
 										});
+										var _label = '<span style="font-size:.72em;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:inline-block;width:52px">';
+										if ( _selAns ) {
+											var _sc = _selAns.is_correct;
+											detailHtml += '<div style="margin:3px 0;display:flex;align-items:baseline;gap:4px">'
+												+ _label + 'Marcou:</span>'
+												+ '<span style="color:'+(_sc?'#16a34a':'#dc2626')+';font-weight:600">'
+												+ (_sc ? '✓ ' : '✗ ')
+												+ $('<span>').text(_selAns.text).html()
+												+ '</span></div>';
+										}
+										if ( _corAns && ( !_selAns || !_selAns.is_correct ) ) {
+											detailHtml += '<div style="margin:3px 0;display:flex;align-items:baseline;gap:4px">'
+												+ _label + 'Correta:</span>'
+												+ '<span style="color:#16a34a;font-weight:600">✓ '
+												+ $('<span>').text(_corAns.text).html()
+												+ '</span></div>';
+										}
 									}
 									detailHtml += '</td></tr>';
 								});
