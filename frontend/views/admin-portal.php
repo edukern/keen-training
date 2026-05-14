@@ -128,7 +128,7 @@ $current_url = get_permalink();
 				<td><div class="kt-member-name"><?php echo esc_html($_name); ?></div></td>
 				<td style="color:#64748b;font-size:.9em"><?php echo esc_html($m->location_name ?? '—'); ?></td>
 				<td>
-					<select class="kt-inline-pos-select" data-member-id="<?php echo absint($m->id); ?>">
+					<select class="kt-inline-pos-select" data-member-id="<?php echo absint($m->id); ?>" <?php echo $m->is_kt_admin ? 'disabled title="Cargo de administrador — altere pelo painel admin"' : ''; ?>>
 						<option value="">— Sem cargo —</option>
 						<?php foreach ( $positions as $pos ): ?>
 						<option value="<?php echo absint($pos->id); ?>" <?php selected( (int)($m->position_id??0), (int)$pos->id ); ?>><?php echo esc_html($pos->name); ?></option>

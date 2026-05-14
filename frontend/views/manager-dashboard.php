@@ -181,6 +181,7 @@
 				<td>
 					<select class="kt-inline-position-select"
 							data-member-id="<?php echo absint( $m->id ); ?>"
+							<?php echo $m->is_kt_admin ? 'disabled title="Cargo de administrador — altere pelo painel admin"' : ''; ?>
 							style="padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84em;color:#334155;width:100%">
 						<option value="">— Sem cargo —</option>
 						<?php foreach ( $positions as $pos ): ?>

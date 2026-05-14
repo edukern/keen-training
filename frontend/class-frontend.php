@@ -665,7 +665,7 @@ class KT_Frontend {
 	}
 
 	/** Banco de frases padrão (do PDF). Editável pelo admin em Keen Training → Dashboard. */
-	private static function default_quotes( string $type ): array {
+	public static function default_quotes( string $type ): array {
 		$manager = [
 			'"Um investimento em conhecimento sempre paga os melhores juros." — Benjamin Franklin',
 			'"A coisa mais linda do aprendizado é que ninguém pode tirar isso de você." — B.B. King',

@@ -22,7 +22,13 @@ class KT_Member {
 			        NULLIF(TRIM(CONCAT(
 			            COALESCE(umf.meta_value, ''), ' ',
 			            COALESCE(uml.meta_value, '')
-			        )), '') AS full_name
+			        )), '') AS full_name,
+			        IF( EXISTS (
+			            SELECT 1 FROM {$wpdb->usermeta} uka
+			            WHERE uka.user_id = u.ID
+			            AND uka.meta_key = '{$wpdb->prefix}capabilities'
+			            AND uka.meta_value LIKE '%\"kt_admin\"%'
+			        ), 1, 0 ) AS is_kt_admin
 			 FROM {$wpdb->prefix}kt_members m
 			 JOIN {$wpdb->users} u ON u.ID = m.user_id
 			 LEFT JOIN {$wpdb->prefix}kt_locations l ON l.id = m.location_id
