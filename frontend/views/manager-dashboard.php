@@ -793,7 +793,7 @@ var ktPositions = <?php echo wp_json_encode(
 							? '<button class="kt-snap-toggle" data-target="'+detailId+'" style="background:none;border:none;cursor:pointer;color:#6366f1;font-size:.8em;padding:2px 4px" title="Ver respostas">▼</button>'
 							: '';
 						html += '<tr style="border-bottom:1px solid #f1f5f9">'
-							+ '<td style="padding:7px 8px;color:#1e293b">'+$('<span>').text(mod.module_title).html()+'</td>'
+							+ '<td style="padding:7px 8px;color:#1e293b">'+$('<span>').text(mod.title).html()+'</td>'
 							+ '<td style="padding:7px 8px;color:#64748b">'+completed+'</td>'
 							+ '<td style="padding:7px 8px">'+scoreCell+'</td>'
 							+ '<td style="padding:7px 8px">'+toggleBtn+'</td>'
