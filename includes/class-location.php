@@ -27,7 +27,7 @@ class KT_Location {
 			$manager_id = absint( $data['manager_id'] );
 			update_user_meta( $manager_id, 'kt_location_id', $location_id );
 			$user = new WP_User( $manager_id );
-			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) && ! in_array( 'kt_super_admin', $user->roles, true ) ) {
+			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) ) {
 				$user->add_role( 'kt_location_manager' );
 			}
 		}
@@ -60,7 +60,7 @@ class KT_Location {
 			update_user_meta( $manager_id, 'kt_location_id', $id );
 			$user = new WP_User( $manager_id );
 			// Garante que tem o papel de gerente se não for admin
-			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) && ! in_array( 'kt_super_admin', $user->roles, true ) ) {
+			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) ) {
 				$user->add_role( 'kt_location_manager' );
 			}
 		}
@@ -76,7 +76,7 @@ class KT_Location {
 			if ( ! $loc->manager_id ) continue;
 			$user = new WP_User( $loc->manager_id );
 			if ( ! $user->ID ) continue;
-			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) && ! in_array( 'kt_super_admin', $user->roles, true ) ) {
+			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) ) {
 				$user->add_role( 'kt_location_manager' );
 				$fixed++;
 			}

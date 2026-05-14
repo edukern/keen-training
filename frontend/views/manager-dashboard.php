@@ -266,6 +266,30 @@
 	</div>
 </div>
 
+<!-- Alterar Senha -->
+<div class="kt-manager-enroll-box">
+	<h3>Alterar Senha</h3>
+	<div style="display:flex;flex-direction:column;gap:12px;max-width:360px">
+		<div>
+			<label style="display:block;font-size:.88em;font-weight:600;margin-bottom:4px">Senha atual</label>
+			<input type="password" id="kt-cp-current" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:.92em">
+		</div>
+		<div>
+			<label style="display:block;font-size:.88em;font-weight:600;margin-bottom:4px">Nova senha</label>
+			<input type="password" id="kt-cp-new" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:.92em">
+		</div>
+		<div>
+			<label style="display:block;font-size:.88em;font-weight:600;margin-bottom:4px">Confirmar nova senha</label>
+			<input type="password" id="kt-cp-confirm" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:.92em">
+		</div>
+		<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+			<button type="button" id="kt-cp-btn" class="kt-btn kt-btn-primary">Salvar senha</button>
+			<a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" style="font-size:.85em;color:#64748b">Esqueci minha senha</a>
+		</div>
+		<p id="kt-cp-msg" style="margin:0;font-size:.88em;min-height:1.2em"></p>
+	</div>
+</div>
+
 <script>
 var ktPositions = <?php echo wp_json_encode(
 	array_map( fn($p) => [ 'id' => (int)$p->id, 'name' => $p->name ], $positions )
@@ -835,6 +859,20 @@ var ktPositions = <?php echo wp_json_encode(
 		var tid = $(this).data('target');
 		$('#'+tid).toggle();
 		$(this).text( $('#'+tid).is(':visible') ? '▲' : '▼' );
+	});
+
+	/* ── Alterar senha ── */
+	$('#kt-cp-btn').on('click', function(){
+		var cur = $('#kt-cp-current').val();
+		var nw  = $('#kt-cp-new').val();
+		var con = $('#kt-cp-confirm').val();
+		if(!cur||!nw||!con){ $('#kt-cp-msg').text('Preencha todos os campos.').css('color','#dc2626'); return; }
+		var $btn=$(this); $btn.prop('disabled',true).text('Salvando…');
+		$.post(ktFrontend.ajaxUrl,{action:'kt_change_password',nonce:ktFrontend.nonce,current_password:cur,new_password:nw,confirm_password:con},function(res){
+			$btn.prop('disabled',false).text('Salvar senha');
+			$('#kt-cp-msg').text(res.data.message).css('color', res.success ? '#16a34a' : '#dc2626');
+			if(res.success){ $('#kt-cp-current,#kt-cp-new,#kt-cp-confirm').val(''); setTimeout(function(){ window.location.href = <?php echo json_encode( wp_login_url() ); ?>; }, 2000); }
+		}).fail(function(){ $btn.prop('disabled',false).text('Salvar senha'); $('#kt-cp-msg').text('Erro de comunicação.').css('color','#dc2626'); });
 	});
 
 })(jQuery);

@@ -30,6 +30,7 @@ class KT_Frontend {
 		add_action( 'template_redirect',           [ $this, 'maybe_render_certificate' ] );
 		add_action( 'template_redirect',           [ $this, 'enforce_module_page_access' ] );
 		add_filter( 'login_redirect',              [ $this, 'login_redirect' ], 10, 3 );
+		add_action( 'wp_ajax_kt_change_password',  [ $this, 'ajax_change_password' ] );
 	}
 
 	/**
@@ -178,6 +179,7 @@ class KT_Frontend {
 	}
 
 	public function ajax_enroll_member() {
+		global $wpdb;
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) wp_send_json_error();
 
@@ -803,22 +805,22 @@ class KT_Frontend {
 		$completion_rate = $total_enr > 0 ? round( $total_done / $total_enr * 100 ) : 0;
 
 		// Lista de usuários com roles KT (para selects de gerente)
-		$kt_users = get_users( [ 'role__in' => [ 'kt_admin', 'kt_super_admin', 'kt_location_manager', 'administrator' ], 'number' => 200 ] );
+		$kt_users = get_users( [ 'role__in' => [ 'kt_admin', 'kt_location_manager', 'administrator' ], 'number' => 200 ] );
 
 		// Detecta URL do painel do gerente (sempre re-busca para evitar auto-referência)
-		$current_page_url = get_permalink();
 		global $wpdb;
-		$mgr_page = $wpdb->get_row(
+		$mgr_page = $wpdb->get_row( $wpdb->prepare(
 			"SELECT ID FROM {$wpdb->posts}
 			 WHERE post_status='publish' AND post_type='page'
 			   AND post_content LIKE '%[kt_gerente%'
-			   AND ID <> " . get_the_ID() . "
-			 LIMIT 1"
-		);
+			   AND ID <> %d
+			 LIMIT 1",
+			get_the_ID()
+		) );
 		if ( $mgr_page ) {
 			$detected_mgr_url = get_permalink( $mgr_page->ID );
 			// Só salva se diferente da página atual (evita auto-referência)
-			if ( $detected_mgr_url !== $current_page_url ) {
+			if ( $detected_mgr_url !== get_permalink() ) {
 				update_option( 'kt_manager_page_url', $detected_mgr_url );
 			}
 		}
@@ -878,8 +880,9 @@ class KT_Frontend {
 			$username = $base_user . $suffix++;
 		}
 
-		$password = 'fazerbemfeito';
-		$user_id  = wp_create_user( $username, $password, $email );
+		$default_pass = ( $role === 'kt_location_manager' ) ? 'cultivartalentos' : 'fazerbemfeito';
+		$password     = $default_pass;
+		$user_id      = wp_create_user( $username, $password, $email );
 
 		if ( is_wp_error( $user_id ) ) {
 			wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
@@ -903,11 +906,11 @@ class KT_Frontend {
 		// Colaborador → criar registro de membro com datas
 		if ( $role === 'kt_staff' && $location_id ) {
 			KT_Member::create( [
-				'user_id'     => $user_id,
-				'location_id' => $location_id,
-				'position_id' => $position_id,
-				'hire_date'   => $hire_date,
-				'birth_date'  => $birth_date,
+				'existing_user_id' => $user_id,
+				'location_id'      => $location_id,
+				'position_id'      => $position_id,
+				'hire_date'        => $hire_date,
+				'birth_date'       => $birth_date,
 			] );
 		}
 
@@ -1156,15 +1159,13 @@ class KT_Frontend {
 			) );
 		}
 
-		// Busca o member_id correto para remover matrículas e progresso
+		// Remove todos os dados do colaborador (matrículas, progresso, quizzes, certificados, registro)
 		$member_id = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d LIMIT 1",
 			$user_id
 		) );
 		if ( $member_id ) {
-			$wpdb->delete( $wpdb->prefix . 'kt_enrollments', [ 'member_id' => $member_id ] );
-			$wpdb->delete( $wpdb->prefix . 'kt_progress',    [ 'member_id' => $member_id ] );
-			$wpdb->delete( $wpdb->prefix . 'kt_members',     [ 'id'        => $member_id ] );
+			KT_Member::delete( $member_id );
 		}
 
 		if ( ! function_exists( 'wp_delete_user' ) ) {
@@ -1304,7 +1305,7 @@ class KT_Frontend {
 	}
 
 
-	 function ajax_get_member_progress_detail() {
+	public function ajax_get_member_progress_detail() {
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
 			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
@@ -1398,5 +1399,34 @@ class KT_Frontend {
 		// Renderiza a página completa do certificado
 		echo KT_Certificate::render_html( $uid );
 		exit;
+	}
+
+	/* -----------------------------------------------------------------------
+	 * AJAX: Alterar senha do gerente/admin logado
+	 * -------------------------------------------------------------------- */
+
+	public function ajax_change_password() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_location_manager() && ! KT_Roles::is_super_admin() ) {
+			wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+		}
+		$current  = $_POST['current_password'] ?? '';
+		$new      = $_POST['new_password'] ?? '';
+		$confirm  = $_POST['confirm_password'] ?? '';
+		if ( ! $current || ! $new || ! $confirm ) {
+			wp_send_json_error( [ 'message' => 'Preencha todos os campos.' ] );
+		}
+		if ( $new !== $confirm ) {
+			wp_send_json_error( [ 'message' => 'A nova senha e a confirmação não coincidem.' ] );
+		}
+		if ( strlen( $new ) < 6 ) {
+			wp_send_json_error( [ 'message' => 'A nova senha deve ter ao menos 6 caracteres.' ] );
+		}
+		$user = wp_get_current_user();
+		if ( ! wp_check_password( $current, $user->user_pass, $user->ID ) ) {
+			wp_send_json_error( [ 'message' => 'Senha atual incorreta.' ] );
+		}
+		wp_set_password( $new, $user->ID );
+		wp_send_json_success( [ 'message' => 'Senha alterada com sucesso. Você será redirecionado para o login.' ] );
 	}
 }

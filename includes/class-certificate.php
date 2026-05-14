@@ -390,15 +390,15 @@ class KT_Certificate {
 
   <div class="side-accent">
     <div class="dot-accent"></div>
-    <span class="vertical-text"><?php echo $company_name; ?> — Certificado</span>
+    <span class="vertical-text"><?php echo esc_html( $company_name ); ?> — Certificado</span>
   </div>
 
   <div class="content">
     <div class="logo-area">
       <?php if ( $logo_url ): ?>
-        <img src="<?php echo $logo_url; ?>" alt="<?php echo $company_name; ?>">
+        <img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( $company_name ); ?>">
       <?php else: ?>
-        <span class="logo-text"><?php echo $company_name; ?></span>
+        <span class="logo-text"><?php echo esc_html( $company_name ); ?></span>
       <?php endif; ?>
     </div>
 
@@ -407,18 +407,18 @@ class KT_Certificate {
     <div class="title-underline"></div>
 
     <div class="subtitle">Certificamos que</div>
-    <div class="participant-name"><?php echo $name; ?></div>
+    <div class="participant-name"><?php echo esc_html( $name ); ?></div>
 
     <div class="description">concluiu com êxito o treinamento</div>
-    <div class="training-name"><?php echo $course_title; ?></div>
+    <div class="training-name"><?php echo esc_html( $course_title ); ?></div>
 
     <div class="footer">
       <div class="date-block">
         Concluído em
-        <div class="date-value"><?php echo $date; ?></div>
+        <div class="date-value"><?php echo esc_html( $date ); ?></div>
       </div>
       <?php if ( $show_id ): ?>
-        <div class="cert-id">ID <?php echo $uid_display; ?></div>
+        <div class="cert-id">ID <?php echo esc_html( $uid_display ); ?></div>
       <?php endif; ?>
     </div>
   </div>

@@ -55,13 +55,13 @@ class KT_Notifications {
 
 		if ( $frequency === 'weekly' ) {
 			// $day: 0=Domingo … 6=Sábado  (PHP date('w'))
-			if ( (int) date( 'w', $today_ts ) !== $day ) {
+			if ( (int) wp_date( 'w' ) !== $day ) {
 				return;
 			}
 			$days_ahead = absint( get_option( 'kt_notif_days_ahead', 7 ) );
 		} elseif ( $frequency === 'monthly' ) {
 			// $day: dia do mês 1-28
-			if ( (int) date( 'j', $today_ts ) !== $day ) {
+			if ( (int) wp_date( 'j' ) !== $day ) {
 				return;
 			}
 			$days_ahead = absint( get_option( 'kt_notif_days_ahead', 30 ) );
@@ -137,11 +137,12 @@ class KT_Notifications {
 			// ── Aniversário de nascimento ──────────────────────────────────
 			if ( $m->birth_date ) {
 				$diff = self::days_until_annual( $m->birth_date, $today_ts, $today_y );
-				if ( $diff !== false && $diff >= 7 && $diff < $days_ahead ) {
+				if ( $diff !== false && $diff >= 0 && $diff < $days_ahead ) {
 					$birthdays[] = [
-						'name'     => $name,
-						'location' => $m->location_name ?? '—',
-						'date'     => self::format_md( $m->birth_date ),
+						'name'      => $name,
+						'location'  => $m->location_name ?? '—',
+						'date'      => self::format_md( $m->birth_date ),
+						'days_until' => $diff,
 					];
 				}
 			}
@@ -149,7 +150,7 @@ class KT_Notifications {
 			// ── Aniversário de empresa ─────────────────────────────────────
 			if ( $m->hire_date ) {
 				$diff = self::days_until_annual( $m->hire_date, $today_ts, $today_y );
-				if ( $diff !== false && $diff >= 7 && $diff < $days_ahead ) {
+				if ( $diff !== false && $diff >= 0 && $diff < $days_ahead ) {
 					$hire_y        = (int) substr( $m->hire_date, 0, 4 );
 					$year_of_event = strtotime( $today_y . substr( $m->hire_date, 4 ) ) >= $today_ts
 						? $today_y
@@ -157,10 +158,11 @@ class KT_Notifications {
 					$years = $year_of_event - $hire_y;
 
 					$anniversaries[] = [
-						'name'     => $name,
-						'location' => $m->location_name ?? '—',
-						'date'     => self::format_md( $m->hire_date ),
-						'extra'    => $years . ' ' . ( $years === 1 ? 'ano' : 'anos' ),
+						'name'      => $name,
+						'location'  => $m->location_name ?? '—',
+						'date'      => self::format_md( $m->hire_date ),
+						'extra'     => $years . ' ' . ( $years === 1 ? 'ano' : 'anos' ),
+						'days_until' => $diff,
 					];
 				}
 			}
@@ -204,15 +206,6 @@ class KT_Notifications {
 		if ( ! $date_str ) return '';
 		$parts = explode( '-', $date_str );
 		return sprintf( '%02d/%02d', (int) $parts[2], (int) $parts[1] );
-	}
-
-	/**
-	 * Rótulo humanizado para $days_until.
-	 */
-	private static function days_label( $days ) {
-		if ( $days === 0 ) return '🎉 <strong>Hoje!</strong>';
-		if ( $days === 1 ) return '⏰ Amanhã';
-		return "em {$days} dias";
 	}
 
 	/* -----------------------------------------------------------------------

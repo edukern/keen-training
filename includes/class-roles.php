@@ -64,12 +64,11 @@ class KT_Roles {
 
 	/**
 	 * Acesso total ao Keen Training.
-	 * Inclui: kt_admin, kt_super_admin (legado), administrator WP.
+	 * Inclui: kt_admin, administrator WP.
 	 */
 	public static function is_super_admin() {
 		$user = wp_get_current_user();
 		return in_array( 'kt_admin', $user->roles, true )
-			|| in_array( 'kt_super_admin', $user->roles, true ) // legado
 			|| current_user_can( 'administrator' );
 	}
 
@@ -92,7 +91,6 @@ class KT_Roles {
 	public static function role_label( $role ) {
 		$labels = [
 			'kt_admin'             => 'Administrador',
-			'kt_super_admin'       => 'Administrador (legado)', // migrado para kt_admin
 			'kt_location_manager'  => 'Gerente de Unidade',
 			'kt_staff'             => 'Colaborador',
 			'administrator'        => 'Administrador WordPress',
