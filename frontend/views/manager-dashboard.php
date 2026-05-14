@@ -1,4 +1,4 @@
-<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
+﻿<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <div class="kt-portal kt-manager-dashboard">
 
 	<div class="kt-portal-header kt-manager-header">
@@ -141,7 +141,7 @@
 			<thead>
 				<tr>
 					<th style="width:200px">Colaborador</th>
-					<th style="width:120px">Cargo</th>
+					<th style="width:180px">Cargo</th>
 					<th>Treinamentos</th>
 				</tr>
 			</thead>
@@ -178,7 +178,7 @@
 				<td>
 					<select class="kt-inline-position-select"
 							data-member-id="<?php echo absint( $m->id ); ?>"
-							style="padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84em;color:#334155;max-width:140px;width:100%">
+							style="padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84em;color:#334155;width:100%">
 						<option value="">— Sem cargo —</option>
 						<?php foreach ( $positions as $pos ): ?>
 							<option value="<?php echo absint( $pos->id ); ?>" <?php selected( $m->position_id, $pos->id ); ?>>
