@@ -1060,26 +1060,25 @@ class KT_Frontend {
 			delete_user_meta( $user_id, 'kt_location_id' );
 		}
 
-		// Salva datas e cargo para colaboradores e gerentes (kt_members)
-		if ( in_array( $role, [ 'kt_staff', 'kt_location_manager' ], true ) ) {
-			$member = $wpdb->get_row( $wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d", $user_id
-			) );
-			if ( $member ) {
-				$wpdb->update(
-					$wpdb->prefix . 'kt_members',
-					[ 'location_id' => $location_id ?: 0, 'position_id' => $position_id, 'hire_date' => $hire_date, 'birth_date' => $birth_date ],
-					[ 'user_id' => $user_id ]
-				);
-			} else {
-				KT_Member::create( [
-					'user_id'     => $user_id,
-					'location_id' => $location_id,
-					'position_id' => $position_id,
-					'hire_date'   => $hire_date,
-					'birth_date'  => $birth_date,
-				] );
-			}
+		// Upsert em kt_members para qualquer role (kt_admin inclusive aparece nas listas de unidade)
+		$member = $wpdb->get_row( $wpdb->prepare(
+			"SELECT id FROM {$wpdb->prefix}kt_members WHERE user_id = %d", $user_id
+		) );
+		if ( $member ) {
+			$wpdb->update(
+				$wpdb->prefix . 'kt_members',
+				[ 'location_id' => $location_id ?: 0, 'position_id' => $position_id, 'hire_date' => $hire_date, 'birth_date' => $birth_date ],
+				[ 'user_id' => $user_id ]
+			);
+		} elseif ( $location_id ) {
+			// Só cria registro se tiver unidade — usuário sem unidade não precisa de linha em kt_members
+			KT_Member::create( [
+				'user_id'     => $user_id,
+				'location_id' => $location_id,
+				'position_id' => $position_id,
+				'hire_date'   => $hire_date,
+				'birth_date'  => $birth_date,
+			] );
 		}
 
 		// Busca nome da unidade para retornar ao JS
