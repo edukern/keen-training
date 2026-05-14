@@ -13,7 +13,7 @@ class KT_Member {
 		$conditions = [];
 		if ( $location_id ) $conditions[] = $wpdb->prepare( 'm.location_id = %d', $location_id );
 		if ( $position_id ) $conditions[] = $wpdb->prepare( 'm.position_id = %d', $position_id );
-		$conditions[] = "u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND (meta_value LIKE '%"administrator"%' OR meta_value LIKE '%"kt_super_admin"%'))"; 
+		$conditions[] = $wpdb->prepare( "u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = %s AND (meta_value LIKE %s OR meta_value LIKE %s))", $wpdb->prefix . 'capabilities', '%"administrator"%', '%"kt_super_admin"%' );
 		$where = 'WHERE ' . implode( ' AND ', $conditions );
 		return $wpdb->get_results(
 			"SELECT m.*, u.display_name, u.user_email,
