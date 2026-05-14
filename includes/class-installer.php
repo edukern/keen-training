@@ -311,6 +311,11 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
+				// v2.8.5 — Reset max_attempts para ilimitado em quizzes que ficaram com valor 1 (antigo padrão)
+		if ( version_compare( $installed, '2.8.5', '<' ) ) {
+			$wpdb->query( "UPDATE {$wpdb->prefix}kt_quizzes SET max_attempts = 0 WHERE max_attempts = 1" );
+		}
+
 		// Adicione blocos futuros aqui, ex:
 		// if ( version_compare( $installed, '2.5.0', '<' ) ) { ... }
 		// -----------------------------------------------------------------

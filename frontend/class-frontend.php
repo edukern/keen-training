@@ -477,7 +477,7 @@ class KT_Frontend {
 			'total'                => $result['total'],
 			'message'              => $message,
 			'pass_threshold'       => (int) $quiz->pass_threshold,
-			'tentativas_restantes' => max( 0, $tentativas_restantes ),
+			'tentativas_restantes' => $tentativas_restantes === -1 ? -1 : max( 0, $tentativas_restantes ),
 			'snapshot'             => $result['snapshot'],
 		] );
 	}
