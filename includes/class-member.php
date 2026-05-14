@@ -13,7 +13,8 @@ class KT_Member {
 		$conditions = [];
 		if ( $location_id ) $conditions[] = $wpdb->prepare( 'm.location_id = %d', $location_id );
 		if ( $position_id ) $conditions[] = $wpdb->prepare( 'm.position_id = %d', $position_id );
-		$where = $conditions ? 'WHERE ' . implode( ' AND ', $conditions ) : '';
+		$conditions[] = "u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND (meta_value LIKE '%"administrator"%' OR meta_value LIKE '%"kt_super_admin"%'))"; 
+		$where = 'WHERE ' . implode( ' AND ', $conditions );
 		return $wpdb->get_results(
 			"SELECT m.*, u.display_name, u.user_email,
 			        l.name AS location_name,
@@ -29,11 +30,6 @@ class KT_Member {
 			 LEFT JOIN {$wpdb->usermeta} umf ON umf.user_id = u.ID AND umf.meta_key = 'first_name'
 			 LEFT JOIN {$wpdb->usermeta} uml ON uml.user_id = u.ID AND uml.meta_key = 'last_name'
 			 $where
-			 AND u.ID NOT IN (
-			     SELECT user_id FROM {$wpdb->usermeta}
-			     WHERE meta_key = '{$wpdb->prefix}capabilities'
-			     AND ( meta_value LIKE '%"administrator"%' OR meta_value LIKE '%"kt_super_admin"%' )
-			 )
 			 ORDER BY u.display_name ASC"
 		);
 	}
