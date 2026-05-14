@@ -18,6 +18,7 @@ class KT_Frontend {
 		add_action( 'wp_ajax_kt_update_due_date',          [ $this, 'ajax_update_due_date' ] );
 		add_action( 'wp_ajax_kt_bulk_update_due_date',      [ $this, 'ajax_bulk_update_due_date' ] );
 		add_action( 'wp_ajax_kt_get_member_progress_detail', [ $this, 'ajax_get_member_progress_detail' ] );
+		add_action( 'wp_ajax_kt_reset_member_progress',      [ $this, 'ajax_reset_member_progress' ] );
 		add_action( 'wp_ajax_kt_admin_create_user',    [ $this, 'ajax_admin_create_user' ] );
 		add_action( 'wp_ajax_kt_admin_update_user',    [ $this, 'ajax_admin_update_user' ] );
 		add_action( 'wp_ajax_kt_admin_add_location',   [ $this, 'ajax_admin_add_location' ] );
@@ -191,15 +192,25 @@ class KT_Frontend {
 		foreach ( $member_ids as $mid ) {
 			$m = KT_Member::get( $mid );
 			if ( ! $m || ! KT_Roles::can_manage_location( $m->location_id ) ) continue;
-			KT_Progress::enroll( [ $mid ], $course_id, $due_date );
+			$existing = $wpdb->get_var( $wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}kt_enrollments WHERE member_id = %d AND course_id = %d",
+				$mid, $course_id
+			) );
+			if ( $existing ) {
+				if ( $due_date !== null ) {
+					$wpdb->update( $wpdb->prefix . 'kt_enrollments', [ 'due_date' => $due_date ], [ 'member_id' => $mid, 'course_id' => $course_id ] );
+				}
+			} else {
+				KT_Progress::enroll( [ $mid ], $course_id, $due_date );
+			}
 			$enrolled++;
 		}
 
 		if ( $enrolled === 0 ) wp_send_json_error( [ 'message' => 'Nenhuma matrícula realizada. Verifique permissões.' ] );
 
 		$msg = $enrolled === 1
-			? 'Matrícula realizada com sucesso.'
-			: "{$enrolled} colaboradores matriculados com sucesso.";
+			? 'Salvo com sucesso.'
+			: "{$enrolled} colaboradores atualizados com sucesso.";
 		wp_send_json_success( [ 'message' => $msg ] );
 	}
 
@@ -1239,7 +1250,64 @@ class KT_Frontend {
 	 * AJAX: Detalhe de progresso por colaborador
 	 * -------------------------------------------------------------------- */
 
-	public function ajax_get_member_progress_detail() {
+	public	public function ajax_reset_member_progress() {
+		check_ajax_referer( 'kt_frontend', 'nonce' );
+		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
+			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
+		}
+
+		 = absint( ['member_id'] ?? 0 );
+		 = absint( ['course_id'] ?? 0 );
+		if ( !  || !  ) wp_send_json_error( [ 'message' => 'Parametros invalidos.' ] );
+
+		 = KT_Member::get(  );
+		if ( !  || ! KT_Roles::can_manage_location( ->location_id ) ) {
+			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );
+		}
+
+		global ;
+
+		// Get module IDs for this course
+		 = ->get_col( ->prepare(
+			"SELECT id FROM {->prefix}kt_modules WHERE course_id = %d",
+			\r
+		) );
+
+		if (  ) {
+			// Delete module progress
+			 = implode( ',', array_fill( 0, count(  ), '%d' ) );
+			->query( ->prepare(
+				"DELETE FROM {->prefix}kt_progress WHERE member_id = %d AND module_id IN (  )",
+				array_merge( [  ],  )
+			) );
+
+			// Delete quiz results
+			 = ->get_col(
+				->prepare(
+					"SELECT id FROM {->prefix}kt_quizzes WHERE module_id IN (  )",
+					\r
+				)
+			);
+			if (  ) {
+				 = implode( ',', array_fill( 0, count(  ), '%d' ) );
+				->query( ->prepare(
+					"DELETE FROM {->prefix}kt_quiz_results WHERE member_id = %d AND quiz_id IN (  )",
+					array_merge( [  ],  )
+				) );
+			}
+		}
+
+		// Reset enrollment status
+		->update(
+			->prefix . 'kt_enrollments',
+			[ 'status' => 'nao_iniciado', 'completed_at' => null ],
+			[ 'member_id' => , 'course_id' =>  ]
+		);
+
+		wp_send_json_success( [ 'message' => 'Progresso zerado com sucesso.' ] );
+	}
+
+	 function ajax_get_member_progress_detail() {
 		check_ajax_referer( 'kt_frontend', 'nonce' );
 		if ( ! KT_Roles::is_super_admin() && ! KT_Roles::is_location_manager() ) {
 			wp_send_json_error( [ 'message' => 'Sem permissao.' ] );

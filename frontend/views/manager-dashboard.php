@@ -131,60 +131,6 @@
 	</div>
 	<?php endif; ?>
 
-	<!-- Alterar Prazo em Massa -->
-	<?php
-	$kt_deadline_data = [];
-	foreach ( $members as $m ) {
-		$_mname = $m->full_name ?: $m->display_name ?: $m->user_login;
-		$_enrs  = $member_progress[ $m->id ] ?? [];
-		foreach ( $_enrs as $_e ) {
-			$_cid = (int) $_e->course_id;
-			if ( ! isset( $kt_deadline_data[ $_cid ] ) ) {
-				$kt_deadline_data[ $_cid ] = [ 'title' => $_e->course_title, 'members' => [] ];
-			}
-			$kt_deadline_data[ $_cid ]['members'][] = [
-				'id'       => (int) $m->id,
-				'name'     => $_mname,
-				'due_date' => $_e->due_date ?: '',
-			];
-		}
-	}
-	?>
-	<?php if ( $kt_deadline_data ): ?>
-	<div class="kt-manager-enroll-box" style="margin-top:20px">
-		<h3>Alterar Prazo em Massa</h3>
-		<div class="kt-assign-top-row">
-			<div class="kt-assign-field kt-assign-field-course">
-				<label>Curso</label>
-				<select id="kt-deadline-course">
-					<option value="">— Selecione o curso —</option>
-					<?php foreach ( $kt_deadline_data as $_cid => $_cd ): ?>
-						<option value="<?php echo absint( $_cid ); ?>"><?php echo esc_html( $_cd['title'] ); ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-			<div class="kt-assign-field kt-assign-field-date">
-				<label>Novo prazo</label>
-				<input type="date" id="kt-deadline-date">
-			</div>
-		</div>
-		<div id="kt-deadline-picker" style="display:none;margin-top:12px">
-			<label style="font-weight:600;font-size:.88em;color:#374151;display:block;margin-bottom:8px">Colaboradores matriculados</label>
-			<div class="kt-member-picker-box">
-				<div class="kt-member-select-all-row">
-					<label><input type="checkbox" id="kt-deadline-select-all"> <span id="kt-deadline-all-label">Selecionar todos</span></label>
-				</div>
-				<div class="kt-member-list" id="kt-deadline-member-list"></div>
-			</div>
-			<div class="kt-assign-footer" style="margin-top:10px">
-				<span class="kt-assign-counter"><strong id="kt-deadline-count">0</strong> selecionado(s)</span>
-				<button type="button" id="kt-deadline-btn" class="kt-btn kt-btn-primary" disabled>Aplicar prazo →</button>
-			</div>
-		</div>
-		<p id="kt-deadline-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
-	</div>
-	<?php endif; ?>
-
 	<!-- Tabela compacta de colaboradores -->
 	<?php if ( ! $members ): ?>
 	<div class="kt-empty-state"><p>Nenhum colaborador cadastrado nesta unidade.</p></div>
@@ -738,62 +684,15 @@ var ktPositions = <?php echo wp_json_encode(
 	});
 
 
-	/* ── Bulk deadline ── */
-	var ktDeadlineData = <?php echo wp_json_encode( $kt_deadline_data ?? [] ); ?>;
-
-	$('#kt-bulk-course-select').on('change', function(){
-		var cid = $(this).val();
-		$('.kt-bulk-member-row').hide();
-		if ( cid && ktDeadlineData[cid] ) {
-			$.each(ktDeadlineData[cid].members, function(i, m){
-				$('.kt-bulk-member-row[data-member-id="'+m.id+'"]').show();
-				var dd = m.due_date ? m.due_date.substring(0,10) : '';
-				$('.kt-bulk-member-row[data-member-id="'+m.id+'"] .kt-bulk-member-cb').prop('checked', false);
-				if ( dd ) {
-					$('#kt-bulk-due-date').val(dd);
-				}
-			});
-		}
-	});
-
-	$('#kt-bulk-select-all').on('change', function(){
-		var checked = $(this).is(':checked');
-		$('.kt-bulk-member-cb:visible').prop('checked', checked);
-	});
-
-	$('#kt-bulk-apply-btn').on('click', function(){
-		var cid  = $('#kt-bulk-course-select').val();
-		var date = $('#kt-bulk-due-date').val();
-		if ( !cid ) { alert('Selecione um treinamento.'); return; }
-		if ( !date ) { alert('Informe a data de prazo.'); return; }
-		var ids = [];
-		$('.kt-bulk-member-cb:checked').each(function(){ ids.push( $(this).val() ); });
-		if ( !ids.length ) { alert('Selecione ao menos um colaborador.'); return; }
-		var $btn = $(this);
-		$btn.prop('disabled', true).text('Salvando…');
-		$.post(ktAjax.url, {
-			action:     'kt_bulk_update_due_date',
-			nonce:      ktAjax.nonce,
-			course_id:  cid,
-			member_ids: ids,
-			due_date:   date
-		}, function(res){
-			$btn.prop('disabled', false).text('Aplicar prazo');
-			if ( res.success ) {
-				alert(res.data.message);
-			} else {
-				alert(res.data || 'Erro ao salvar.');
-			}
-		}).fail(function(){ $btn.prop('disabled', false).text('Aplicar prazo'); alert('Erro de comunicação.'); });
-	});
-
 	/* ── Progress modal ── */
 	function closeProgressModal(){
 		$('#kt-progress-modal-overlay').fadeOut(200);
 	}
 
-	function renderProgress(memberName, courses){
+	var _currentMemberId = 0;
+	function renderProgress(memberName, memberId, courses){
 		var html = '';
+		_currentMemberId = memberId;
 		if ( !courses || !courses.length ) {
 			html = '<p style="color:#64748b;padding:16px 0">Nenhum treinamento encontrado.</p>';
 		} else {
@@ -802,9 +701,12 @@ var ktPositions = <?php echo wp_json_encode(
 					: course.status === 'in_progress' ? '<span style="color:#d97706;font-weight:600">Em andamento</span>'
 					: '<span style="color:#94a3b8;font-weight:600">Pendente</span>';
 				html += '<div style="margin-bottom:20px">';
-				html += '<div style="font-weight:700;font-size:.95em;color:#0f172a;margin-bottom:8px">'
+				html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">';
+				html += '<div style="font-weight:700;font-size:.95em;color:#0f172a">'
 					+ $('<span>').text(course.course_title).html()
 					+ ' <span style="font-weight:400;font-size:.82em">'+statusLabel+'</span></div>';
+				html += '<button class="kt-reset-progress-btn" data-member-id="'+_currentMemberId+'" data-course-id="'+course.course_id+'" style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:5px;padding:3px 10px;font-size:.75em;cursor:pointer;white-space:nowrap;flex-shrink:0">Zerar</button>';
+				html += '</div>';
 				if ( course.modules && course.modules.length ) {
 					html += '<table style="width:100%;border-collapse:collapse;font-size:.85em">';
 					html += '<thead><tr style="background:#f8fafc">'
@@ -821,7 +723,7 @@ var ktPositions = <?php echo wp_json_encode(
 						var detailId  = 'kt-snap-'+ci+'-'+mi;
 						var detailHtml = '';
 						if ( mod.first_attempt ) {
-							var pct = Math.round(mod.first_attempt.score * 100);
+							var pct = mod.first_attempt.score;
 							var passed = mod.first_attempt.passed;
 							scoreCell = '<span style="color:'+(passed?'#16a34a':'#dc2626')+';font-weight:600">'+pct+'%</span>';
 							if ( mod.first_attempt.answers_snapshot && mod.first_attempt.answers_snapshot.length ) {
@@ -877,13 +779,13 @@ var ktPositions = <?php echo wp_json_encode(
 		$('#kt-progress-modal-body').html('<p style="color:#64748b;padding:16px 0">Carregando…</p>');
 		$('#kt-progress-modal-title').text('Progresso — ' + name);
 		$('#kt-progress-modal-overlay').fadeIn(200);
-		$.post(ktAjax.url, {
+		$.post(ktFrontend.ajaxUrl, {
 			action:    'kt_get_member_progress_detail',
-			nonce:     ktAjax.nonce,
+			nonce:     ktFrontend.nonce,
 			member_id: mid
 		}, function(res){
 			if ( res.success ) {
-				renderProgress(name, res.data.courses);
+				renderProgress(name, mid, res.data.courses);
 			} else {
 				$('#kt-progress-modal-body').html('<p style="color:#dc2626">' + (res.data || 'Erro ao carregar.') + '</p>');
 			}
@@ -896,6 +798,37 @@ var ktPositions = <?php echo wp_json_encode(
 		if ( e.target.id === 'kt-progress-modal-overlay' || e.target.id === 'kt-progress-modal-close' ) {
 			closeProgressModal();
 		}
+	});
+
+	$(document).on('click', '.kt-reset-progress-btn', function(){
+		var mid = $(this).data('member-id');
+		var cid = $(this).data('course-id');
+		if ( !confirm('Zerar todo o progresso deste colaborador neste treinamento? Esta ação não pode ser desfeita.') ) return;
+		var $btn = $(this);
+		$btn.prop('disabled', true).text('Zerando…');
+		$.post(ktFrontend.ajaxUrl, {
+			action:    'kt_reset_member_progress',
+			nonce:     ktFrontend.nonce,
+			member_id: mid,
+			course_id: cid
+		}, function(res){
+			if ( res.success ) {
+				alert(res.data.message);
+				// Reload modal content
+				$('#kt-progress-modal-body').html('<p style="color:#64748b;padding:16px 0">Carregando…</p>');
+				$.post(ktFrontend.ajaxUrl, {
+					action:    'kt_get_member_progress_detail',
+					nonce:     ktFrontend.nonce,
+					member_id: mid
+				}, function(r){
+					if ( r.success ) renderProgress($('#kt-progress-modal-title').text().replace('Progresso — ',''), mid, r.data.courses);
+					else $('#kt-progress-modal-body').html('<p style="color:#dc2626">Erro ao recarregar.</p>');
+				});
+			} else {
+				alert(res.data || 'Erro ao zerar.');
+				$btn.prop('disabled', false).text('Zerar');
+			}
+		}).fail(function(){ $btn.prop('disabled', false).text('Zerar'); alert('Erro de comunicação.'); });
 	});
 
 	$(document).on('click', '.kt-snap-toggle', function(){
