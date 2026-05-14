@@ -633,12 +633,15 @@ $current_url = get_permalink();
 		</div>
 		<div class="kt-modal-body">
 			<input type="hidden" id="kt-edit-user-id">
-			<!-- Usuário (login) — somente leitura -->
+
+			<!-- Login -->
 			<div style="margin-bottom:14px">
 				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Usuário (login)</label>
 				<input type="text" id="kt-edit-u-login" readonly style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box;background:#f8fafc;color:#64748b;cursor:default">
 			</div>
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+
+			<!-- Nome + Sobrenome -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Nome</label>
 					<input type="text" id="kt-edit-u-first" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
@@ -647,6 +650,10 @@ $current_url = get_permalink();
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Sobrenome</label>
 					<input type="text" id="kt-edit-u-last" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
+			</div>
+
+			<!-- E-mail + Nível de Acesso -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">E-mail</label>
 					<input type="email" id="kt-edit-u-email" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
@@ -659,6 +666,13 @@ $current_url = get_permalink();
 						<option value="kt_staff">Colaborador</option>
 					</select>
 				</div>
+			</div>
+
+			<!-- Divisória -->
+			<hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0">
+
+			<!-- Cargo + Unidade -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Cargo</label>
 					<select id="kt-edit-u-position" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
@@ -668,6 +682,22 @@ $current_url = get_permalink();
 						<?php endforeach; ?>
 					</select>
 				</div>
+				<div id="kt-edit-u-location-wrap">
+					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-edit-u-location-label">Unidade</label>
+					<select id="kt-edit-u-location" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
+						<option value="">— Selecione —</option>
+						<?php foreach ( $locations as $loc ): ?>
+						<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+			</div>
+
+			<!-- Divisória -->
+			<hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0">
+
+			<!-- Datas -->
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
 				<div>
 					<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em">Data de Admissão</label>
 					<input type="date" id="kt-edit-u-hire" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
@@ -677,23 +707,14 @@ $current_url = get_permalink();
 					<input type="date" id="kt-edit-u-birth" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px;box-sizing:border-box">
 				</div>
 			</div>
-			<!-- Unidade (Gerente ou Colaborador) -->
-			<div id="kt-edit-u-location-wrap" style="margin-bottom:14px">
-				<label style="display:block;margin-bottom:4px;font-weight:600;font-size:.9em" id="kt-edit-u-location-label">Unidade</label>
-				<select id="kt-edit-u-location" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:7px">
-					<option value="">— Selecione a unidade —</option>
-					<?php foreach ( $locations as $loc ): ?>
-					<option value="<?php echo absint($loc->id); ?>"><?php echo esc_html($loc->name); ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-			<div style="display:flex;gap:10px;margin-top:4px">
+
+			<!-- Botões -->
+			<div style="display:flex;gap:10px">
 				<button type="button" id="kt-save-user-btn" class="kt-btn kt-btn-primary">Salvar</button>
 				<button type="button" id="kt-user-modal-close2" class="kt-btn kt-btn-outline">Cancelar</button>
 			</div>
 			<p id="kt-user-modal-msg" style="margin:10px 0 0;font-size:.88em;min-height:1.2em"></p>
-		</div>
-	</div>
+		</div>	</div>
 </div>
 
 <!-- ── Modal de edição de matrícula (reutilizado do gerente) ─ -->
