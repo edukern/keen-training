@@ -945,7 +945,9 @@ $(document).on('click','.kt-edit-user-btn',function(){
 	$('#kt-edit-u-first').val($b.data('first'));
 	$('#kt-edit-u-last').val($b.data('last'));
 	$('#kt-edit-u-email').val($b.data('email'));
-	$('#kt-edit-u-role').val($b.data('role')||'kt_staff').trigger('change');
+	var _role=$b.data('role')||'kt_staff';
+	if(!$('#kt-edit-u-role option[value="'+_role+'"]').length) _role='kt_staff';
+	$('#kt-edit-u-role').val(_role).trigger('change');
 	$('#kt-edit-u-position').val($b.data('position')||'');
 	$('#kt-edit-u-location').val($b.data('location')||'');
 	$('#kt-edit-u-hire').val($b.data('hire')||'');
@@ -967,7 +969,8 @@ $('#kt-save-user-btn').on('click',function(){
 	var loc=$('#kt-edit-u-location').val();
 	var hire=$('#kt-edit-u-hire').val(), birth=$('#kt-edit-u-birth').val();
 	var posId=$('#kt-edit-u-position').val()||'';
-	if(!first||!email||!role){msg('#kt-user-modal-msg','Nome e e-mail são obrigatórios.',false);return;}
+	if(!first||!email){msg('#kt-user-modal-msg','Nome e e-mail são obrigatórios.',false);return;}
+	if(!role){msg('#kt-user-modal-msg','Selecione um nível de acesso.',false);return;}
 	$b.prop('disabled',true).text('Salvando…');
 	$.post(ktFrontend.ajaxUrl,{action:'kt_admin_update_user',nonce:ktFrontend.nonce,
 		user_id:uid,first_name:first,last_name:last,email:email,role:role,location_id:loc,hire_date:hire,birth_date:birth,position_id:posId})
