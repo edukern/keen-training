@@ -29,6 +29,11 @@ class KT_Member {
 			 LEFT JOIN {$wpdb->usermeta} umf ON umf.user_id = u.ID AND umf.meta_key = 'first_name'
 			 LEFT JOIN {$wpdb->usermeta} uml ON uml.user_id = u.ID AND uml.meta_key = 'last_name'
 			 $where
+			 AND u.ID NOT IN (
+			     SELECT user_id FROM {$wpdb->usermeta}
+			     WHERE meta_key = '{$wpdb->prefix}capabilities'
+			     AND ( meta_value LIKE '%"administrator"%' OR meta_value LIKE '%"kt_super_admin"%' )
+			 )
 			 ORDER BY u.display_name ASC"
 		);
 	}
