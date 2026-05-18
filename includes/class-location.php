@@ -76,8 +76,12 @@ class KT_Location {
 			if ( ! $loc->manager_id ) continue;
 			$user = new WP_User( $loc->manager_id );
 			if ( ! $user->ID ) continue;
-			if ( ! in_array( 'administrator', $user->roles, true ) && ! in_array( 'kt_location_manager', $user->roles, true ) ) {
-				$user->add_role( 'kt_location_manager' );
+			// Pula administradores WP e kt_admin — não mexe na role deles
+			if ( in_array( 'administrator', $user->roles, true ) || in_array( 'kt_admin', $user->roles, true ) || in_array( 'kt_super_admin', $user->roles, true ) ) continue;
+			if ( ! in_array( 'kt_location_manager', $user->roles, true ) ) {
+				// set_role substitui a role atual (ex.: kt_staff) pela kt_location_manager
+				$user->set_role( 'kt_location_manager' );
+				update_user_meta( $user->ID, 'kt_location_id', $loc->id );
 				$fixed++;
 			}
 		}

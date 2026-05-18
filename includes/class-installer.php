@@ -311,14 +311,19 @@ class KT_Installer {
 		}
 
 		// -----------------------------------------------------------------
-				// v2.8.5 — Reset max_attempts para ilimitado em quizzes que ficaram com valor 1 (antigo padrão)
+		// v2.8.5 — Reset max_attempts para ilimitado em quizzes que ficaram com valor 1 (antigo padrão)
 		if ( version_compare( $installed, '2.8.5', '<' ) ) {
 			$wpdb->query( "UPDATE {$wpdb->prefix}kt_quizzes SET max_attempts = 0 WHERE max_attempts = 1" );
 		}
 
-		// Adicione blocos futuros aqui, ex:
-		// if ( version_compare( $installed, '2.5.0', '<' ) ) { ... }
 		// -----------------------------------------------------------------
+		// v2.8.7 — Garante role WP kt_location_manager para todos os gerentes
+		// cadastrados em kt_locations (corrige registros criados via edição
+		// de unidade que não atualizavam a role do usuário).
+		// -----------------------------------------------------------------
+		if ( version_compare( $installed, '2.8.7', '<' ) ) {
+			KT_Location::sync_manager_roles();
+		}
 
 		update_option( 'kt_db_version', KT_VERSION );
 	}

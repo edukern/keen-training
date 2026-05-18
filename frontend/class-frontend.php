@@ -56,7 +56,9 @@ class KT_Frontend {
 		// Gerente de unidade → dashboard frontend do gerente (se configurado)
 		if ( in_array( 'kt_location_manager', $roles, true ) ) {
 			$manager_url = get_option( 'kt_manager_page_url' );
-			return $manager_url ?: ( $redirect_to ?: admin_url() );
+			// Nunca usa $redirect_to como fallback: ele pode ser a URL do portal do colaborador
+			// se a gerente clicou em "faça login" de dentro dessa página.
+			return $manager_url ?: admin_url();
 		}
 
 		// Colaborador → portal de treinamentos
@@ -283,6 +285,15 @@ class KT_Frontend {
 					'Por favor, <a href="%s">faça login</a> para acessar o portal de treinamentos.',
 					esc_url( wp_login_url( get_permalink() ) )
 				) . '</p></div>';
+		}
+
+		// Gerente caiu aqui por engano → redireciona para o portal correto
+		if ( KT_Roles::is_location_manager() ) {
+			$manager_url = get_option( 'kt_manager_page_url' );
+			if ( $manager_url ) {
+				wp_redirect( $manager_url );
+				exit;
+			}
 		}
 
 		$member = KT_Member::get_by_user_id( get_current_user_id() );
@@ -960,7 +971,13 @@ class KT_Frontend {
 		$manager_name = '';
 		if ( $manager_id ) {
 			$u = get_user_by( 'ID', $manager_id );
-			$manager_name = $u ? $u->display_name : '';
+			if ( $u ) {
+				$manager_name = $u->display_name;
+				if ( ! in_array( 'administrator', $u->roles, true ) && ! in_array( 'kt_admin', $u->roles, true ) ) {
+					$u->set_role( 'kt_location_manager' );
+				}
+				update_user_meta( $manager_id, 'kt_location_id', $id );
+			}
 		}
 
 		wp_send_json_success( [
@@ -985,12 +1002,29 @@ class KT_Frontend {
 
 		if ( ! $id || ! $name ) wp_send_json_error( [ 'message' => 'Dados inválidos.' ] );
 
+		// Antes de atualizar, remove a role do gerente anterior (se mudou)
+		$old_loc = KT_Location::get( $id );
+		if ( $old_loc && $old_loc->manager_id && (int) $old_loc->manager_id !== $manager_id ) {
+			$old_manager = get_user_by( 'ID', $old_loc->manager_id );
+			if ( $old_manager && in_array( 'kt_location_manager', $old_manager->roles, true ) ) {
+				$old_manager->set_role( 'kt_staff' );
+				delete_user_meta( $old_manager->ID, 'kt_location_id' );
+			}
+		}
+
 		KT_Location::update( $id, [ 'name' => $name, 'manager_id' => $manager_id ] );
 
 		$manager_name = '';
 		if ( $manager_id ) {
 			$u = get_user_by( 'ID', $manager_id );
-			$manager_name = $u ? $u->user_login : '';
+			if ( $u ) {
+				$manager_name = $u->user_login;
+				// Garante role WP correta e vínculo de unidade
+				if ( ! in_array( 'administrator', $u->roles, true ) && ! in_array( 'kt_admin', $u->roles, true ) ) {
+					$u->set_role( 'kt_location_manager' );
+				}
+				update_user_meta( $manager_id, 'kt_location_id', $id );
+			}
 		}
 
 		wp_send_json_success( [
@@ -1208,6 +1242,21 @@ class KT_Frontend {
 		if ( $position_id ) {
 			$pos = $wpdb->get_row( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kt_positions WHERE id = %d", $position_id ) );
 			if ( $pos ) $pos_name = $pos->name;
+		}
+
+		// Sincroniza a role WP automaticamente com base no cargo
+		$wp_user = get_user_by( 'ID', $member->user_id );
+		if ( $wp_user && ! in_array( 'administrator', $wp_user->roles, true ) && ! in_array( 'kt_admin', $wp_user->roles, true ) ) {
+			$is_gerente = $pos_name && ( strtolower( trim( $pos_name ) ) === 'gerente' );
+			if ( $is_gerente && ! in_array( 'kt_location_manager', $wp_user->roles, true ) ) {
+				$wp_user->set_role( 'kt_location_manager' );
+				update_user_meta( $wp_user->ID, 'kt_location_id', $member->location_id );
+				// Registra como gerente na tabela de unidades
+				$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $wp_user->ID ], [ 'id' => $member->location_id ] );
+			} elseif ( ! $is_gerente && in_array( 'kt_location_manager', $wp_user->roles, true ) ) {
+				$wp_user->set_role( 'kt_staff' );
+				$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => 0 ], [ 'id' => $member->location_id, 'manager_id' => $wp_user->ID ] );
+			}
 		}
 
 		wp_send_json_success( [ 'message' => 'Cargo atualizado.', 'position_name' => $pos_name ] );
