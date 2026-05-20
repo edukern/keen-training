@@ -287,15 +287,6 @@ class KT_Frontend {
 				) . '</p></div>';
 		}
 
-		// Gerente caiu aqui por engano → redireciona para o portal correto
-		if ( KT_Roles::is_location_manager() ) {
-			$manager_url = get_option( 'kt_manager_page_url' );
-			if ( $manager_url ) {
-				wp_redirect( $manager_url );
-				exit;
-			}
-		}
-
 		$member = KT_Member::get_by_user_id( get_current_user_id() );
 
 		if ( ! $member && KT_Roles::is_location_manager() ) {
