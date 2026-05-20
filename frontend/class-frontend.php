@@ -298,9 +298,19 @@ class KT_Frontend {
 
 		$member = KT_Member::get_by_user_id( get_current_user_id() );
 
+		if ( ! $member && KT_Roles::is_location_manager() ) {
+			// Gerentes são também colaboradores: cria o perfil de membro automaticamente
+			// caso ainda não exista (cenário de gerentes cadastrados antes desta versão).
+			$loc_id = absint( get_user_meta( get_current_user_id(), 'kt_location_id', true ) );
+			if ( $loc_id ) {
+				KT_Member::create( [ 'existing_user_id' => get_current_user_id(), 'location_id' => $loc_id ] );
+				$member = KT_Member::get_by_user_id( get_current_user_id() );
+			}
+		}
+
 		if ( ! $member ) {
-			// Se for admin/super_admin, mostra link para o painel
-			if ( KT_Roles::is_super_admin() || KT_Roles::is_location_manager() ) {
+			// Super admin → link para o painel WP
+			if ( KT_Roles::is_super_admin() ) {
 				return '<div class="kt-portal"><p>Você tem acesso ao <a href="' . esc_url( admin_url( 'admin.php?page=kt-dashboard' ) ) . '">painel administrativo</a> do Keen Training.</p></div>';
 			}
 			return '<div class="kt-portal"><p>Você não está cadastrado como colaborador. Entre em contato com seu gerente.</p></div>';
@@ -907,11 +917,18 @@ class KT_Frontend {
 			'role'         => $role,
 		] );
 
-		// Gerente → vincular unidade
+		// Gerente → vincular unidade + criar perfil de colaborador (para poder receber treinamentos)
 		if ( $role === 'kt_location_manager' && $location_id ) {
 			update_user_meta( $user_id, 'kt_location_id', $location_id );
 			global $wpdb;
 			$wpdb->update( $wpdb->prefix . 'kt_locations', [ 'manager_id' => $user_id ], [ 'id' => $location_id ] );
+			KT_Member::create( [
+				'existing_user_id' => $user_id,
+				'location_id'      => $location_id,
+				'position_id'      => $position_id,
+				'hire_date'        => $hire_date,
+				'birth_date'       => $birth_date,
+			] );
 		}
 
 		// Colaborador → criar registro de membro com datas
@@ -1123,11 +1140,11 @@ class KT_Frontend {
 		} elseif ( $location_id ) {
 			// Só cria registro se tiver unidade — usuário sem unidade não precisa de linha em kt_members
 			KT_Member::create( [
-				'user_id'     => $user_id,
-				'location_id' => $location_id,
-				'position_id' => $position_id,
-				'hire_date'   => $hire_date,
-				'birth_date'  => $birth_date,
+				'existing_user_id' => $user_id,
+				'location_id'      => $location_id,
+				'position_id'      => $position_id,
+				'hire_date'        => $hire_date,
+				'birth_date'       => $birth_date,
 			] );
 		}
 
