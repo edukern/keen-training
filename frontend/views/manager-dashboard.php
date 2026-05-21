@@ -226,13 +226,18 @@
 								<?php echo $pct; ?>%
 							</span>
 							<span class="kt-drawer-course-title"><?php echo esc_html( $e->course_title ); ?></span>
+							<?php
+							$due_ts    = $e->due_date ? strtotime( $e->due_date ) : 0;
+							$days_left = $due_ts ? (int) ceil( ( $due_ts - time() ) / 86400 ) : null;
+							$due_urgent = $due_ts && ( $overdue || $days_left <= 7 );
+							?>
 							<span class="kt-drawer-due">
-								<?php if ( $e->due_date ): ?>
-									<span class="<?php echo $overdue ? 'kt-due-late' : ''; ?>">
-										<?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $e->due_date ) ) ); ?>
+								<?php if ( $due_urgent ): ?>
+									<span class="<?php echo $overdue ? 'kt-due-late' : 'kt-due-soon'; ?>">
+										<?php echo $overdue
+											? 'Atrasado'
+											: 'Vence ' . esc_html( date_i18n( 'd/m', $due_ts ) ); ?>
 									</span>
-								<?php else: ?>
-									<span style="color:#cbd5e1">—</span>
 								<?php endif; ?>
 							</span>
 							<a href="#"

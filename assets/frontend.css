@@ -118,6 +118,7 @@
 
 .kt-due-date { font-size: .82em; color: #64748b; margin: 4px 0; }
 .kt-due-late { color: #b91c1c; font-weight: 600; }
+.kt-due-soon { color: #b45309; font-weight: 600; }
 
 /* --- Status badges --- */
 .kt-status-badge {
