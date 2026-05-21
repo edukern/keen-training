@@ -199,13 +199,23 @@
 					<span class="kt-inline-pos-status" style="font-size:.75em;display:block;min-height:1em;margin-top:2px"></span>
 				</td>
 				<td>
-					<?php if ( $enrs ): ?>
+					<?php if ( $enrs ):
+						// Cursos ativos (não concluídos)
+						$active_enrs = array_filter( $enrs, fn($e) => $e->status !== 'concluido' );
+						$use_toggle  = count( $active_enrs ) >= 2;
+					?>
+					<?php if ( $use_toggle ): ?>
+					<!-- 2+ cursos ativos: exibe resumo colapsável -->
 					<div class="kt-chips-summary" data-target="kt-chips-<?php echo absint( $m->id ); ?>">
 						<span class="kt-chips-avg"><?php echo $avg_pct; ?>% <span class="kt-chips-count">(<?php echo $enr_count; ?> curso<?php echo $enr_count !== 1 ? 's' : ''; ?>)</span></span>
 						<?php if ( $has_overdue ): ?><span class="kt-chips-overdue-flag">atrasado</span><?php endif; ?>
 						<span class="kt-chips-toggle-icon">▾</span>
 					</div>
 					<div class="kt-chips-drawer" id="kt-chips-<?php echo absint( $m->id ); ?>" style="display:none">
+					<?php else: ?>
+					<!-- 1 curso (ou só concluídos): exibe direto sem toggle -->
+					<div class="kt-chips-drawer" id="kt-chips-<?php echo absint( $m->id ); ?>">
+					<?php endif; ?>
 						<?php foreach ( $enrs as $e ):
 							$pct        = KT_Progress::course_progress_pct( $m->id, $e->course_id );
 							$overdue    = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
