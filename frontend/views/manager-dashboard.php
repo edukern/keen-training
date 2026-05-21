@@ -64,10 +64,13 @@
 		</div>
 	</div>
 
-	<!-- Atribuir Treinamento -->
+	<!-- Matricular Colaborador (oculto por padrão, revelado pelo botão) -->
 	<?php if ( $courses ): ?>
-	<div class="kt-manager-enroll-box">
-		<h3>Atribuir Treinamento</h3>
+	<div class="kt-manager-enroll-box" id="kt-enroll-box" style="display:none">
+		<div class="kt-enroll-box-header">
+			<h3>Matricular Colaborador</h3>
+			<button type="button" id="kt-enroll-close" style="background:none;border:none;font-size:1.2em;cursor:pointer;color:#94a3b8;line-height:1" title="Fechar">✕</button>
+		</div>
 
 		<!-- Passo 1: Curso + Prazo -->
 		<div class="kt-assign-top-row">
@@ -136,13 +139,19 @@
 	<div class="kt-empty-state"><p>Nenhum colaborador cadastrado nesta unidade.</p></div>
 	<?php else: ?>
 	<div class="kt-manager-members">
-		<h3>Colaboradores e Progresso</h3>
+		<div class="kt-manager-members-header">
+			<h3>Colaboradores e Progresso</h3>
+			<?php if ( $courses && $members ): ?>
+			<button type="button" id="kt-enroll-open" class="kt-btn kt-btn-primary kt-btn-sm">+ Matricular Colaborador</button>
+			<?php endif; ?>
+		</div>
 		<table class="kt-members-table">
 			<thead>
 				<tr>
-					<th style="width:200px">Colaborador</th>
-					<th style="width:180px">Cargo</th>
+					<th style="width:180px">Colaborador</th>
+					<th style="width:160px">Cargo</th>
 					<th>Treinamentos</th>
+					<th style="width:110px"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -174,9 +183,6 @@
 			<tr>
 				<td>
 					<div class="kt-member-name"><?php echo esc_html( $_name ); ?></div>
-					<a href="#" class="kt-progress-link"
-					   data-member-id="<?php echo absint( $m->id ); ?>"
-					   data-member-name="<?php echo esc_attr( $_name ); ?>">Acompanhar →</a>
 				</td>
 				<td>
 					<select class="kt-inline-position-select"
@@ -233,6 +239,11 @@
 					<?php else: ?>
 					<span class="kt-no-enroll">Sem treinamentos</span>
 					<?php endif; ?>
+				</td>
+				<td style="white-space:nowrap">
+					<a href="#" class="kt-progress-link"
+					   data-member-id="<?php echo absint( $m->id ); ?>"
+					   data-member-name="<?php echo esc_attr( $_name ); ?>">Acompanhar →</a>
 				</td>
 			</tr>
 			<?php endforeach; ?>
@@ -298,6 +309,23 @@ var ktPositions = <?php echo wp_json_encode(
 </script>
 <script>
 (function($){
+
+	/* ── Toggle bloco Matricular Colaborador ── */
+	$('#kt-enroll-open').on('click', function(){
+		var $box = $('#kt-enroll-box');
+		$box.slideDown( 200 );
+		$(this).hide();
+		$box[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	});
+	$('#kt-enroll-close').on('click', function(){
+		$('#kt-enroll-box').slideUp( 200 );
+		$('#kt-enroll-open').show();
+		$('.kt-member-cb').prop('checked', false);
+		$('#kt-assign-course').val('');
+		$('#kt-member-picker').hide();
+		$('#kt-enroll-msg').text('');
+		updateCounter();
+	});
 
 	/* ── Helpers ── */
 	function showMsg( msg, ok ) {
@@ -764,7 +792,7 @@ var ktPositions = <?php echo wp_json_encode(
 									if ( q.answers && q.answers.length ) {
 										var _selAns = null, _corAns = null;
 										$.each(q.answers, function(ai, ans){
-											if ( q.selected_answer_ids && q.selected_answer_ids.indexOf(ans.id) !== -1 ) _selAns = ans;
+											if ( q.user_answer_ids && q.user_answer_ids.indexOf(ans.id) !== -1 ) _selAns = ans;
 											if ( ans.is_correct ) _corAns = ans;
 										});
 										var _label = '<span style="font-size:.72em;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:inline-block;width:52px">';
