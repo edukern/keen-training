@@ -168,6 +168,13 @@
 					$overdue = $e->due_date && strtotime( $e->due_date ) < time() && $e->status !== 'concluido';
 					if ( $overdue ) $has_overdue = true;
 					$pcts[] = $pct;
+					$_cert_url = '';
+					if ( $e->status === 'concluido' ) {
+						$_ec = KT_Certificate::get( $m->id, $e->course_id );
+						if ( $_ec ) {
+							$_cert_url = esc_url( add_query_arg( 'kt_cert', $_ec->cert_uid ) );
+						}
+					}
 					$enrs_for_json[] = [
 						'course_id'    => (int) $e->course_id,
 						'course_title' => $e->course_title,
@@ -175,6 +182,7 @@
 						'overdue'      => $overdue,
 						'due_date'     => $e->due_date ?: '',
 						'pct'          => $pct,
+						'cert_url'     => $_cert_url,
 					];
 				}
 				$avg_pct   = $pcts ? round( array_sum( $pcts ) / count( $pcts ) ) : 0;
@@ -527,6 +535,9 @@ var ktPositions = <?php echo wp_json_encode(
 				html += '<td class="kt-modal-actions">';
 				html +=   '<button type="button" class="kt-btn kt-btn-sm kt-modal-save-due" data-member-id="' + memberId + '" data-course-id="' + e.course_id + '">Salvar prazo</button>';
 				html +=   ' <button type="button" class="kt-btn kt-btn-sm kt-modal-unenroll" data-member-id="' + memberId + '" data-course-id="' + e.course_id + '" data-course-name="' + $('<div>').text(e.course_title).html() + '" data-row="' + rowId + '" style="color:#b91c1c;border-color:#fca5a5">Remover</button>';
+				if ( e.cert_url ) {
+					html += ' <a href="' + e.cert_url + '" target="_blank" class="kt-cert-link" title="Ver certificado" style="font-size:1.1em">🎓</a>';
+				}
 				html += '</td>';
 				html += '</tr>';
 			});
