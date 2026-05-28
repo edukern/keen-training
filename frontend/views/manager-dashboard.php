@@ -255,7 +255,7 @@
 								data-member-name="<?php echo esc_attr( $_name ); ?>"
 								data-position-id="<?php echo absint( $m->position_id ?? 0 ); ?>"
 								data-enrollments="<?php echo esc_attr( wp_json_encode( $enrs_for_json ) ); ?>">
-								Editar →
+								⚙️
 							</a>
 						</div>
 						<?php endforeach; ?>
@@ -267,7 +267,7 @@
 				<td style="white-space:nowrap">
 					<a href="#" class="kt-progress-link"
 					   data-member-id="<?php echo absint( $m->id ); ?>"
-					   data-member-name="<?php echo esc_attr( $_name ); ?>">Acompanhar →</a>
+					   data-member-name="<?php echo esc_attr( $_name ); ?>">Avaliações →</a>
 				</td>
 			</tr>
 			<?php endforeach; ?>
