@@ -240,6 +240,15 @@
 									</span>
 								<?php endif; ?>
 							</span>
+							<?php if ( $e->status === 'concluido' ):
+								$_cert = KT_Certificate::get( $m->id, $e->course_id );
+								if ( $_cert ):
+							?>
+							<a href="<?php echo esc_url( add_query_arg( 'kt_cert', $_cert->cert_uid ) ); ?>"
+								target="_blank"
+								class="kt-cert-link"
+								title="Ver certificado">🎓</a>
+							<?php endif; endif; ?>
 							<a href="#"
 								class="kt-edit-link kt-edit-member-btn"
 								data-member-id="<?php echo absint( $m->id ); ?>"
