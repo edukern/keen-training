@@ -673,6 +673,15 @@
 }
 .kt-edit-link:hover { color: var(--kt-color-primary); text-decoration: underline; }
 
+.kt-cert-link {
+	font-size: 1em;
+	text-decoration: none;
+	opacity: .75;
+	flex-shrink: 0;
+	line-height: 1;
+}
+.kt-cert-link:hover { opacity: 1; }
+
 /* Toggle de treinamentos na tabela */
 .kt-chips-summary {
 	display: inline-flex;
