@@ -850,8 +850,9 @@ class KT_Frontend {
 	 * -------------------------------------------------------------------- */
 
 	public function ajax_admin_create_user() {
+		ob_start(); // captura qualquer output parasita de hooks (user_register, etc.)
 		check_ajax_referer( 'kt_frontend', 'nonce' );
-		if ( ! KT_Roles::is_kt_admin() ) wp_send_json_error( [ 'message' => 'Sem permissão.' ] );
+		if ( ! KT_Roles::is_kt_admin() ) { ob_end_clean(); wp_send_json_error( [ 'message' => 'Sem permissão.' ] ); }
 
 		$first_name  = sanitize_text_field( $_POST['first_name']  ?? '' );
 		$last_name   = sanitize_text_field( $_POST['last_name']   ?? '' );
@@ -864,18 +865,18 @@ class KT_Frontend {
 		$send_email  = ! empty( $_POST['send_email'] );
 
 		if ( ! $first_name || ! $email ) {
-			wp_send_json_error( [ 'message' => 'Nome e e-mail são obrigatórios.' ] );
+			ob_end_clean(); wp_send_json_error( [ 'message' => 'Nome e e-mail são obrigatórios.' ] );
 		}
 		if ( ! is_email( $email ) ) {
-			wp_send_json_error( [ 'message' => 'E-mail inválido.' ] );
+			ob_end_clean(); wp_send_json_error( [ 'message' => 'E-mail inválido.' ] );
 		}
 		if ( email_exists( $email ) ) {
-			wp_send_json_error( [ 'message' => 'Este e-mail já está cadastrado.' ] );
+			ob_end_clean(); wp_send_json_error( [ 'message' => 'Este e-mail já está cadastrado.' ] );
 		}
 
 		$allowed = [ 'kt_admin', 'kt_location_manager', 'kt_staff' ];
 		if ( ! in_array( $role, $allowed, true ) ) {
-			wp_send_json_error( [ 'message' => 'Nível de acesso inválido.' ] );
+			ob_end_clean(); wp_send_json_error( [ 'message' => 'Nível de acesso inválido.' ] );
 		}
 
 		// Gera username: primeiro nome + "." + último sobrenome (sem acentos, minúsculas)
@@ -897,7 +898,7 @@ class KT_Frontend {
 		$user_id      = wp_create_user( $username, $password, $email );
 
 		if ( is_wp_error( $user_id ) ) {
-			wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
+			ob_end_clean(); wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
 		}
 
 		wp_update_user( [
@@ -951,6 +952,7 @@ class KT_Frontend {
 			wp_mail( $email, $subject, $access_msg );
 		}
 
+		ob_end_clean(); // descarta qualquer output parasita antes de enviar JSON
 		wp_send_json_success( [
 			'message'    => 'Usuário criado com sucesso.',
 			'user_id'    => $user_id,
