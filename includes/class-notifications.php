@@ -76,20 +76,62 @@ class KT_Notifications {
 	 * Envio do digest
 	 * -------------------------------------------------------------------- */
 
-	public static function send_digest( $email, $days_ahead = 7 ) {
-		$events = self::get_upcoming_events( $days_ahead );
+	public static function send_digest( $email, $days_ahead = 7, $force = false ) {
+		$tiers = self::get_tiered_events();
 
-		if ( empty( $events['birthdays'] ) && empty( $events['anniversaries'] ) ) {
-			return false; // nada a enviar
+		$has_events = false;
+		foreach ( $tiers as $tier ) {
+			if ( ! empty( $tier['birthdays'] ) || ! empty( $tier['anniversaries'] ) ) {
+				$has_events = true;
+				break;
+			}
 		}
 
-		$site_name = get_bloginfo( 'name' );
-		$label     = $days_ahead === 1 ? 'amanhã' : "nos próximos {$days_ahead} dias";
-		$subject   = "[{$site_name}] 🎂 Datas Especiais dos Colaboradores — {$label}";
-		$body      = self::build_email_html( $events, $days_ahead, $site_name );
+		if ( ! $force && ! $has_events ) {
+			return false;
+		}
 
+		$site_name    = get_bloginfo( 'name' );
+		$urgent_count = count( $tiers['urgent']['birthdays'] ) + count( $tiers['urgent']['anniversaries'] );
+		$subject      = $urgent_count > 0
+			? "[{$site_name}] 🎂 {$urgent_count} data(s) especial(is) esta semana"
+			: "[{$site_name}] 🗓️ Datas Especiais dos Colaboradores";
+
+		$body    = self::build_email_html( $tiers, $site_name );
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 		return wp_mail( $email, $subject, $body, $headers );
+	}
+
+	private static function get_tiered_events() {
+		$all = self::get_upcoming_events( 60 );
+
+		$tiers = [
+			'urgent'   => [ 'birthdays' => [], 'anniversaries' => [] ],
+			'upcoming' => [ 'birthdays' => [], 'anniversaries' => [] ],
+			'horizon'  => [ 'birthdays' => [], 'anniversaries' => [] ],
+		];
+
+		foreach ( $all['birthdays'] as $ev ) {
+			if ( $ev['days_until'] < 7 ) {
+				$tiers['urgent']['birthdays'][] = $ev;
+			} elseif ( $ev['days_until'] < 21 ) {
+				$tiers['upcoming']['birthdays'][] = $ev;
+			} else {
+				$tiers['horizon']['birthdays'][] = $ev;
+			}
+		}
+
+		foreach ( $all['anniversaries'] as $ev ) {
+			if ( $ev['days_until'] < 7 ) {
+				$tiers['urgent']['anniversaries'][] = $ev;
+			} elseif ( $ev['days_until'] < 21 ) {
+				$tiers['upcoming']['anniversaries'][] = $ev;
+			} else {
+				$tiers['horizon']['anniversaries'][] = $ev;
+			}
+		}
+
+		return $tiers;
 	}
 
 	/* -----------------------------------------------------------------------
@@ -221,79 +263,71 @@ class KT_Notifications {
 	 * Template do e-mail HTML
 	 * -------------------------------------------------------------------- */
 
-	private static function build_email_html( $events, $days_ahead, $site_name ) {
-		$birthdays     = $events['birthdays'];
-		$anniversaries = $events['anniversaries'];
+	private static function build_email_html( $tiers, $site_name ) {
+		$date_today  = date_i18n( 'd \\d\\e F \\d\\e Y', current_time( 'timestamp' ) );
+		$table_style = 'width:100%;border-collapse:collapse;font-size:.9em;margin-top:10px';
 
-		$label = $days_ahead === 1 ? 'amanhã' : "nos próximos {$days_ahead} dias";
+		$tier_configs = [
+			'urgent'   => [ 'label' => 'Esta semana',      'range' => '0–7 dias',  'accent' => '#dc2626', 'muted' => false ],
+			'upcoming' => [ 'label' => 'Próximas semanas', 'range' => '8–21 dias', 'accent' => '#2563eb', 'muted' => false ],
+			'horizon'  => [ 'label' => 'No horizonte',     'range' => '22–60 dias','accent' => '#cbd5e1', 'muted' => true  ],
+		];
 
-		$rows_b = '';
-		foreach ( $birthdays as $ev ) {
-			$rows_b .= '<tr>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">'
-					. esc_html( $ev['name'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#64748b;font-size:.9em">'
-					. esc_html( $ev['location'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-weight:600">'
-					. esc_html( $ev['date'] ) . '</td>
-			</tr>';
+		$all_sections = '';
+
+		foreach ( $tier_configs as $key => $cfg ) {
+			$birthdays     = $tiers[ $key ]['birthdays'];
+			$anniversaries = $tiers[ $key ]['anniversaries'];
+
+			if ( empty( $birthdays ) && empty( $anniversaries ) ) {
+				continue;
+			}
+
+			// Merge e ordena por days_until
+			$events = [];
+			foreach ( $birthdays as $ev ) {
+				$ev['type'] = 'birthday';
+				$events[]   = $ev;
+			}
+			foreach ( $anniversaries as $ev ) {
+				$ev['type'] = 'anniversary';
+				$events[]   = $ev;
+			}
+			usort( $events, fn( $a, $b ) => $a['days_until'] <=> $b['days_until'] );
+
+			$label_color = $cfg['muted'] ? '#94a3b8' : '#1e293b';
+			$name_color  = $cfg['muted'] ? '#475569' : '#1e293b';
+			$date_color  = $cfg['muted'] ? '#94a3b8' : '#64748b';
+			$meta_color  = '#94a3b8';
+			$td          = 'padding:9px 0;border-bottom:1px solid #f1f5f9;vertical-align:middle';
+
+			$rows = '';
+			foreach ( $events as $ev ) {
+				$badge = self::days_badge( $ev['days_until'], $cfg['muted'] );
+				$icon  = $ev['type'] === 'birthday' ? '🎂' : '🏅';
+				$tempo = $ev['type'] === 'anniversary' ? esc_html( $ev['extra'] ) : '';
+				$rows .= "<tr>
+					<td style=\"{$td};width:84px;white-space:nowrap\">{$badge}</td>
+					<td style=\"{$td};padding-left:12px;padding-right:12px;color:{$name_color}\">{$icon} " . esc_html( $ev['name'] ) . "</td>
+					<td style=\"{$td};padding-left:12px;padding-right:12px;color:{$date_color};white-space:nowrap\">" . esc_html( $ev['date'] ) . "</td>
+					<td style=\"{$td};padding-left:12px;padding-right:12px;color:{$meta_color};font-size:.86em;white-space:nowrap\">{$tempo}</td>
+					<td style=\"{$td};color:{$meta_color};font-size:.86em;text-align:right\">" . esc_html( $ev['location'] ) . "</td>
+				</tr>";
+			}
+
+			$section_header = "
+			<p style=\"margin:28px 0 0;padding-left:10px;border-left:3px solid {$cfg['accent']};font-size:.82em;font-weight:500;color:{$label_color};line-height:1\">
+				{$cfg['label']} <span style=\"font-weight:400;color:#94a3b8;margin-left:6px\">{$cfg['range']}</span>
+			</p>";
+
+			$table_block = "<table style=\"{$table_style}\"><tbody>{$rows}</tbody></table>";
+
+			$all_sections .= $section_header . $table_block;
 		}
 
-		$rows_a = '';
-		foreach ( $anniversaries as $ev ) {
-			$rows_a .= '<tr>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">'
-					. esc_html( $ev['name'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#64748b;font-size:.9em">'
-					. esc_html( $ev['location'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-weight:600">'
-					. esc_html( $ev['date'] ) . '</td>
-				<td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#64748b;font-size:.9em">'
-					. esc_html( $ev['extra'] ) . '</td>
-			</tr>';
+		if ( ! $all_sections ) {
+			$all_sections = '<p style="color:#94a3b8;margin:24px 0;font-size:.95em">Nenhuma data especial nos próximos 60 dias.</p>';
 		}
-
-		$table_style = 'width:100%;border-collapse:collapse;margin-top:8px;font-size:.95em';
-		$th_style    = 'padding:8px 14px;background:#f8fafc;text-align:left;font-size:.85em;color:#64748b;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #e2e8f0';
-
-		$birthday_section = '';
-		if ( $rows_b ) {
-			$count = count( $birthdays );
-			$birthday_section = "
-			<h2 style=\"margin:32px 0 8px;font-size:1.1em;color:#1e293b\">
-				🎂 Aniversários de Nascimento
-				<span style=\"font-size:.8em;font-weight:400;color:#64748b\">({$count} colaborador" . ( $count > 1 ? 'es' : '' ) . ")</span>
-			</h2>
-			<table style=\"{$table_style}\">
-				<thead><tr>
-					<th style=\"{$th_style}\">Nome</th>
-					<th style=\"{$th_style}\">Unidade</th>
-					<th style=\"{$th_style}\">Data</th>
-				</tr></thead>
-				<tbody>{$rows_b}</tbody>
-			</table>";
-		}
-
-		$anniversary_section = '';
-		if ( $rows_a ) {
-			$count = count( $anniversaries );
-			$anniversary_section = "
-			<h2 style=\"margin:32px 0 8px;font-size:1.1em;color:#1e293b\">
-				🏅 Aniversários de Empresa
-				<span style=\"font-size:.8em;font-weight:400;color:#64748b\">({$count} colaborador" . ( $count > 1 ? 'es' : '' ) . ")</span>
-			</h2>
-			<table style=\"{$table_style}\">
-				<thead><tr>
-					<th style=\"{$th_style}\">Nome</th>
-					<th style=\"{$th_style}\">Unidade</th>
-					<th style=\"{$th_style}\">Data</th>
-					<th style=\"{$th_style}\">Tempo de empresa</th>
-				</tr></thead>
-				<tbody>{$rows_a}</tbody>
-			</table>";
-		}
-
-		$date_today = date_i18n( 'd \\d\\e F \\d\\e Y', current_time( 'timestamp' ) );
 
 		return "<!DOCTYPE html>
 <html lang=\"pt-BR\">
@@ -303,22 +337,19 @@ class KT_Notifications {
 <tr><td align=\"center\">
 <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)\">
 
-	<!-- Header -->
 	<tr><td style=\"background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:28px 32px\">
 		<p style=\"margin:0;font-size:1.3em;font-weight:700;color:#fff\">{$site_name}</p>
 		<p style=\"margin:4px 0 0;font-size:.9em;color:#94a3b8\">Datas Especiais dos Colaboradores</p>
 	</td></tr>
 
-	<!-- Body -->
 	<tr><td style=\"padding:28px 32px\">
 		<p style=\"margin:0 0 4px;font-size:.85em;color:#94a3b8\">{$date_today}</p>
-		<h1 style=\"margin:0 0 8px;font-size:1.4em;color:#0f172a\">Datas Especiais {$label}</h1>
+		<h1 style=\"margin:0 0 8px;font-size:1.35em;color:#0f172a\">Datas Especiais — Próximos 60 dias</h1>
 		<p style=\"margin:0;color:#475569;line-height:1.6\">
 			Confira abaixo os colaboradores com aniversários e datas de admissão próximas para que o time de marketing possa preparar as mensagens de felicitação.
 		</p>
 
-		{$birthday_section}
-		{$anniversary_section}
+		{$all_sections}
 
 		<p style=\"margin:40px 0 0;font-size:.82em;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px\">
 			Este e-mail foi gerado automaticamente pelo plugin <strong>Keen Training</strong>.<br>
@@ -331,5 +362,12 @@ class KT_Notifications {
 </table>
 </body>
 </html>";
+	}
+
+	private static function days_badge( $days, $muted = false ) {
+		if ( $days === 0 ) return '<span style="background:#f0fdf4;color:#15803d;padding:2px 9px;border-radius:99px;font-size:.78em;font-weight:500">Hoje!</span>';
+		$color = $muted ? '#94a3b8' : '#475569';
+		if ( $days === 1 ) return "<span style=\"font-size:.84em;color:{$color}\">Amanhã</span>";
+		return "<span style=\"font-size:.84em;color:{$color}\">em {$days} dias</span>";
 	}
 }

@@ -575,14 +575,9 @@
 						</td>
 					</tr>
 					<tr>
-						<th style="padding:8px 0"><label for="kt_notif_days_ahead_weekly">Janela de dias</label></th>
+						<th style="padding:8px 0">Cobertura</th>
 						<td style="padding:8px 0">
-							<select id="kt_notif_days_ahead_weekly" name="kt_notif_days_ahead_weekly" style="min-width:120px">
-								<option value="3"  <?php selected( $notif_frequency === 'weekly' ? $notif_days_ahead : 7, 3 ); ?>>3 dias</option>
-								<option value="7"  <?php selected( $notif_frequency === 'weekly' ? $notif_days_ahead : 7, 7 ); ?>>7 dias</option>
-								<option value="14" <?php selected( $notif_frequency === 'weekly' ? $notif_days_ahead : 7, 14 ); ?>>14 dias</option>
-							</select>
-							<p class="description">Listar aniversários que ocorrem nos próximos X dias a partir da data do envio.</p>
+							<p class="description" style="margin:0">O e-mail exibe 3 seções automáticas: <strong>esta semana (0–7 dias)</strong>, <strong>próximas semanas (8–21 dias)</strong> e <strong>no horizonte (22–60 dias)</strong>.</p>
 						</td>
 					</tr>
 				</table>
@@ -601,14 +596,9 @@
 						</td>
 					</tr>
 					<tr>
-						<th style="padding:8px 0"><label for="kt_notif_days_ahead_monthly">Janela de dias</label></th>
+						<th style="padding:8px 0">Cobertura</th>
 						<td style="padding:8px 0">
-							<select id="kt_notif_days_ahead_monthly" name="kt_notif_days_ahead_monthly" style="min-width:120px">
-								<option value="14" <?php selected( $notif_frequency === 'monthly' ? $notif_days_ahead : 30, 14 ); ?>>14 dias</option>
-								<option value="30" <?php selected( $notif_frequency === 'monthly' ? $notif_days_ahead : 30, 30 ); ?>>30 dias</option>
-								<option value="60" <?php selected( $notif_frequency === 'monthly' ? $notif_days_ahead : 30, 60 ); ?>>60 dias</option>
-							</select>
-							<p class="description">Listar aniversários que ocorrem nos próximos X dias a partir da data do envio.</p>
+							<p class="description" style="margin:0">O e-mail exibe 3 seções automáticas: <strong>esta semana (0–7 dias)</strong>, <strong>próximas semanas (8–21 dias)</strong> e <strong>no horizonte (22–60 dias)</strong>.</p>
 						</td>
 					</tr>
 				</table>
