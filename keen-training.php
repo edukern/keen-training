@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 /**
  * Plugin Name: Keen Training
- * Description: Plataforma de onboarding e treinamento corporativo. Gerencie colaboradores, cursos, avaliações, progresso e certificados por unidade.
- * Version:     2.9.6
+ * Description: Plataforma de onboarding e treinamento corporativo. Gerencie colaboradores, cursos, avaliaÃ§Ãµes, progresso e certificados por unidade.
+ * Version:     2.9.7
  * Author:      Keenfisher
  * Text Domain: keen-training
  * Domain Path: /languages
@@ -12,18 +12,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KT_VERSION',    '2.9.6' );
+define( 'KT_VERSION',    '2.9.7' );
 define( 'KT_PLUGIN_FILE', __FILE__ );
 define( 'KT_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 
-// Atualizações automáticas via GitHub Releases
+// AtualizaÃ§Ãµes automÃ¡ticas via GitHub Releases
 require_once KT_PLUGIN_DIR . 'includes/plugin-update-checker/plugin-update-checker.php';
 $kt_updater = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
 	'https://github.com/edukern/keen-training/',
 	KT_PLUGIN_FILE,
 	'keen-training'
 );
+$kt_updater->setBranch( 'main' );
 $kt_updater->getVcsApi()->enableReleaseAssets();
 
 // Autoload de classes
@@ -48,6 +49,11 @@ spl_autoload_register( function ( $class ) {
 	}
 } );
 
+// Ãcone na tela de plugins instalados
+add_filter( 'plugin_row_meta', function( $links, $file ) {
+	return $links;
+}, 10, 2 );
+
 add_action( 'admin_head', function() {
 	$icon_url = KT_PLUGIN_URL . 'assets/icon.svg';
 	echo '<style>
@@ -58,7 +64,7 @@ add_action( 'admin_head', function() {
 register_activation_hook( __FILE__, [ 'KT_Installer', 'activate' ] );
 register_deactivation_hook( __FILE__, function() {
 	KT_Installer::deactivate();
-	// Remove o cron diário de aniversários ao desativar o plugin
+	// Remove o cron diÃ¡rio de aniversÃ¡rios ao desativar o plugin
 	$ts = wp_next_scheduled( 'kt_birthday_digest_check' );
 	if ( $ts ) wp_unschedule_event( $ts, 'kt_birthday_digest_check' );
 } );

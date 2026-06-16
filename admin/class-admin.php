@@ -698,7 +698,7 @@ class KT_Admin {
 
 		// Envio de teste
 		if ( ! empty( $_POST['kt_notif_test_send'] ) && $email ) {
-			KT_Notifications::send_digest( $email, $days_ahead ?: 7 );
+			KT_Notifications::send_digest( $email, $days_ahead ?: 7, true );
 		}
 
 		wp_redirect( admin_url( 'admin.php?page=kt-dashboard&notif_saved=1' ) );
