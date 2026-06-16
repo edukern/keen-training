@@ -137,11 +137,12 @@ class KT_Notifications {
 			// ── Aniversário de nascimento ──────────────────────────────────
 			if ( $m->birth_date ) {
 				$diff = self::days_until_annual( $m->birth_date, $today_ts, $today_y );
-				if ( $diff !== false && $diff >= 7 && $diff < $days_ahead ) {
+				if ( $diff !== false && $diff >= 0 && $diff < $days_ahead ) {
 					$birthdays[] = [
-						'name'     => $name,
-						'location' => $m->location_name ?? '—',
-						'date'     => self::format_md( $m->birth_date ),
+						'name'       => $name,
+						'location'   => $m->location_name ?? '—',
+						'date'       => self::format_md( $m->birth_date ),
+						'days_until' => $diff,
 					];
 				}
 			}
@@ -149,7 +150,7 @@ class KT_Notifications {
 			// ── Aniversário de empresa ─────────────────────────────────────
 			if ( $m->hire_date ) {
 				$diff = self::days_until_annual( $m->hire_date, $today_ts, $today_y );
-				if ( $diff !== false && $diff >= 7 && $diff < $days_ahead ) {
+				if ( $diff !== false && $diff >= 0 && $diff < $days_ahead ) {
 					$hire_y        = (int) substr( $m->hire_date, 0, 4 );
 					$year_of_event = strtotime( $today_y . substr( $m->hire_date, 4 ) ) >= $today_ts
 						? $today_y
@@ -157,10 +158,11 @@ class KT_Notifications {
 					$years = $year_of_event - $hire_y;
 
 					$anniversaries[] = [
-						'name'     => $name,
-						'location' => $m->location_name ?? '—',
-						'date'     => self::format_md( $m->hire_date ),
-						'extra'    => $years . ' ' . ( $years === 1 ? 'ano' : 'anos' ),
+						'name'       => $name,
+						'location'   => $m->location_name ?? '—',
+						'date'       => self::format_md( $m->hire_date ),
+						'extra'      => $years . ' ' . ( $years === 1 ? 'ano' : 'anos' ),
+						'days_until' => $diff,
 					];
 				}
 			}

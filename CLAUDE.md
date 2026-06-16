@@ -4,7 +4,7 @@ Plugin WordPress de treinamento corporativo para rede de lojas de roupas.
 Repositório: https://github.com/edukern/keen-training
 
 ## Versão atual
-2.3.3
+2.3.7
 
 ## Estrutura principal
 - `keen-training.php` — bootstrap, versão, autoload de classes, cron
