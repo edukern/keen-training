@@ -36,3 +36,11 @@ Nova Hartz, Três Coroas, Igrejinha, Osório, CD
 - Todas as queries usam $wpdb->prepare()
 - Verificação de nonce em todos os formulários
 - Capacidade `can_manage_location()` controla o que gerentes de unidade enxergam
+
+## Revisão de impacto obrigatória (antever quebras)
+
+Antes de implementar qualquer mudança que toque o schema/dados persistidos, os serviços/módulos compartilhados, o fluxo crítico de negócio, auth/permissões, ou o deploy/publicação, rode primeiro o agente `revisor-impacto` (em `.claude/agents/`) e apresente o resultado para aprovação ANTES de mexer. Não depende de pedirem — é o passo padrão.
+
+Mudança trivial e isolada (texto, estilo de 1 componente, sem efeito em dados/contratos) não precisa — diga que é trivial e siga.
+
+A análise deve sempre responder: "como dá pra testar isso ANTES de ir pro ar?" e, se houver dado existente afetado, qual backup específico fazer antes.
