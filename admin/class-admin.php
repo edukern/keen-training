@@ -305,8 +305,9 @@ class KT_Admin {
 		}
 
 		$qs = http_build_query( array_filter( [
-			'loc' => absint( $_POST['filter_loc'] ?? 0 ),
-			'pos' => absint( $_POST['filter_pos'] ?? 0 ),
+			'loc'     => absint( $_POST['filter_loc'] ?? 0 ),
+			'pos'     => absint( $_POST['filter_pos'] ?? 0 ),
+			'tstatus' => in_array( $_POST['filter_tstatus'] ?? '', [ 'pending', 'done', 'none' ], true ) ? sanitize_key( $_POST['filter_tstatus'] ) : '',
 		] ) );
 
 		// ── Remoção em massa ───────────────────────────────────────────────

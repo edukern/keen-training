@@ -141,9 +141,14 @@
 	<div class="kt-manager-members">
 		<div class="kt-manager-members-header">
 			<h3>Colaboradores e Progresso</h3>
-			<?php if ( $courses && $members ): ?>
-			<button type="button" id="kt-enroll-open" class="kt-btn kt-btn-primary kt-btn-sm">+ Matricular Colaborador</button>
-			<?php endif; ?>
+			<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+				<label style="display:inline-flex;align-items:center;gap:6px;font-size:.85em;color:#475569;cursor:pointer;user-select:none">
+					<input type="checkbox" id="kt-filter-pending"> Mostrar só quem não concluiu
+				</label>
+				<?php if ( $courses && $members ): ?>
+				<button type="button" id="kt-enroll-open" class="kt-btn kt-btn-primary kt-btn-sm">+ Matricular Colaborador</button>
+				<?php endif; ?>
+			</div>
 		</div>
 		<table class="kt-members-table">
 			<thead>
@@ -185,10 +190,12 @@
 						'cert_url'     => $_cert_url,
 					];
 				}
-				$avg_pct   = $pcts ? round( array_sum( $pcts ) / count( $pcts ) ) : 0;
-				$enr_count = count( $enrs );
+				$avg_pct    = $pcts ? round( array_sum( $pcts ) / count( $pcts ) ) : 0;
+				$enr_count  = count( $enrs );
+				$done_count = count( array_filter( $enrs, fn( $e ) => $e->status === 'concluido' ) );
+				$m_tstatus  = $enr_count === 0 ? 'none' : ( $done_count >= $enr_count ? 'done' : 'pending' );
 			?>
-			<tr>
+			<tr data-tstatus="<?php echo esc_attr( $m_tstatus ); ?>">
 				<td>
 					<div class="kt-member-name"><?php echo esc_html( $_name ); ?></div>
 				</td>
@@ -388,6 +395,15 @@ var ktPositions = <?php echo wp_json_encode(
 		var total = $('.kt-member-check-item').length;
 		$('#kt-select-all-label').text( visible === total ? 'Selecionar todos (' + total + ')' : 'Selecionar visíveis (' + visible + ')' );
 	}
+
+	/* ── Filtro "só quem não concluiu" ── */
+	$('#kt-filter-pending').on('change', function(){
+		var onlyPending = $(this).prop('checked');
+		$('.kt-members-table tbody tr').each(function(){
+			var st = $(this).attr('data-tstatus');
+			$(this).toggle( ! onlyPending || st === 'pending' );
+		});
+	});
 
 	/* ── Toggle de treinamentos na tabela ── */
 	$(document).on('click', '.kt-chips-summary', function(){

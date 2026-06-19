@@ -243,20 +243,45 @@
 				<?php endforeach; ?>
 			</select>
 		</label>
+		<?php endif; ?>
+		<?php $filter_tstatus = in_array( $_GET['tstatus'] ?? '', [ 'pending', 'done', 'none' ], true ) ? sanitize_key( $_GET['tstatus'] ) : ''; ?>
+		<label>Treinamentos:
+			<select id="kt-filter-tstatus" onchange="kt_apply_member_filters()">
+				<option value="">Todos</option>
+				<option value="pending" <?php selected( $filter_tstatus, 'pending' ); ?>>Não concluíram</option>
+				<option value="done" <?php selected( $filter_tstatus, 'done' ); ?>>Concluíram tudo</option>
+				<option value="none" <?php selected( $filter_tstatus, 'none' ); ?>>Sem treinamento</option>
+			</select>
+		</label>
 		<script>
 		function kt_apply_member_filters() {
-			var loc = document.getElementById('kt-filter-loc') ? document.getElementById('kt-filter-loc').value : 0;
-			var pos = document.getElementById('kt-filter-pos').value;
-			window.location.href = '<?php echo esc_url( admin_url( 'admin.php?page=kt-members' ) ); ?>&loc=' + loc + '&pos=' + pos;
+			var locEl = document.getElementById('kt-filter-loc');
+			var posEl = document.getElementById('kt-filter-pos');
+			var loc = locEl ? locEl.value : 0;
+			var pos = posEl ? posEl.value : 0;
+			var ts  = document.getElementById('kt-filter-tstatus').value;
+			var url = '<?php echo esc_url( admin_url( 'admin.php?page=kt-members' ) ); ?>&loc=' + loc + '&pos=' + pos;
+			if ( ts ) url += '&tstatus=' + ts;
+			window.location.href = url;
 		}
 		</script>
-		<?php endif; ?>
 	</div>
 
 	<?php
 	$filter_loc  = KT_Roles::is_super_admin() ? absint( $_GET['loc'] ?? 0 ) : $current_loc;
 	$filter_pos  = absint( $_GET['pos'] ?? 0 );
 	$all_members = KT_Member::get_all( $filter_loc, $filter_pos );
+
+	// Resumo de treinamento por colaborador (1 query por membro) — usado no filtro e na coluna
+	$training_summary = [];
+	foreach ( $all_members as $m ) {
+		$training_summary[ $m->id ] = KT_Progress::member_training_summary( $m->id );
+	}
+	if ( $filter_tstatus ) {
+		$all_members = array_values( array_filter( $all_members, function ( $m ) use ( $training_summary, $filter_tstatus ) {
+			return $training_summary[ $m->id ]['status'] === $filter_tstatus;
+		} ) );
+	}
 	$all_positions_bulk = KT_Position::get_all();
 	?>
 
@@ -273,6 +298,7 @@
 		<input type="hidden" name="action" value="kt_bulk_members">
 		<input type="hidden" name="filter_loc" value="<?php echo absint( $filter_loc ); ?>">
 		<input type="hidden" name="filter_pos" value="<?php echo absint( $filter_pos ); ?>">
+		<input type="hidden" name="filter_tstatus" value="<?php echo esc_attr( $filter_tstatus ); ?>">
 
 		<!-- Barra de ações em massa -->
 		<div class="kt-bulk-bar" id="kt-bulk-bar">
@@ -316,12 +342,13 @@
 					<th>Função</th>
 					<th>Admissão</th>
 					<th>Aniversário</th>
+					<th>Treinamentos</th>
 					<th>Ações</th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php if ( ! $all_members ): ?>
-				<tr><td colspan="8" style="text-align:center;padding:20px;color:#888">Nenhum colaborador encontrado. <a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=add' ) ); ?>">Adicionar →</a></td></tr>
+				<tr><td colspan="9" style="text-align:center;padding:20px;color:#888">Nenhum colaborador encontrado. <a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=add' ) ); ?>">Adicionar →</a></td></tr>
 			<?php else: ?>
 			<?php foreach ( $all_members as $m ): ?>
 				<tr>
@@ -348,6 +375,18 @@
 					</td>
 					<td><?php echo $m->hire_date  ? esc_html( date_i18n( 'd/m/Y', strtotime( $m->hire_date ) ) )  : '—'; ?></td>
 					<td><?php echo $m->birth_date ? esc_html( date_i18n( 'd/m',   strtotime( $m->birth_date ) ) ) : '—'; ?></td>
+					<td>
+						<?php
+						$ts = $training_summary[ $m->id ];
+						if ( $ts['status'] === 'none' ) {
+							echo '<em style="color:#aaa">Sem treinamento</em>';
+						} elseif ( $ts['status'] === 'done' ) {
+							echo '<span style="color:#15803d;font-weight:600">✓ Concluído</span> <span style="color:#888">(' . absint( $ts['done'] ) . ')</span>';
+						} else {
+							echo '<span style="color:#b45309;font-weight:600">' . absint( $ts['done'] ) . '/' . absint( $ts['total'] ) . '</span> <span style="color:#888">concluído(s)</span>';
+						}
+						?>
+					</td>
 					<td>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kt-members&action=edit&id=' . $m->id ) ); ?>">Editar</a>
 						&nbsp;|&nbsp;

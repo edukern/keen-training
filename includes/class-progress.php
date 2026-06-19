@@ -193,6 +193,27 @@ class KT_Progress {
 		return (int) round( ( $done / $total ) * 100 );
 	}
 
+	/**
+	 * Resumo do status de treinamento de um colaborador, em uma única query.
+	 * @return array{ total:int, done:int, status:string } status ∈ none|pending|done
+	 *   - none    : nenhum treinamento atribuído
+	 *   - pending : tem ao menos um treinamento não concluído
+	 *   - done    : tem treinamento e todos estão concluídos
+	 */
+	public static function member_training_summary( $member_id ) {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare(
+			"SELECT COUNT(*) AS total,
+			        SUM( CASE WHEN status = 'concluido' THEN 1 ELSE 0 END ) AS done
+			 FROM {$wpdb->prefix}kt_enrollments WHERE member_id = %d",
+			$member_id
+		) );
+		$total = (int) ( $row->total ?? 0 );
+		$done  = (int) ( $row->done ?? 0 );
+		$status = $total === 0 ? 'none' : ( $done >= $total ? 'done' : 'pending' );
+		return [ 'total' => $total, 'done' => $done, 'status' => $status ];
+	}
+
 	public static function location_stats( $location_id ) {
 		global $wpdb;
 		return $wpdb->get_results( $wpdb->prepare(
