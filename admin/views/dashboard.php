@@ -168,6 +168,23 @@
 		</form>
 	</div>
 
+	<!-- Exportar dados (migração) -->
+	<div class="kt-settings-box" style="margin-top:32px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:24px;max-width:600px">
+		<h2 style="margin-top:0">Exportar dados</h2>
+		<p class="description" style="margin-top:0">
+			Gera um único arquivo <strong>JSON</strong> com todos os dados do sistema
+			(colaboradores, cursos, módulos, avaliações, matrículas, progresso, resultados
+			e certificados), preservando os IDs de origem. Use este arquivo para migrar a
+			plataforma para outro sistema. A operação apenas <strong>lê</strong> os dados —
+			nada é alterado ou apagado. As páginas dos módulos (Elementor) não são incluídas.
+		</p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px">
+			<?php wp_nonce_field( 'kt_export_data' ); ?>
+			<input type="hidden" name="action" value="kt_export_data">
+			<button type="submit" class="button button-primary">⬇ Exportar dados (JSON)</button>
+		</form>
+	</div>
+
 	<?php
 	$fonts_disponiveis = [
 		''                 => '— Herdar do tema —',

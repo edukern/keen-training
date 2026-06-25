@@ -19,7 +19,7 @@ class KT_Admin {
 			'kt_save_module',   'kt_delete_module',
 			'kt_save_quiz',     'kt_save_quiz_questions', 'kt_delete_quiz',
 			'kt_save_enrollment', 'kt_delete_enrollment', 'kt_bulk_delete_enrollments',
-			'kt_export_progress', 'kt_dismiss_setup',
+			'kt_export_progress', 'kt_export_data', 'kt_dismiss_setup',
 			'kt_import_members', 'kt_import_quiz_questions',
 			'kt_reset_quiz_attempts',
 			'kt_save_pages',
@@ -660,6 +660,12 @@ class KT_Admin {
 		foreach ( $rows as $row ) fputcsv( $out, array_values( $row ), ';' );
 		fclose( $out );
 		exit;
+	}
+
+	public function handle_kt_export_data() {
+		check_admin_referer( 'kt_export_data' );
+		if ( ! KT_Roles::is_super_admin() ) wp_die( 'Acesso negado.' );
+		KT_Export::stream_download();
 	}
 
 	public function handle_kt_save_notifications() {

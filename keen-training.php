@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Keen Training
  * Description: Plataforma de onboarding e treinamento corporativo. Gerencie colaboradores, cursos, avaliaÃ§Ãµes, progresso e certificados por unidade.
- * Version:     2.9.8
+ * Version:     2.9.9
  * Author:      Keenfisher
  * Text Domain: keen-training
  * Domain Path: /languages
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KT_VERSION',    '2.9.8' );
+define( 'KT_VERSION',    '2.9.9' );
 define( 'KT_PLUGIN_FILE', __FILE__ );
 define( 'KT_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -40,6 +40,7 @@ spl_autoload_register( function ( $class ) {
 		'KT_Quiz'        => KT_PLUGIN_DIR . 'includes/class-quiz.php',
 		'KT_Progress'    => KT_PLUGIN_DIR . 'includes/class-progress.php',
 		'KT_Certificate' => KT_PLUGIN_DIR . 'includes/class-certificate.php',
+		'KT_Export'      => KT_PLUGIN_DIR . 'includes/class-export.php',
 		'KT_Admin'         => KT_PLUGIN_DIR . 'admin/class-admin.php',
 		'KT_Frontend'      => KT_PLUGIN_DIR . 'frontend/class-frontend.php',
 		'KT_Notifications' => KT_PLUGIN_DIR . 'includes/class-notifications.php',
@@ -81,3 +82,21 @@ function kt_init() {
 	new KT_Frontend();
 }
 add_action( 'plugins_loaded', 'kt_init' );
+
+// Comando WP-CLI: exporta todos os dados do LMS para um arquivo JSON.
+// Uso: wp keen-training export [--file=<caminho>]
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	WP_CLI::add_command( 'keen-training export', function ( $args, $assoc_args ) {
+		$json = KT_Export::to_json( true );
+		$file = $assoc_args['file'] ?? '';
+		if ( $file ) {
+			if ( false === file_put_contents( $file, $json ) ) {
+				WP_CLI::error( "Não foi possível gravar em: $file" );
+			}
+			WP_CLI::success( 'Export gravado em ' . $file . ' (' . size_format( strlen( $json ) ) . ')' );
+		} else {
+			// Sem --file: imprime o JSON no stdout (pode redirecionar para arquivo)
+			WP_CLI::line( $json );
+		}
+	} );
+}
