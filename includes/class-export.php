@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class KT_Export {
 
 	/** Versão do formato do envelope JSON. Incremente se a estrutura mudar. */
-	const SCHEMA_VERSION = 1;
+	const SCHEMA_VERSION = 2;
 
 	/** Tamanho do lote ao paginar tabelas grandes (progress, quiz_results). */
 	const CHUNK = 2000;
@@ -50,6 +50,45 @@ class KT_Export {
 			'quiz_results' => self::quiz_results(),
 			'certificates' => self::certificates(),
 			'restrictions' => self::restrictions(),
+			'settings'     => self::settings(),
+		];
+	}
+
+	/**
+	 * Configurações de apresentação salvas no admin (opções WP kt_*).
+	 *
+	 * Não são "dados" do LMS, mas são necessárias para o destino reproduzir
+	 * o certificado IDÊNTICO e manter as frases/avisos. Inclui o HTML do
+	 * modelo de certificado já renderizado (prévia com dados de exemplo e os
+	 * valores reais de logo/empresa/cor), para o destino copiar pixel a pixel.
+	 */
+	private static function settings() {
+		$cert_template = class_exists( 'KT_Certificate' )
+			? KT_Certificate::render_html( '', true )
+			: null;
+
+		return [
+			'certificate' => [
+				'primary_color' => get_option( 'kt_primary_color', '' ),
+				'accent_color'  => get_option( 'kt_cert_accent_color', '' ),
+				'company_name'  => get_option( 'kt_cert_company_name', '' ),
+				'logo_url'      => get_option( 'kt_cert_logo_url', '' ),
+				'show_id'       => get_option( 'kt_cert_show_id', '1' ) === '1',
+				'font_body'     => get_option( 'kt_font_body', '' ),
+				'font_heading'  => get_option( 'kt_font_heading', '' ),
+				// Modelo HTML/CSS completo e autossuficiente do certificado.
+				'template_html' => $cert_template,
+			],
+			'quotes' => [
+				'manager' => get_option( 'kt_quotes_manager', '' ),
+				'staff'   => get_option( 'kt_quotes_staff', '' ),
+			],
+			'notifications' => [
+				'email'      => get_option( 'kt_notif_email', '' ),
+				'frequency'  => get_option( 'kt_notif_frequency', '' ),
+				'day'        => get_option( 'kt_notif_day', '' ),
+				'days_ahead' => get_option( 'kt_notif_days_ahead', '' ),
+			],
 		];
 	}
 
