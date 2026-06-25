@@ -413,6 +413,11 @@ class KT_Export {
 		if ( function_exists( 'set_time_limit' ) ) @set_time_limit( 0 );
 		@ini_set( 'memory_limit', '512M' );
 
+		// Descarta qualquer saída acumulada antes do JSON (BOM/whitespace de
+		// arquivos PHP incluídos no boot), senão o arquivo baixado começa com
+		// bytes inválidos e importadores estritos recusam o JSON.
+		while ( ob_get_level() > 0 ) { ob_end_clean(); }
+
 		nocache_headers();
 		header( 'Content-Type: application/json; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="' . self::filename() . '"' );
