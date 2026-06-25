@@ -607,6 +607,11 @@ class KT_Frontend {
 		$module  = KT_Course::get_module_by_page( $page_id );
 		if ( ! $module ) return; // Página normal, sem vínculo
 
+		// Modo demonstração público (temporário): libera a visualização do
+		// conteúdo do módulo sem login. As ações de escrita (concluir módulo,
+		// enviar avaliação) continuam exigindo login nos respectivos AJAX.
+		if ( KT_PUBLIC_DEMO ) return;
+
 		// Não logado → login
 		if ( ! is_user_logged_in() ) {
 			wp_redirect( wp_login_url( get_permalink( $page_id ) ) );

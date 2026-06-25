@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Keen Training
  * Description: Plataforma de onboarding e treinamento corporativo. Gerencie colaboradores, cursos, avaliaÃ§Ãµes, progresso e certificados por unidade.
- * Version:     2.9.11
+ * Version:     2.9.12
  * Author:      Keenfisher
  * Text Domain: keen-training
  * Domain Path: /languages
@@ -12,10 +12,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KT_VERSION',    '2.9.11' );
+define( 'KT_VERSION',    '2.9.12' );
 define( 'KT_PLUGIN_FILE', __FILE__ );
 define( 'KT_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
+
+// Modo demonstração público (TEMPORÁRIO): quando true, as páginas de conteúdo
+// dos módulos ficam visíveis sem login, apenas para visualização. Painel do
+// gerente, painel admin, certificados e ações de escrita continuam exigindo login.
+// Deixar false em operação normal. Pode ser sobrescrito no wp-config.php.
+if ( ! defined( 'KT_PUBLIC_DEMO' ) ) {
+	define( 'KT_PUBLIC_DEMO', true );
+}
 
 // AtualizaÃ§Ãµes automÃ¡ticas via GitHub Releases
 require_once KT_PLUGIN_DIR . 'includes/plugin-update-checker/plugin-update-checker.php';
